@@ -6,8 +6,8 @@ authors = ["Everlabs"]
 description = "A CLI to add components to your app."
 keywords = ["cli", "ui", "components", "leptos", "tailwind"]
 license = "MIT"
-# readme = "./README.md"
-
+readme = "./README.md"
+repository = "https://github.com/rust-ui/cli"
 
 
 
