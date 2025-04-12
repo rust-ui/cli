@@ -1,7 +1,6 @@
 use clap::Command;
 use std::process;
 
-
 mod command_add;
 mod command_init;
 mod constants;
@@ -9,7 +8,6 @@ mod shared;
 
 use constants::commands::{COMMAND_ADD, COMMAND_INIT};
 
-// cargo install ui-cli --force
 // ui init
 // * ui add button demo_button demo_button_variants demo_button_sizes
 // * ui add demo_use_floating_placement
