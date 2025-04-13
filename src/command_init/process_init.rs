@@ -25,7 +25,7 @@ pub async fn process_init() {
     INIT_TEMPLATE_FILE(STYLE_SLASH_TAILWIND_CSS, TEMPLATE_STYLE_TAILWIND_CSS).await;
     INIT_TEMPLATE_FILE(TAILWIND_CONFIG_JS, TEMPLATE_TAILWIND_CONFIG).await;
 
-    // handle_cargo_toml().await;
+    handle_cargo_toml().await;
     handle_config_schema().await;
     handle_index_styles().await;
     handle_pnpm_install_dependencies().await;

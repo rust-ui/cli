@@ -3,13 +3,12 @@ use std::fs;
 use std::process::Command;
 use std::time::Duration;
 
-use crate::constants::others::{CARGO_TOML_FILE, LEPTOS_0_6_13, SPINNER_UPDATE_DURATION, WASM_BINDGEN_STRICT_0_2_93};
+use crate::constants::others::{CARGO_TOML_FILE, LEPTOS_0_6_13, SPINNER_UPDATE_DURATION};
 
 pub async fn handle_cargo_toml() {
     ensure_leptos_dependencies_are_0_6_13();
-    ensure_wasm_bindgen_is_0_2_93();
-    add_tailwind_fuse_and_leptos_use();
-    handle_adding_leptos_use_to_ssr_features();
+    // add_tailwind_fuse_and_leptos_use();
+    // handle_adding_leptos_use_to_ssr_features();
     handle_tailwind_input_file();
 }
 
@@ -37,39 +36,15 @@ fn ensure_leptos_dependencies_are_0_6_13() {
 
             // Write the modified contents back to the file
             if let Err(e) = fs::write(CARGO_TOML_FILE, &contents) {
-                eprintln!("Error writing to file: {}", e);
+                eprintln!("🔸 Error writing to file: {}", e);
             }
         }
         Err(e) => {
-            eprintln!("Error reading file: {}", e);
+            eprintln!("🔸 Error reading file: {}", e);
         }
     }
 }
 
-fn ensure_wasm_bindgen_is_0_2_93() {
-    match fs::read_to_string(CARGO_TOML_FILE) {
-        Ok(mut contents) => {
-            let dep_pattern = "wasm-bindgen = \"";
-            if let Some(start_pos) = contents.find(dep_pattern) {
-                let version_start = start_pos + dep_pattern.len();
-                if let Some(version_end) = contents[version_start..].find('"') {
-                    let current_version = &contents[version_start..version_start + version_end];
-                    if current_version != WASM_BINDGEN_STRICT_0_2_93 {
-                        contents.replace_range(version_start..version_start + version_end, WASM_BINDGEN_STRICT_0_2_93);
-                    }
-                }
-            }
-
-            // Write the modified contents back to the file
-            if let Err(e) = fs::write(CARGO_TOML_FILE, &contents) {
-                eprintln!("Error writing to file: {}", e);
-            }
-        }
-        Err(e) => {
-            eprintln!("Error reading file: {}", e);
-        }
-    }
-}
 
 fn add_tailwind_fuse_and_leptos_use() {
     let spinner = ProgressBar::new_spinner();
