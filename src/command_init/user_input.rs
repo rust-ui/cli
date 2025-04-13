@@ -12,19 +12,23 @@ const LABEL: &str = "label";
 /*                        🦀 MAIN 🦀                          */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-pub async fn handle_index_styles() {
-    dotenv().ok();
+pub struct UserInput {}
 
-    let url_registry_styles_json = env::var(ENV::URL_REGISTRY_STYLES_JSON).unwrap_or_default();
+impl UserInput {
+    pub async fn handle_index_styles() {
+        dotenv().ok();
 
-    let styles_index_result = Fetch::from_url(&url_registry_styles_json).await;
-    // println!("{}", styles_index_result.as_ref().unwrap());
+        let url_registry_styles_json = env::var(ENV::URL_REGISTRY_STYLES_JSON).unwrap_or_default();
 
-    // Parse the JSON string into Vec<serde_json::Value>
-    if let Ok(styles_index) = styles_index_result {
-        // Convert the String to a Vec<serde_json::Value>
-        let vec_styles: Vec<serde_json::Value> = serde_json::from_str(&styles_index).unwrap();
-        ask_user_choose_style(vec_styles);
+        let styles_index_result = Fetch::from_url(&url_registry_styles_json).await;
+        // println!("{}", styles_index_result.as_ref().unwrap());
+
+        // Parse the JSON string into Vec<serde_json::Value>
+        if let Ok(styles_index) = styles_index_result {
+            // Convert the String to a Vec<serde_json::Value>
+            let vec_styles: Vec<serde_json::Value> = serde_json::from_str(&styles_index).unwrap();
+            ask_user_choose_style(vec_styles);
+        }
     }
 }
 

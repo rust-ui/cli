@@ -11,6 +11,12 @@ importers:
       '@tailwindcss/cli':
         specifier: ^4.1.3
         version: 4.1.3
+      tailwindcss:
+        specifier: ^4.1.3
+        version: 4.1.3
+      tw-animate-css:
+        specifier: ^1.2.5
+        version: 1.2.5
 
 packages:
 
@@ -306,6 +312,9 @@ packages:
     resolution: {integrity: sha512-65P7iz6X5yEr1cwcgvQxbbIw7Uk3gOy5dIdtZ4rDveLqhrdJP+Li/Hx6tyK0NEb+2GCyneCMJiGqrADCSNk8sQ==}
     engines: {node: '>=8.0'}
 
+  tw-animate-css@1.2.5:
+    resolution: {integrity: sha512-ABzjfgVo+fDbhRREGL4KQZUqqdPgvc5zVrLyeW9/6mVqvaDepXc7EvedA+pYmMnIOsUAQMwcWzNvom26J2qYvQ==}
+
 snapshots:
 
   '@parcel/watcher-android-arm64@2.5.1':
@@ -526,3 +535,5 @@ snapshots:
   to-regex-range@5.0.1:
     dependencies:
       is-number: 7.0.0
+
+  tw-animate-css@1.2.5: {}
