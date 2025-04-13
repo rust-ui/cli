@@ -3,7 +3,7 @@ use std::time::Duration;
 
 use super::{
     handle_cargo_toml::handle_cargo_toml, handle_config_schema::handle_config_schema,
-    handle_index_styles::handle_index_styles, handle_install_dependencies::handle_pnpm_install_dependencies,
+    handle_index_styles::handle_index_styles, install::Install,
 };
 use crate::constants::{
     file_names::{
@@ -28,7 +28,7 @@ pub async fn process_init() {
     handle_cargo_toml().await;
     handle_config_schema().await;
     handle_index_styles().await;
-    handle_pnpm_install_dependencies().await;
+    Install::tailwind_with_pnpm().await;
 }
 
 //
