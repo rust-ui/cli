@@ -5,7 +5,8 @@ use std::fs;
 use std::process::Command;
 use std::time::Duration;
 
-use crate::constants::others::{CARGO_TOML_FILE, LEPTOS_0_6_13, SPINNER_UPDATE_DURATION};
+use crate::constants::dependencies::DEPENDENCIES;
+use crate::constants::others::{CARGO_TOML_FILE, SPINNER_UPDATE_DURATION};
 use crate::{command_init::fetch::Fetch, constants::env::ENV};
 
 pub struct Config {}
@@ -34,7 +35,7 @@ impl Config {
 fn ensure_leptos_dependencies_are_0_6_13() {
     match fs::read_to_string(CARGO_TOML_FILE) {
         Ok(mut contents) => {
-            let dependencies = ["leptos", "leptos_axum", "leptos_meta", "leptos_router"];
+            let dependencies = DEPENDENCIES::LEPTOS;
 
             for dep in dependencies.iter() {
                 let dep_pattern = format!("{} = {{ version = \"", dep);
@@ -42,8 +43,8 @@ fn ensure_leptos_dependencies_are_0_6_13() {
                     let version_start = start_pos + dep_pattern.len();
                     if let Some(version_end) = contents[version_start..].find('"') {
                         let current_version = &contents[version_start..version_start + version_end];
-                        if current_version != LEPTOS_0_6_13 {
-                            contents.replace_range(version_start..version_start + version_end, LEPTOS_0_6_13);
+                        if current_version != DEPENDENCIES::LEPTOS_0_6_13 {
+                            contents.replace_range(version_start..version_start + version_end, DEPENDENCIES::LEPTOS_0_6_13);
                         }
                     }
                 }
@@ -76,7 +77,7 @@ fn add_tailwind_fuse_and_leptos_use() {
             "leptos-use@0.13.5/storage,leptos-use@0.13.5/docs,leptos-use@0.13.5/math",
         ])
         .output()
-        .expect("Failed to execute cargo add command");
+        .expect("🔸 Failed to execute cargo add command");
 
     if output.status.success() {
         spinner.finish_with_message("✔️ Crates added successfully.");

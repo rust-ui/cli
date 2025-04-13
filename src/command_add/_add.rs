@@ -105,8 +105,8 @@ fn create_components_mod_if_not_exists_with_pub_mods(user_config_path: String, p
     // Add each parent directory as a module if it doesn't already exist
     for parent_dir in parent_dirs {
         if !mod_content.contains(&format!("pub mod {};", parent_dir)) {
-            writeln!(mod_rs_file, "pub mod {};", parent_dir).expect("Failed to write to mod.rs");
-            println!("Added pub mod {}; to components/mod.rs", parent_dir);
+            writeln!(mod_rs_file, "pub mod {};", parent_dir).expect("🔸 Failed to write to mod.rs");
+            println!("✅ Added pub mod {}; to components/mod.rs", parent_dir);
         }
     }
 }

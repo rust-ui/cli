@@ -1,4 +1,4 @@
-pub mod init_main;
+pub mod _init;
 
 pub mod config;
 pub mod fetch;
