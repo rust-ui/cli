@@ -10,7 +10,7 @@ use constants::commands::COMMAND;
 
 
 
-// ui init
+// * cargo run --bin ui init
 // * cargo run --bin ui add button demo_button demo_button_variants demo_button_sizes
 // * cargo run --bin ui add demo_use_floating_placement
 
