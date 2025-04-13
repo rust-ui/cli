@@ -10,15 +10,11 @@ use crate::{
         fetch_index_json::fetch_index_content,
         get_path_from_toml::get_base_path_from_Components_toml,
         models::MyComponent,
-        print_tree::print_dependency_tree,
-        resolve_registry_dependencies::{
-            all_tree_resolved, get_all_resolved_cargo_dependencies, get_all_resolved_components,
-            get_all_resolved_parent_dirs,
-        },
     },
     constants::commands::{ADD, COMMAND},
 };
 
+use super::dependencies::Dependencies;
 use super::fetch_from_registry_and_write::fetch_from_registry_component_name_json_and_write_to_file;
 
 pub fn command_add() -> Command {
@@ -47,11 +43,11 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
 
     let vec_components_from_index: Vec<MyComponent> = serde_json::from_str(&index_content_from_url).unwrap();
 
-    let all_tree_resolved = all_tree_resolved(user_components, &vec_components_from_index);
-    print_dependency_tree(&all_tree_resolved);
-    let all_resolved_components = get_all_resolved_components(&all_tree_resolved);
-    let all_resolved_parent_dirs = get_all_resolved_parent_dirs(&all_tree_resolved);
-    let all_resolved_cargo_dependencies = get_all_resolved_cargo_dependencies(&all_tree_resolved);
+    let all_tree_resolved = Dependencies::all_tree_resolved(user_components, &vec_components_from_index);
+    Dependencies::print_dependency_tree(&all_tree_resolved); // Can be commented out
+    let all_resolved_components = Dependencies::get_all_resolved_components(&all_tree_resolved);
+    let all_resolved_parent_dirs = Dependencies::get_all_resolved_parent_dirs(&all_tree_resolved);
+    let all_resolved_cargo_dependencies = Dependencies::get_all_resolved_cargo_dependencies(&all_tree_resolved);
 
     // println!("--------------------------------");
     // println!("All resolved components: {:?}", all_resolved_components);
