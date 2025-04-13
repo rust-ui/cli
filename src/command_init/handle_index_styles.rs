@@ -1,8 +1,9 @@
 use serde_json;
 use std::io;
+use std::env;
+use dotenv::dotenv;
 
-use crate::constants::urls::URL_REGISTRY_STYLES_JSON;
-
+use crate::constants::env::ENV;
 use super::init_fetch_functions::handle_fetch_from_init;
 
 const LABEL: &str = "label";
@@ -12,7 +13,11 @@ const LABEL: &str = "label";
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 pub async fn handle_index_styles() {
-    let styles_index_result = handle_fetch_from_init(URL_REGISTRY_STYLES_JSON).await;
+    dotenv().ok();
+
+    let url_registry_styles_json = env::var(ENV::URL_REGISTRY_STYLES_JSON).unwrap_or_default();
+
+    let styles_index_result = handle_fetch_from_init(&url_registry_styles_json).await;
     // println!("{}", styles_index_result.as_ref().unwrap());
 
     // Parse the JSON string into Vec<serde_json::Value>

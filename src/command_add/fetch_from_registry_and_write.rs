@@ -2,7 +2,7 @@ use std::{io::Write, path::Path};
 use std::env;
 use dotenv::dotenv;
 
-
+use crate::constants::env::ENV;
 use super::get_path_from_toml::get_base_path_from_Components_toml;
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -11,7 +11,7 @@ use super::get_path_from_toml::get_base_path_from_Components_toml;
 
 pub async fn fetch_from_registry_component_name_json_and_write_to_file(component_to_add: String) {
     dotenv().ok(); 
-    let base_url = env::var("BASE_URL_STYLES_DEFAULT").unwrap_or_default();
+    let base_url = env::var(ENV::BASE_URL_STYLES_DEFAULT).unwrap_or_default();
 
     let formatted_url_json = format!("{}/{}.json", base_url, component_to_add);
 

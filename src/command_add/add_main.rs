@@ -3,6 +3,7 @@ use std::{io::Write, vec::Vec};
 use std::env;
 use dotenv::dotenv;
 
+use crate::constants::env::ENV;
 use crate::{
     command_add::{
         add_cargo_deps_to_toml::add_cargo_dep_to_toml,
@@ -41,7 +42,7 @@ pub fn command_add() -> Command {
 pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
     dotenv().ok();
 
-    let base_url = env::var("BASE_URL").unwrap_or_default();
+    let base_url = env::var(ENV::BASE_URL).unwrap_or_default();
 
     let user_components: Vec<String> = matches
         .get_many::<String>(ADD::COMPONENTS)
