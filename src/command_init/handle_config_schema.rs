@@ -13,6 +13,4 @@ pub async fn handle_config_schema() {
     let url_config_schema_json = env::var(ENV::URL_CONFIG_SCHEMA_JSON).unwrap_or_default();
 
     let _ = handle_fetch_from_init(&url_config_schema_json).await;
-    // println!("{}", registry_schema.unwrap());
-    println!("🦀 handle_config_schema OK 🦀");
 }

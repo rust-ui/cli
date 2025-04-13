@@ -7,7 +7,7 @@ use crate::constants::others::{INIT_DEPENDENCIES, SPINNER_UPDATE_DURATION};
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-pub async fn init_pnpm_install_dependencies() {
+pub async fn handle_pnpm_install_dependencies() {
     let spinner = ProgressBar::new_spinner();
 
     for dep in INIT_DEPENDENCIES {

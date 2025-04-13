@@ -3,92 +3,106 @@
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 /// 1. components.json
-pub const TEMPLATE_COMPONENTS_JSON: &str = r#"
-{
-  "$schema": "https://ever-ui.com/schema.json",
-  "style": "default",
-  "rsc": true,
-  "tsx": true,
-  "tailwind": {
-    "config": "tailwind.config.ts",
-    "css": "app/globals.css",
-    "baseColor": "neutral",
-    "cssVariables": true,
-    "prefix": ""
-  },
-  "aliases": {
-    "components": "@/components",
-    "utils": "@/lib/utils/cn"
-  }
-}
+pub const TEMPLATE_COMPONENTS_TOML: &str = r#"base_path = "src/components"
 "#;
 
-/// 2. app/globals.css
-pub const TEMPLATE_GLOBAL_CSS: &str = r#"
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+/// 2. style/tailwind.css
+pub const TEMPLATE_STYLE_TAILWIND_CSS: &str = r#"@import "tailwindcss";
+@import "tw-animate-css";
+
+@config "../tailwind.config.js";
+
+
+:root {
+  --radius: 0.625rem;
+  --background: oklch(1 0 0);
+  --foreground: oklch(0.145 0 0);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.145 0 0);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.145 0 0);
+  --primary: oklch(0.205 0 0);
+  --primary-foreground: oklch(0.985 0 0);
+  --secondary: oklch(0.97 0 0);
+  --secondary-foreground: oklch(0.205 0 0);
+  --muted: oklch(0.97 0 0);
+  --muted-foreground: oklch(0.556 0 0);
+  --accent: oklch(0.97 0 0);
+  --accent-foreground: oklch(0.205 0 0);
+  --destructive: oklch(0.577 0.245 27.325);
+  --border: oklch(0.922 0 0);
+  --input: oklch(0.922 0 0);
+  --ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+}
+
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
 
 @layer base {
-  :root {
-    --background: 0 0% 98%;
-    --foreground: 240 10% 3.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 240 10% 3.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 240 10% 3.9%;
-    --primary: 240 7% 10%;
-    --primary-foreground: 0 0% 90%;
-    --secondary: 240 4.8% 95.9%;
-    --secondary-foreground: 240 7% 10%;
-    --muted: 240 4.8% 95.9%;
-    --muted-foreground: 240 3.8% 46.1%;
-    --accent: 240 4.8% 95.9%;
-    --accent-foreground: 240 7% 10%;
-    --success: 81 37% 44%;
-    --success-foreground: 71 44% 95%;
-    --warning: 32 95% 44%;
-    --warning-foreground: 48 100% 96%;
-    --error: 14 100% 53%;
-    --error-foreground: 0 86% 97%;
-    --destructive: 0 72.22% 50.59%;
-    --destructive-foreground: 0 0% 90%;
-    --border: 240 7% 80%;
-    --input: 240 7% 90%;
-    --ring: 240 5% 64.9%;
-    --radius: 0.5rem;
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
   }
 
-  .dark {
-    --background: 240 3% 11.5%;
-    --foreground: 0 0% 98%;
-    --card: 240 3% 10%;
-    --card-foreground: 0 0% 70%;
-    --popover: 240 3% 10%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 0 0% 80%;
-    --primary-foreground: 240 7% 16%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 240 3.7% 15.9%;
-    --muted-foreground: 240 5% 64.9%;
-    --accent: 240 3.7% 15.9%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 85.7% 97.3%;
-    --border: 240 3.7% 30%;
-    --input: 240 3.7% 20%;
-    --ring: 240 4.9% 83.9%;
+  dialog {
+    margin: auto;
   }
 }
 "#;
 
 /// 3. tailwind.config.ts
 pub const TEMPLATE_TAILWIND_CONFIG: &str = r#"/** @type {import('tailwindcss').Config} */
-module.exports = {
+export default {
 	darkMode: "class",
 	content: {
-		files: ["*.html", "./src/**/*.rs", "./input.css"],
+		files: ["./src/**/*.rs"],
 	},
 	theme: {
 		container: {
@@ -103,62 +117,6 @@ module.exports = {
 				opensans: ["Open Sans", "sans-serif"],
 				robotomono: ["Roboto Mono", "monospace"],
 			},
-			colors: {
-				border: "hsl(var(--border))",
-				input: "hsl(var(--input))",
-				ring: "hsl(var(--ring))",
-				background: "hsl(var(--background))",
-				foreground: "hsl(var(--foreground))",
-				primary: {
-					DEFAULT: "hsl(var(--primary))",
-					foreground: "hsl(var(--primary-foreground))",
-				},
-				secondary: {
-					DEFAULT: "hsl(var(--secondary))",
-					foreground: "hsl(var(--secondary-foreground))",
-				},
-				success: {
-					DEFAULT: "hsl(var(--success))",
-					foreground: "hsl(var(--success-foreground))",
-				},
-				info: {
-					DEFAULT: "hsl(var(--info))",
-					foreground: "hsl(var(--info-foreground))",
-				},
-				warning: {
-					DEFAULT: "hsl(var(--warning))",
-					foreground: "hsl(var(--warning-foreground))",
-				},
-				error: {
-					DEFAULT: "hsl(var(--error))",
-					foreground: "hsl(var(--error-foreground))",
-				},
-				destructive: {
-					DEFAULT: "hsl(var(--destructive))",
-					foreground: "hsl(var(--destructive-foreground))",
-				},
-				muted: {
-					DEFAULT: "hsl(var(--muted))",
-					foreground: "hsl(var(--muted-foreground))",
-				},
-				accent: {
-					DEFAULT: "hsl(var(--accent))",
-					foreground: "hsl(var(--accent-foreground))",
-				},
-				popover: {
-					DEFAULT: "hsl(var(--popover))",
-					foreground: "hsl(var(--popover-foreground))",
-				},
-				card: {
-					DEFAULT: "hsl(var(--card))",
-					foreground: "hsl(var(--card-foreground))",
-				},
-			},
-			borderRadius: {
-				lg: "var(--radius)",
-				md: "calc(var(--radius) - 2px)",
-				sm: "calc(var(--radius) - 4px)",
-			},
 			keyframes: {},
 			animation: {},
 		},
@@ -166,14 +124,7 @@ module.exports = {
 	plugins: [require("tailwindcss-animate")],
 };"#;
 
-pub const TEMPLATE_PACKAGE_JSON: &str = r#"
-{
-	"type": "module",
-	"dependencies": {
-		"@tailwindcss/cli": "^4.1.3",
-		"tailwindcss": "^4.1.3",
-		"tw-animate-css": "^1.2.5"
-	}
+pub const TEMPLATE_PACKAGE_JSON: &str = r#"{
+	"type": "module"
 }
-
 "#;

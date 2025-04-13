@@ -45,7 +45,7 @@ fn ask_user_choose_style(vec_styles: Vec<serde_json::Value>) {
     println!("Please choose a style by entering the corresponding number:");
 
     let mut user_input = String::new();
-    io::stdin().read_line(&mut user_input).expect("Failed to read line");
+    io::stdin().read_line(&mut user_input).expect("🔸 Failed to read line");
 
     // Parse the choice and print the selected style
     if let Ok(index) = user_input.trim().parse::<usize>() {
@@ -57,11 +57,11 @@ fn ask_user_choose_style(vec_styles: Vec<serde_json::Value>) {
             }
         } else {
             println!(
-                "Invalid choice. Please select a number between 1 and {}.",
+                "🔸 Invalid choice. Please select a number between 1 and {}.",
                 vec_styles.len()
             );
         }
     } else {
-        println!("Invalid input. Please enter a number.");
+        println!("🔸 Invalid input. Please enter a number.");
     }
 }
