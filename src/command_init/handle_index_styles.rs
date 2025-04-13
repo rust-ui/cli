@@ -4,7 +4,7 @@ use std::env;
 use dotenv::dotenv;
 
 use crate::constants::env::ENV;
-use super::init_fetch_functions::handle_fetch_from_init;
+use crate::command_init::fetch::Fetch;
 
 const LABEL: &str = "label";
 
@@ -17,7 +17,7 @@ pub async fn handle_index_styles() {
 
     let url_registry_styles_json = env::var(ENV::URL_REGISTRY_STYLES_JSON).unwrap_or_default();
 
-    let styles_index_result = handle_fetch_from_init(&url_registry_styles_json).await;
+    let styles_index_result = Fetch::handle_fetch_from_init(&url_registry_styles_json).await;
     // println!("{}", styles_index_result.as_ref().unwrap());
 
     // Parse the JSON string into Vec<serde_json::Value>
