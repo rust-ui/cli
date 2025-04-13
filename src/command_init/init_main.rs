@@ -1,13 +1,13 @@
 use clap::{Arg, Command};
 
-use crate::{command_init::process_init::process_init, constants::commands::{COMMAND, ID}};
+use crate::{command_init::process_init::process_init, constants::commands::{COMMAND, INIT}};
 
 pub fn command_init() -> Command {
     Command::new(COMMAND::INIT)
-        .about("Initialize the project")
+        .about(INIT::ABOUT)
         .arg(
-            Arg::new(ID::PROJECT_NAME)
-                .help("The name of the project to initialize")
+            Arg::new(INIT::PROJECT_NAME)
+                .help(INIT::HELP)
                 .required(false),
         )
         .subcommand(Command::new("run").about("Run the initialization logic"))

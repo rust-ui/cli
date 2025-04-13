@@ -15,19 +15,19 @@ use crate::{
             get_all_resolved_parent_dirs,
         },
     },
-    constants::commands::{COMMAND, ID},
+    constants::commands::{COMMAND, ADD},
 };
 
 use super::fetch_from_registry_and_write::fetch_from_registry_component_name_json_and_write_to_file;
 
 pub fn command_add() -> Command {
     Command::new(COMMAND::ADD)
-        .about("Add components and dependencies to your project")
+        .about(ADD::ABOUT)
         .arg(
-            Arg::new(ID::COMPONENTS)
-                .help("The components to add (space-separated)")
+            Arg::new(ADD::COMPONENTS)
+                .help(ADD::HELP)
                 .required(false)
-                .num_args(1..), // Allow one or more values
+                .num_args(1..),
         )
 }
 
@@ -39,12 +39,12 @@ pub fn command_add() -> Command {
 
 //
 pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
-    dotenv().ok(); // Load .env file
+    dotenv().ok();
 
     let base_url = env::var("BASE_URL").unwrap_or_default();
 
     let user_components: Vec<String> = matches
-        .get_many::<String>(ID::COMPONENTS)
+        .get_many::<String>(ADD::COMPONENTS)
         .unwrap_or_default()
         .cloned()
         .collect();
