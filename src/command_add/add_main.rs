@@ -1,5 +1,7 @@
 use clap::{Arg, ArgMatches, Command};
 use std::{io::Write, vec::Vec};
+use std::env;
+use dotenv::dotenv;
 
 use crate::{
     command_add::{
@@ -13,7 +15,7 @@ use crate::{
             get_all_resolved_parent_dirs,
         },
     },
-    constants::{commands::{COMMAND, ID}, urls::BASE_URL},
+    constants::commands::{COMMAND, ID},
 };
 
 use super::fetch_from_registry_and_write::fetch_from_registry_component_name_json_and_write_to_file;
@@ -37,13 +39,17 @@ pub fn command_add() -> Command {
 
 //
 pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
+    dotenv().ok(); // Load .env file
+
+    let base_url = env::var("BASE_URL").unwrap_or_default();
+
     let user_components: Vec<String> = matches
         .get_many::<String>(ID::COMPONENTS)
         .unwrap_or_default()
         .cloned()
         .collect();
 
-    let index_content_from_url = fetch_index_content(BASE_URL).await?;
+    let index_content_from_url = fetch_index_content(&base_url).await?;
 
     let vec_components_from_index: Vec<MyComponent> = serde_json::from_str(&index_content_from_url).unwrap();
 
