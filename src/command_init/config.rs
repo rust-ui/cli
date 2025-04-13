@@ -1,16 +1,39 @@
+use dotenv::dotenv;
+use std::env;
 use indicatif::ProgressBar;
 use std::fs;
 use std::process::Command;
 use std::time::Duration;
 
 use crate::constants::others::{CARGO_TOML_FILE, LEPTOS_0_6_13, SPINNER_UPDATE_DURATION};
+use crate::{command_init::fetch::Fetch, constants::env::ENV};
 
-pub async fn handle_cargo_toml() {
-    ensure_leptos_dependencies_are_0_6_13();
-    // add_tailwind_fuse_and_leptos_use();
-    // handle_adding_leptos_use_to_ssr_features();
-    handle_tailwind_input_file();
+
+
+pub struct Config {}
+
+impl Config {
+    pub async fn handle_config_schema() {
+        dotenv().ok();
+    
+        let url_config_schema_json = env::var(ENV::URL_CONFIG_SCHEMA_JSON).unwrap_or_default();
+    
+        let _ = Fetch::handle_fetch_from_init(&url_config_schema_json).await;
+    }
+
+    pub async fn handle_cargo_toml() {
+        ensure_leptos_dependencies_are_0_6_13();
+        // add_tailwind_fuse_and_leptos_use();
+        // handle_adding_leptos_use_to_ssr_features();
+        handle_tailwind_input_file();
+    }
+    
+    
 }
+
+
+
+
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                     ✨ FUNCTIONS ✨                        */

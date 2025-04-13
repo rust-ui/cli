@@ -2,8 +2,7 @@ use indicatif::ProgressBar;
 use std::time::Duration;
 
 use super::{
-    handle_cargo_toml::handle_cargo_toml, handle_config_schema::handle_config_schema,
-    handle_index_styles::handle_index_styles, install::Install,
+    config::Config, handle_index_styles::handle_index_styles, install::Install
 };
 use crate::constants::{
     file_names::{
@@ -25,9 +24,10 @@ pub async fn process_init() {
     INIT_TEMPLATE_FILE(STYLE_SLASH_TAILWIND_CSS, TEMPLATE_STYLE_TAILWIND_CSS).await;
     INIT_TEMPLATE_FILE(TAILWIND_CONFIG_JS, TEMPLATE_TAILWIND_CONFIG).await;
 
-    handle_cargo_toml().await;
-    handle_config_schema().await;
+    Config::handle_cargo_toml().await;
+    Config::handle_config_schema().await;
     handle_index_styles().await;
+
     Install::tailwind_with_pnpm().await;
 }
 
