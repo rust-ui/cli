@@ -16,7 +16,7 @@ impl Config {
 
         let url_config_schema_json = env::var(ENV::URL_CONFIG_SCHEMA_JSON).unwrap_or_default();
 
-        let _ = Fetch::handle_fetch_from_init(&url_config_schema_json).await;
+        let _ = Fetch::from_url(&url_config_schema_json).await;
     }
 
     pub async fn handle_cargo_toml() {

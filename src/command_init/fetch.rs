@@ -3,7 +3,7 @@ use crate::shared::shared_fetch_functions::shared_fetch_registry_return_json;
 pub struct Fetch {}
 
 impl Fetch {
-    pub async fn handle_fetch_from_init(url: &str) -> Result<String, reqwest::Error> {
+    pub async fn from_url(url: &str) -> Result<String, reqwest::Error> {
         let result = shared_fetch_registry_return_json(url).await;
 
         match result {
