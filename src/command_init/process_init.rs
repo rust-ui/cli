@@ -1,16 +1,14 @@
 use indicatif::ProgressBar;
 use std::time::Duration;
 
-use super::{
-    config::Config, handle_index_styles::handle_index_styles, install::Install
-};
+use super::{config::Config, handle_index_styles::handle_index_styles, install::Install};
 use crate::constants::{
-    file_names::{
-        COMPONENTS_TOML, PACKAGE_JSON, STYLE_SLASH_TAILWIND_CSS, TAILWIND_CONFIG_JS
-    },
+    file_names::{COMPONENTS_TOML, PACKAGE_JSON, STYLE_SLASH_TAILWIND_CSS, TAILWIND_CONFIG_JS},
     others::SPINNER_UPDATE_DURATION,
     paths::RELATIVE_PATH_PROJECT_DIR,
-    templates_init::{TEMPLATE_COMPONENTS_TOML, TEMPLATE_STYLE_TAILWIND_CSS, TEMPLATE_PACKAGE_JSON, TEMPLATE_TAILWIND_CONFIG},
+    templates_init::{
+        TEMPLATE_COMPONENTS_TOML, TEMPLATE_PACKAGE_JSON, TEMPLATE_STYLE_TAILWIND_CSS, TEMPLATE_TAILWIND_CONFIG,
+    },
 };
 use crate::shared::shared_write_template_file::shared_write_template_file;
 

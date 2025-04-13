@@ -1,10 +1,10 @@
-use serde_json;
-use std::io;
-use std::env;
 use dotenv::dotenv;
+use serde_json;
+use std::env;
+use std::io;
 
-use crate::constants::env::ENV;
 use crate::command_init::fetch::Fetch;
+use crate::constants::env::ENV;
 
 const LABEL: &str = "label";
 

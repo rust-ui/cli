@@ -1,7 +1,7 @@
 use clap::{Arg, ArgMatches, Command};
-use std::{io::Write, vec::Vec};
-use std::env;
 use dotenv::dotenv;
+use std::env;
+use std::{io::Write, vec::Vec};
 
 use crate::constants::env::ENV;
 use crate::{
@@ -16,7 +16,7 @@ use crate::{
             get_all_resolved_parent_dirs,
         },
     },
-    constants::commands::{COMMAND, ADD},
+    constants::commands::{ADD, COMMAND},
 };
 
 use super::fetch_from_registry_and_write::fetch_from_registry_component_name_json_and_write_to_file;
@@ -24,15 +24,8 @@ use super::fetch_from_registry_and_write::fetch_from_registry_component_name_jso
 pub fn command_add() -> Command {
     Command::new(COMMAND::ADD)
         .about(ADD::ABOUT)
-        .arg(
-            Arg::new(ADD::COMPONENTS)
-                .help(ADD::HELP)
-                .required(false)
-                .num_args(1..),
-        )
+        .arg(Arg::new(ADD::COMPONENTS).help(ADD::HELP).required(false).num_args(1..))
 }
-
-
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                        🦀 MAIN 🦀                          */
