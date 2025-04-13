@@ -6,7 +6,9 @@ mod command_init;
 mod constants;
 mod shared;
 
-use constants::commands::{COMMAND_ADD, COMMAND_INIT};
+use constants::commands::COMMAND;
+
+
 
 // ui init
 // * ui add button demo_button demo_button_variants demo_button_sizes
@@ -31,10 +33,10 @@ async fn main() {
 
     // Handle commands
     match matches.subcommand() {
-        Some((COMMAND_INIT, _)) => {
+        Some((COMMAND::INIT, _)) => {
             command_init::process_init::process_init().await;
         }
-        Some((COMMAND_ADD, sub_matches)) => {
+        Some((COMMAND::ADD, sub_matches)) => {
             let _ = command_add::add_main::process_add(sub_matches).await;
         }
         _ => {
