@@ -4,13 +4,11 @@ use std::time::Duration;
 
 use super::{config::Config, install::Install, user_input::UserInput};
 use crate::constants::commands::{COMMAND, INIT};
+use crate::constants::file_name::FILE_NAME;
+use crate::constants::template::TEMPLATE;
 use crate::constants::{
-    file_names::{COMPONENTS_TOML, PACKAGE_JSON, STYLE_SLASH_TAILWIND_CSS, TAILWIND_CONFIG_JS},
     others::SPINNER_UPDATE_DURATION,
     paths::RELATIVE_PATH_PROJECT_DIR,
-    templates_init::{
-        TEMPLATE_COMPONENTS_TOML, TEMPLATE_PACKAGE_JSON, TEMPLATE_STYLE_TAILWIND_CSS, TEMPLATE_TAILWIND_CONFIG,
-    },
 };
 use crate::shared::shared_write_template_file::shared_write_template_file;
 
@@ -39,10 +37,10 @@ pub async fn init_project() {
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 pub async fn process_init() {
-    INIT_TEMPLATE_FILE(PACKAGE_JSON, TEMPLATE_PACKAGE_JSON).await;
-    INIT_TEMPLATE_FILE(COMPONENTS_TOML, TEMPLATE_COMPONENTS_TOML).await;
-    INIT_TEMPLATE_FILE(STYLE_SLASH_TAILWIND_CSS, TEMPLATE_STYLE_TAILWIND_CSS).await;
-    INIT_TEMPLATE_FILE(TAILWIND_CONFIG_JS, TEMPLATE_TAILWIND_CONFIG).await;
+    INIT_TEMPLATE_FILE(FILE_NAME::PACKAGE_JSON, TEMPLATE::PACKAGE_JSON).await;
+    INIT_TEMPLATE_FILE(FILE_NAME::COMPONENTS_TOML, TEMPLATE::COMPONENTS_TOML).await;
+    INIT_TEMPLATE_FILE(FILE_NAME::STYLE_SLASH_TAILWIND_CSS, TEMPLATE::STYLE_TAILWIND_CSS).await;
+    INIT_TEMPLATE_FILE(FILE_NAME::TAILWIND_CONFIG_JS, TEMPLATE::TAILWIND_CONFIG).await;
 
     Config::handle_cargo_toml().await;
     Config::handle_config_schema().await;

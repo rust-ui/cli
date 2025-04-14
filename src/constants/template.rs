@@ -1,13 +1,10 @@
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                      ✨ TEMPLATES ✨                        */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+pub struct TEMPLATE;
 
-/// 1. components.json
-pub const TEMPLATE_COMPONENTS_TOML: &str = r#"base_path = "src/components"
+impl TEMPLATE {
+    pub const COMPONENTS_TOML: &str = r#"base_path = "src/components"
 "#;
 
-/// 2. style/tailwind.css
-pub const TEMPLATE_STYLE_TAILWIND_CSS: &str = r#"@import "tailwindcss";
+    pub const STYLE_TAILWIND_CSS: &str = r#"@import "tailwindcss";
 @import "tw-animate-css";
 
 @config "../tailwind.config.js";
@@ -97,8 +94,7 @@ pub const TEMPLATE_STYLE_TAILWIND_CSS: &str = r#"@import "tailwindcss";
 }
 "#;
 
-/// 3. tailwind.config.ts
-pub const TEMPLATE_TAILWIND_CONFIG: &str = r#"/** @type {import('tailwindcss').Config} */
+    pub const TAILWIND_CONFIG: &str = r#"/** @type {import('tailwindcss').Config} */
 export default {
 	darkMode: "class",
 	content: {
@@ -113,18 +109,14 @@ export default {
 			},
 		},
 		extend: {
-			fontFamily: {
-				opensans: ["Open Sans", "sans-serif"],
-				robotomono: ["Roboto Mono", "monospace"],
-			},
 			keyframes: {},
 			animation: {},
 		},
-	},
-	plugins: [require("tailwindcss-animate")],
+	}
 };"#;
 
-pub const TEMPLATE_PACKAGE_JSON: &str = r#"{
+    pub const PACKAGE_JSON: &str = r#"{
 	"type": "module"
 }
 "#;
+}

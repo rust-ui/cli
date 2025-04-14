@@ -6,7 +6,6 @@ use std::{io::Write, vec::Vec};
 use crate::constants::env::ENV;
 use crate::{
     command_add::{
-        add_cargo_deps_to_toml::add_cargo_dep_to_toml,
         fetch_index_json::fetch_index_content,
         get_path_from_toml::get_base_path_from_Components_toml,
         models::MyComponent,
@@ -64,7 +63,7 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
 
     // Handle cargo dependencies if any exist
     if !all_resolved_cargo_dependencies.is_empty() {
-        add_cargo_dep_to_toml(&all_resolved_cargo_dependencies)?;
+        Dependencies::add_cargo_dep_to_toml(&all_resolved_cargo_dependencies)?;
     }
 
     Ok(())

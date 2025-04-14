@@ -13,13 +13,8 @@ export default {
 			},
 		},
 		extend: {
-			fontFamily: {
-				opensans: ["Open Sans", "sans-serif"],
-				robotomono: ["Roboto Mono", "monospace"],
-			},
 			keyframes: {},
 			animation: {},
 		},
-	},
-	plugins: [require("tailwindcss-animate")],
+	}
 };
