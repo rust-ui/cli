@@ -26,3 +26,9 @@ indicatif = "0.17"
 [[bin]]
 name = "ui"
 path = "src/main.rs"
+
+
+
+
+# ------- JUST FOR TESTING ---------
+tailwind-input-file = "style/tailwind.css"

@@ -4,6 +4,7 @@ use indicatif::ProgressBar;
 use std::fs;
 use std::process::Command;
 use std::time::Duration;
+use colored::Colorize;
 
 use crate::constants::dependencies::DEPENDENCIES;
 use crate::constants::others::{CARGO_TOML_FILE, SPINNER_UPDATE_DURATION};
@@ -28,6 +29,21 @@ impl Config {
         // add_tailwind_fuse_and_leptos_use();
         // handle_adding_leptos_use_to_ssr_features();
         handle_tailwind_input_file();
+    }
+
+    pub fn try_extract_tailwind_input_file_from_cargo_toml() -> Result<String, String> {
+        let file_path = CARGO_TOML_FILE;
+        let contents = fs::read_to_string(file_path).unwrap();
+        
+        // Find the line containing 'tailwind-input-file' and extract its value
+        if let Some(line) = contents.lines().find(|line| line.contains("tailwind-input-file =")) {
+            // Split the line and get the value after '='
+            let parts: Vec<&str> = line.split('=').collect();
+            if parts.len() > 1 {
+                return Ok(parts[1].trim().replace("\"", "")); // Remove quotes and trim whitespace
+            }
+        }
+        Err("🔸 Error: 'tailwind-input-file' not found in Cargo.toml. Please add it to your Cargo.toml under [[workspace.metadata.leptos]].".to_string()) // Return an error if not found
     }
 }
 

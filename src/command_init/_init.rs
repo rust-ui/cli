@@ -37,9 +37,18 @@ pub async fn init_project() {
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 pub async fn process_init() {
+  
+    // TODO. If it can not extract, throw an error, tell to add it in Cargo.toml and early return
+    let tailwind_input_file = Config::try_extract_tailwind_input_file_from_cargo_toml();
+    
+    if tailwind_input_file.is_err() {
+        eprintln!("{}", tailwind_input_file.unwrap_err());
+        return; // Early return
+    }
+
     INIT_TEMPLATE_FILE(FILE_NAME::PACKAGE_JSON, TEMPLATE::PACKAGE_JSON).await;
     INIT_TEMPLATE_FILE(FILE_NAME::COMPONENTS_TOML, TEMPLATE::COMPONENTS_TOML).await;
-    INIT_TEMPLATE_FILE(FILE_NAME::STYLE_SLASH_TAILWIND_CSS, TEMPLATE::STYLE_TAILWIND_CSS).await;
+    INIT_TEMPLATE_FILE(&tailwind_input_file.unwrap(), TEMPLATE::STYLE_TAILWIND_CSS).await;
     INIT_TEMPLATE_FILE(FILE_NAME::TAILWIND_CONFIG_JS, TEMPLATE::TAILWIND_CONFIG).await;
 
     Config::handle_cargo_toml().await;
