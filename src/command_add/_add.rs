@@ -14,6 +14,7 @@ use crate::{
     constants::commands::{ADD, COMMAND},
 };
 
+use super::components_toml::ComponentsToml;
 use super::dependencies::Dependencies;
 use super::fetch_from_registry_and_write::fetch_from_registry_component_name_json_and_write_to_file;
 
@@ -31,9 +32,17 @@ pub fn command_add() -> Command {
 pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
     // dotenv().ok();
 
+    // Early return if Components.toml does not exist
+    if let Err(err) = ComponentsToml::check_if_exists() {
+        println!("{}", err);
+        return Ok(());
+    }
+
     // let base_url = env::var(ENV::BASE_URL).unwrap_or_default();
     let base_url = URL::BASE_URL;
-    
+
+
+
     let user_components: Vec<String> = matches
         .get_many::<String>(ADD::COMPONENTS)
         .unwrap_or_default()
@@ -110,3 +119,4 @@ fn create_components_mod_if_not_exists_with_pub_mods(user_config_path: String, p
         }
     }
 }
+

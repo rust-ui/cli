@@ -5,3 +5,4 @@ pub mod get_path_from_toml;
 pub mod models;
 
 pub mod dependencies;
+pub mod components_toml;
