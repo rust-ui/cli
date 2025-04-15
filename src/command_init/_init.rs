@@ -38,7 +38,6 @@ pub async fn init_project() {
 
 pub async fn process_init() {
   
-    // TODO. If it can not extract, throw an error, tell to add it in Cargo.toml and early return
     let tailwind_input_file = Config::try_extract_tailwind_input_file_from_cargo_toml();
     
     if tailwind_input_file.is_err() {

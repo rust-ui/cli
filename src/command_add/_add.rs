@@ -32,14 +32,15 @@ pub fn command_add() -> Command {
 pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
     // dotenv().ok();
 
-    // Early return if Components.toml does not exist
-    if let Err(err) = ComponentsToml::check_if_exists() {
-        println!("{}", err);
-        return Ok(());
+    let base_path_components = ComponentsToml::try_extract_base_path_components_from_components_toml();
+
+    if base_path_components.is_err() {
+        eprintln!("{}", base_path_components.unwrap_err());
+        return Ok(()); // Early return
     }
 
     // let base_url = env::var(ENV::BASE_URL).unwrap_or_default();
-    let base_url = URL::BASE_URL;
+    let url_registry_index_json = URL::URL_REGISTRY_INDEX_JSON;
 
 
 
@@ -49,7 +50,7 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
         .cloned()
         .collect();
 
-    let index_content_from_url = fetch_index_content(&base_url).await?;
+    let index_content_from_url = fetch_index_content(&url_registry_index_json).await?;
 
     let vec_components_from_index: Vec<MyComponent> = serde_json::from_str(&index_content_from_url).unwrap();
 
