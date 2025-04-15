@@ -1,19 +1,21 @@
-use dotenv::dotenv;
-use std::env;
+// use dotenv::dotenv;
+// use std::env;
 use std::{io::Write, path::Path};
 
 use super::get_path_from_toml::get_base_path_from_Components_toml;
-use crate::constants::env::ENV;
+// use crate::constants::env::ENV;
+use crate::constants::url::URL;
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 pub async fn fetch_from_registry_component_name_json_and_write_to_file(component_to_add: String) {
-    dotenv().ok();
-    let base_url = env::var(ENV::BASE_URL_STYLES_DEFAULT).unwrap_or_default();
+    // dotenv().ok();
+    // let base_url = env::var(ENV::BASE_URL_STYLES_DEFAULT).unwrap_or_default();
+    let base_url_styles_default = URL::BASE_URL_STYLES_DEFAULT;
 
-    let formatted_url_json = format!("{}/{}.json", base_url, component_to_add);
+    let formatted_url_json = format!("{}/{}.json", base_url_styles_default, component_to_add);
 
     let response = reqwest::get(&formatted_url_json).await.expect("Failed to fetch JSON");
     let json_content: serde_json::Value = response.json().await.expect("Failed to parse JSON");

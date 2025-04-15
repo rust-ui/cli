@@ -1,21 +1,24 @@
-use dotenv::dotenv;
+// use dotenv::dotenv;
 use indicatif::ProgressBar;
-use std::env;
+// use std::env;
 use std::fs;
 use std::process::Command;
 use std::time::Duration;
 
 use crate::constants::dependencies::DEPENDENCIES;
 use crate::constants::others::{CARGO_TOML_FILE, SPINNER_UPDATE_DURATION};
-use crate::{command_init::fetch::Fetch, constants::env::ENV};
+use crate::constants::url::URL;
+use crate::{command_init::fetch::Fetch};
 
 pub struct Config {}
 
 impl Config {
     pub async fn handle_config_schema() {
-        dotenv().ok();
+        // dotenv().ok();
 
-        let url_config_schema_json = env::var(ENV::URL_CONFIG_SCHEMA_JSON).unwrap_or_default();
+        // let url_config_schema_json = env::var(ENV::URL_CONFIG_SCHEMA_JSON).unwrap_or_default();
+
+        let url_config_schema_json = URL::URL_CONFIG_SCHEMA_JSON;
 
         let _ = Fetch::from_url(&url_config_schema_json).await;
     }

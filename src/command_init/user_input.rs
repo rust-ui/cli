@@ -1,10 +1,11 @@
-use dotenv::dotenv;
+// use dotenv::dotenv;
 use serde_json;
-use std::env;
+// use std::env;
 use std::io;
 
 use crate::command_init::fetch::Fetch;
-use crate::constants::env::ENV;
+// use crate::constants::env::ENV;
+use crate::constants::url::URL;
 
 const LABEL: &str = "label";
 
@@ -16,9 +17,13 @@ pub struct UserInput {}
 
 impl UserInput {
     pub async fn handle_index_styles() {
-        dotenv().ok();
+        // dotenv().ok();
 
-        let url_registry_styles_json = env::var(ENV::URL_REGISTRY_STYLES_JSON).unwrap_or_default();
+        // let url_registry_styles_json = env::var(ENV::URL_REGISTRY_STYLES_JSON).unwrap_or_default();
+
+
+        let url_registry_styles_json = URL::URL_REGISTRY_STYLES_JSON;
+
 
         let styles_index_result = Fetch::from_url(&url_registry_styles_json).await;
         // println!("{}", styles_index_result.as_ref().unwrap());

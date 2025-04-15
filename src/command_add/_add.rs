@@ -1,9 +1,10 @@
 use clap::{Arg, ArgMatches, Command};
-use dotenv::dotenv;
-use std::env;
+// use dotenv::dotenv;
+// use std::env;
 use std::{io::Write, vec::Vec};
 
-use crate::constants::env::ENV;
+// use crate::constants::env::ENV;
+use crate::constants::url::URL;
 use crate::{
     command_add::{
         fetch_index_json::fetch_index_content,
@@ -28,10 +29,11 @@ pub fn command_add() -> Command {
 
 //
 pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
-    dotenv().ok();
+    // dotenv().ok();
 
-    let base_url = env::var(ENV::BASE_URL).unwrap_or_default();
-
+    // let base_url = env::var(ENV::BASE_URL).unwrap_or_default();
+    let base_url = URL::BASE_URL;
+    
     let user_components: Vec<String> = matches
         .get_many::<String>(ADD::COMPONENTS)
         .unwrap_or_default()
@@ -105,7 +107,6 @@ fn create_components_mod_if_not_exists_with_pub_mods(user_config_path: String, p
     for parent_dir in parent_dirs {
         if !mod_content.contains(&format!("pub mod {};", parent_dir)) {
             writeln!(mod_rs_file, "pub mod {};", parent_dir).expect("🔸 Failed to write to mod.rs");
-            println!("✅ Added pub mod {}; to components/mod.rs", parent_dir);
         }
     }
 }
