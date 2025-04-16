@@ -1,9 +1,6 @@
-
-
-
 // use dotenv::dotenv;
 // use std::env;
-use std::{io::Write};
+use std::io::Write;
 
 // use crate::constants::env::ENV;
 use crate::constants::url::URL;
@@ -11,15 +8,13 @@ use crate::constants::url::URL;
 use super::components_toml::ComponentsToml;
 use serde_json;
 
-
 pub struct Registry {}
-
 
 impl Registry {
     pub async fn fetch_index_content(url: &str) -> Result<String, Box<dyn std::error::Error>> {
         // Attempt to fetch the content from the URL
         let response = reqwest::get(url).await;
-    
+
         // Check if the request was successful
         let index_content_from_url = match response {
             Ok(resp) => {
@@ -37,28 +32,21 @@ impl Registry {
                 return Err(error_message.into());
             }
         };
-    
+
         // Check if the fetched content is empty
         if index_content_from_url.is_empty() {
             let error_message = "🔸 Failed to fetch data: The server returned an empty response.";
             println!("{}", error_message); // Print the error message
             return Err(error_message.into());
         }
-    
+
         Ok(index_content_from_url)
     }
-
 }
-
-
-
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-
-
 
 pub struct RegistryComponent {
     pub registry_json_path: String,
@@ -66,9 +54,10 @@ pub struct RegistryComponent {
     pub component_name_json: String,
 }
 
-
 impl RegistryComponent {
-    pub async fn fetch_from_registry(component_name_json: String) -> Result<RegistryComponent, Box<dyn std::error::Error>> {
+    pub async fn fetch_from_registry(
+        component_name_json: String,
+    ) -> Result<RegistryComponent, Box<dyn std::error::Error>> {
         let base_url_styles_default = URL::BASE_URL_STYLES_DEFAULT;
         let formatted_url_json = format!("{}/{}.json", base_url_styles_default, component_name_json);
 
@@ -76,7 +65,10 @@ impl RegistryComponent {
         let json_content: serde_json::Value = response.json().await?;
 
         let registry_json_path = json_content["path"].as_str().ok_or("Path not found")?.to_string();
-        let registry_json_content = json_content["files"][0]["content"].as_str().ok_or("Content not found")?.to_string();
+        let registry_json_content = json_content["files"][0]["content"]
+            .as_str()
+            .ok_or("Content not found")?
+            .to_string();
 
         Ok(RegistryComponent {
             registry_json_path,

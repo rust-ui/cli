@@ -4,16 +4,14 @@ use clap::{Arg, ArgMatches, Command};
 use std::{io::Write, vec::Vec};
 
 // use crate::constants::env::ENV;
-use crate::constants::url::URL;
-use crate::{
-    command_add::{
-        models::MyComponent,
-    },
-    constants::commands::{ADD, COMMAND},
-};
-use super::registry::{Registry, RegistryComponent};
 use super::components_toml::ComponentsToml;
 use super::dependencies::Dependencies;
+use super::registry::{Registry, RegistryComponent};
+use crate::constants::url::URL;
+use crate::{
+    command_add::models::MyComponent,
+    constants::commands::{ADD, COMMAND},
+};
 
 pub fn command_add() -> Command {
     Command::new(COMMAND::ADD)
@@ -38,8 +36,6 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
 
     // let base_url = env::var(ENV::BASE_URL).unwrap_or_default();
     let url_registry_index_json = URL::URL_REGISTRY_INDEX_JSON;
-
-
 
     let user_components: Vec<String> = matches
         .get_many::<String>(ADD::COMPONENTS)
@@ -121,4 +117,3 @@ fn create_components_mod_if_not_exists_with_pub_mods(user_config_path: String, p
         }
     }
 }
-

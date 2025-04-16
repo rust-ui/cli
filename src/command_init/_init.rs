@@ -6,10 +6,7 @@ use super::{config::Config, install::Install, user_input::UserInput};
 use crate::constants::commands::{COMMAND, INIT};
 use crate::constants::file_name::FILE_NAME;
 use crate::constants::template::TEMPLATE;
-use crate::constants::{
-    others::SPINNER_UPDATE_DURATION,
-    paths::RELATIVE_PATH_PROJECT_DIR,
-};
+use crate::constants::{others::SPINNER_UPDATE_DURATION, paths::RELATIVE_PATH_PROJECT_DIR};
 use crate::shared::shared_write_template_file::shared_write_template_file;
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -37,9 +34,8 @@ pub async fn init_project() {
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 pub async fn process_init() {
-  
     let tailwind_input_file = Config::try_extract_tailwind_input_file_from_cargo_toml();
-    
+
     if tailwind_input_file.is_err() {
         eprintln!("{}", tailwind_input_file.unwrap_err());
         return; // Early return

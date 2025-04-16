@@ -21,9 +21,7 @@ impl UserInput {
 
         // let url_registry_styles_json = env::var(ENV::URL_REGISTRY_STYLES_JSON).unwrap_or_default();
 
-
         let url_registry_styles_json = URL::URL_REGISTRY_STYLES_JSON;
-
 
         let styles_index_result = Fetch::from_url(&url_registry_styles_json).await;
         // println!("{}", styles_index_result.as_ref().unwrap());

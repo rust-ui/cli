@@ -1,15 +1,15 @@
 // use dotenv::dotenv;
 use indicatif::ProgressBar;
 // use std::env;
+use colored::Colorize;
 use std::fs;
 use std::process::Command;
 use std::time::Duration;
-use colored::Colorize;
 
+use crate::command_init::fetch::Fetch;
 use crate::constants::dependencies::DEPENDENCIES;
 use crate::constants::others::{CARGO_TOML_FILE, SPINNER_UPDATE_DURATION};
 use crate::constants::url::URL;
-use crate::{command_init::fetch::Fetch};
 
 pub struct Config {}
 
@@ -34,7 +34,7 @@ impl Config {
     pub fn try_extract_tailwind_input_file_from_cargo_toml() -> Result<String, String> {
         let file_path = CARGO_TOML_FILE;
         let contents = fs::read_to_string(file_path).unwrap();
-        
+
         // Find the line containing 'tailwind-input-file' and extract its value
         if let Some(line) = contents.lines().find(|line| line.contains("tailwind-input-file =")) {
             // Split the line and get the value after '='
@@ -63,7 +63,8 @@ fn ensure_leptos_dependencies_are_0_6_13() {
                     if let Some(version_end) = contents[version_start..].find('"') {
                         let current_version = &contents[version_start..version_start + version_end];
                         if current_version != DEPENDENCIES::LEPTOS_0_6_13 {
-                            contents.replace_range(version_start..version_start + version_end, DEPENDENCIES::LEPTOS_0_6_13);
+                            contents
+                                .replace_range(version_start..version_start + version_end, DEPENDENCIES::LEPTOS_0_6_13);
                         }
                     }
                 }
