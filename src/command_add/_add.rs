@@ -7,15 +7,13 @@ use std::{io::Write, vec::Vec};
 use crate::constants::url::URL;
 use crate::{
     command_add::{
-        fetch_index_json::fetch_index_content,
         models::MyComponent,
     },
     constants::commands::{ADD, COMMAND},
 };
-
+use super::fetch::Fetch;
 use super::components_toml::ComponentsToml;
 use super::dependencies::Dependencies;
-use super::fetch_from_registry_and_write::fetch_from_registry_component_name_json_and_write_to_file;
 
 pub fn command_add() -> Command {
     Command::new(COMMAND::ADD)
@@ -49,7 +47,7 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
         .cloned()
         .collect();
 
-    let index_content_from_url = fetch_index_content(&url_registry_index_json).await?;
+    let index_content_from_url = Fetch::fetch_index_content(&url_registry_index_json).await?;
 
     let vec_components_from_index: Vec<MyComponent> = serde_json::from_str(&index_content_from_url).unwrap();
 
@@ -69,7 +67,7 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
     create_components_mod_if_not_exists_with_pub_mods(user_config_path_toml, all_resolved_parent_dirs.clone());
 
     for component_to_add in all_resolved_components {
-        fetch_from_registry_component_name_json_and_write_to_file(component_to_add).await;
+        Fetch::from_registry_component_name_json_and_write_to_file(component_to_add).await;
     }
 
     // Handle cargo dependencies if any exist
