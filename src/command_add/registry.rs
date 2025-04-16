@@ -78,7 +78,7 @@ impl RegistryComponent {
     }
 
     pub async fn then_write_to_file(self) -> Result<(), Box<dyn std::error::Error>> {
-        let user_config_path = ComponentsToml::get_base_path_from_Components_toml().unwrap_or_default();
+        let user_config_path = ComponentsToml::get_base_path().unwrap_or_default();
         let full_path_component = format!("{}/{}", user_config_path, self.registry_json_path);
 
         let full_path_component_without_name_rs = std::path::Path::new(&full_path_component)

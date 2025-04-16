@@ -25,7 +25,7 @@ pub fn command_add() -> Command {
 pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
     // dotenv().ok();
 
-    let base_path_components = ComponentsToml::try_extract_base_path_components_from_components_toml();
+    let base_path_components = ComponentsToml::try_extract_base_path_components();
 
     if base_path_components.is_err() {
         eprintln!("{}", base_path_components.unwrap_err());
@@ -57,7 +57,7 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
     // println!("All resolved cargo dependencies: {:?}", all_resolved_cargo_dependencies);
 
     // Create components/mod.rs if it does not exist
-    let user_config_path_toml = ComponentsToml::get_base_path_from_Components_toml().unwrap_or_default();
+    let user_config_path_toml = ComponentsToml::get_base_path().unwrap_or_default();
     Components::create_components_mod_if_not_exists_with_pub_mods(
         user_config_path_toml,
         all_resolved_parent_dirs.clone(),

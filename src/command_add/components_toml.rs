@@ -6,7 +6,7 @@ use colored::Colorize;
 pub struct ComponentsToml {}
 
 impl ComponentsToml {
-    pub fn try_extract_base_path_components_from_components_toml() -> Result<String, String> {
+    pub fn try_extract_base_path_components() -> Result<String, String> {
         let file_path = FILE_NAME::COMPONENTS_TOML;
         let contents = fs::read_to_string(file_path).unwrap();
 
@@ -26,10 +26,9 @@ impl ComponentsToml {
         )
     }
 
-    #[allow(non_snake_case)]
-    pub fn get_base_path_from_Components_toml() -> Result<String, String> {
+    pub fn get_base_path() -> Result<String, String> {
         // Read the Components.toml file
-        let config_str = match std::fs::read_to_string("Components.toml") {
+        let config_str = match std::fs::read_to_string(FILE_NAME::COMPONENTS_TOML) {
             Ok(content) => content,
             Err(e) => {
                 println!("Error reading Components.toml: {}", e);
