@@ -1,15 +1,20 @@
-
-
 // use dotenv::dotenv;
 // use std::env;
-use std::{io::Write, path::Path};
+use std::{io::Write};
 
 // use crate::constants::env::ENV;
 use crate::constants::url::URL;
 
 use super::components_toml::ComponentsToml;
+use serde_json;
 
 pub struct Fetch {}
+
+pub struct RegistryComponent {
+    pub registry_json_path: String,
+    pub registry_json_content: String,
+    pub component_name_json: String,
+}
 
 impl Fetch {
     pub async fn fetch_index_content(url: &str) -> Result<String, Box<dyn std::error::Error>> {
@@ -44,47 +49,48 @@ impl Fetch {
         Ok(index_content_from_url)
     }
 
-    pub async fn from_registry_component_name_json_and_write_to_file(component_to_add: String) {
-        // dotenv().ok();
-        // let base_url = env::var(ENV::BASE_URL_STYLES_DEFAULT).unwrap_or_default();
+    pub async fn from_registry(component_name_json: String) -> Result<RegistryComponent, Box<dyn std::error::Error>> {
         let base_url_styles_default = URL::BASE_URL_STYLES_DEFAULT;
-    
-        let formatted_url_json = format!("{}/{}.json", base_url_styles_default, component_to_add);
-    
-        let response = reqwest::get(&formatted_url_json).await.expect("Failed to fetch JSON");
-        let json_content: serde_json::Value = response.json().await.expect("Failed to parse JSON");
-    
-        let registry_json_path = json_content["path"].as_str().expect("Path not found");
-        let registry_json_content = json_content["files"][0]["content"].as_str().expect("Content not found");
-    
-        let user_config_path = ComponentsToml::get_base_path_from_Components_toml().unwrap_or_default();
-        let full_path_component = format!("{}/{}", user_config_path, registry_json_path);
-    
-        // * Converts from "src/components/ui/button.rs" to "src/components/ui"
-        let full_path_component_without_name_rs = std::path::Path::new(&full_path_component)
-            .parent()
-            .expect("Failed to get parent directory")
-            .to_str()
-            .expect("Failed to convert path to string")
-            .to_string();
-    
-        //
-        write_component_name_in_mod_rs_if_not_exists(component_to_add, full_path_component_without_name_rs);
-    
-        //
-        // Create the directory if it doesn't exist
-        let dir = Path::new(&full_path_component)
-            .parent()
-            .expect("Failed to get parent directory");
-        std::fs::create_dir_all(dir).expect("Failed to create directories");
-    
-        // Write the content to the specified file
-        std::fs::write(full_path_component, registry_json_content).expect("Failed to write to file");
+        let formatted_url_json = format!("{}/{}.json", base_url_styles_default, component_name_json);
+
+        let response = reqwest::get(&formatted_url_json).await?;
+        let json_content: serde_json::Value = response.json().await?;
+
+        let registry_json_path = json_content["path"].as_str().ok_or("Path not found")?.to_string();
+        let registry_json_content = json_content["files"][0]["content"].as_str().ok_or("Content not found")?.to_string();
+
+        Ok(RegistryComponent {
+            registry_json_path,
+            registry_json_content,
+            component_name_json,
+        })
     }
-    
 }
 
+impl RegistryComponent {
+    pub async fn then_write_to_file(self) -> Result<(), Box<dyn std::error::Error>> {
+        let user_config_path = ComponentsToml::get_base_path_from_Components_toml().unwrap_or_default();
+        let full_path_component = format!("{}/{}", user_config_path, self.registry_json_path);
 
+        let full_path_component_without_name_rs = std::path::Path::new(&full_path_component)
+            .parent()
+            .ok_or("Failed to get parent directory")?
+            .to_str()
+            .ok_or("Failed to convert path to string")?
+            .to_string();
+
+        write_component_name_in_mod_rs_if_not_exists(self.component_name_json, full_path_component_without_name_rs);
+
+        let dir = std::path::Path::new(&full_path_component)
+            .parent()
+            .ok_or("Failed to get parent directory")?;
+        std::fs::create_dir_all(dir)?;
+
+        std::fs::write(full_path_component, self.registry_json_content)?;
+
+        Ok(())
+    }
+}
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                     ✨ FUNCTIONS ✨                        */

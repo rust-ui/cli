@@ -66,8 +66,12 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
     let user_config_path_toml = ComponentsToml::get_base_path_from_Components_toml().unwrap_or_default();
     create_components_mod_if_not_exists_with_pub_mods(user_config_path_toml, all_resolved_parent_dirs.clone());
 
-    for component_to_add in all_resolved_components {
-        Fetch::from_registry_component_name_json_and_write_to_file(component_to_add).await;
+    // Components to add
+    for component_name_json in all_resolved_components {
+        Fetch::from_registry(component_name_json)
+            .await?
+            .then_write_to_file()
+            .await?;
     }
 
     // Handle cargo dependencies if any exist
