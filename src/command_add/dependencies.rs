@@ -2,8 +2,9 @@ use indicatif::ProgressBar;
 use std::collections::{HashMap, HashSet};
 use std::{fs, time::Duration};
 
-use crate::command_add::models::{MyComponent, ResolvedComponent};
 use crate::constants::others::SPINNER_UPDATE_DURATION;
+
+use super::components::{MyComponent, ResolvedComponent};
 
 // TODO. Should distinguish clearly between cargo dependencies and registry dependencies.
 
