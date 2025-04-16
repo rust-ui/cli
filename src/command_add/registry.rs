@@ -1,3 +1,6 @@
+
+
+
 // use dotenv::dotenv;
 // use std::env;
 use std::{io::Write};
@@ -8,15 +11,11 @@ use crate::constants::url::URL;
 use super::components_toml::ComponentsToml;
 use serde_json;
 
-pub struct Fetch {}
 
-pub struct RegistryComponent {
-    pub registry_json_path: String,
-    pub registry_json_content: String,
-    pub component_name_json: String,
-}
+pub struct Registry {}
 
-impl Fetch {
+
+impl Registry {
     pub async fn fetch_index_content(url: &str) -> Result<String, Box<dyn std::error::Error>> {
         // Attempt to fetch the content from the URL
         let response = reqwest::get(url).await;
@@ -49,7 +48,27 @@ impl Fetch {
         Ok(index_content_from_url)
     }
 
-    pub async fn from_registry(component_name_json: String) -> Result<RegistryComponent, Box<dyn std::error::Error>> {
+}
+
+
+
+
+/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/*                     ✨ FUNCTIONS ✨                        */
+/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+
+
+
+pub struct RegistryComponent {
+    pub registry_json_path: String,
+    pub registry_json_content: String,
+    pub component_name_json: String,
+}
+
+
+impl RegistryComponent {
+    pub async fn fetch_from_registry(component_name_json: String) -> Result<RegistryComponent, Box<dyn std::error::Error>> {
         let base_url_styles_default = URL::BASE_URL_STYLES_DEFAULT;
         let formatted_url_json = format!("{}/{}.json", base_url_styles_default, component_name_json);
 
@@ -65,9 +84,7 @@ impl Fetch {
             component_name_json,
         })
     }
-}
 
-impl RegistryComponent {
     pub async fn then_write_to_file(self) -> Result<(), Box<dyn std::error::Error>> {
         let user_config_path = ComponentsToml::get_base_path_from_Components_toml().unwrap_or_default();
         let full_path_component = format!("{}/{}", user_config_path, self.registry_json_path);

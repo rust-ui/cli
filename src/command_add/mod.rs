@@ -3,4 +3,4 @@ pub mod models;
 
 pub mod dependencies;
 pub mod components_toml;
-pub mod fetch;
+pub mod registry;

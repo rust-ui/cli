@@ -11,7 +11,7 @@ use crate::{
     },
     constants::commands::{ADD, COMMAND},
 };
-use super::fetch::Fetch;
+use super::registry::{Registry, RegistryComponent};
 use super::components_toml::ComponentsToml;
 use super::dependencies::Dependencies;
 
@@ -47,7 +47,7 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
         .cloned()
         .collect();
 
-    let index_content_from_url = Fetch::fetch_index_content(&url_registry_index_json).await?;
+    let index_content_from_url = Registry::fetch_index_content(&url_registry_index_json).await?;
 
     let vec_components_from_index: Vec<MyComponent> = serde_json::from_str(&index_content_from_url).unwrap();
 
@@ -68,7 +68,7 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
 
     // Components to add
     for component_name_json in all_resolved_components {
-        Fetch::from_registry(component_name_json)
+        RegistryComponent::fetch_from_registry(component_name_json)
             .await?
             .then_write_to_file()
             .await?;
