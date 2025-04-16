@@ -2,9 +2,10 @@
 // use std::env;
 use std::{io::Write, path::Path};
 
-use super::get_path_from_toml::get_base_path_from_Components_toml;
 // use crate::constants::env::ENV;
 use crate::constants::url::URL;
+
+use super::components_toml::ComponentsToml;
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                     ✨ FUNCTIONS ✨                        */
@@ -23,7 +24,7 @@ pub async fn fetch_from_registry_component_name_json_and_write_to_file(component
     let registry_json_path = json_content["path"].as_str().expect("Path not found");
     let registry_json_content = json_content["files"][0]["content"].as_str().expect("Content not found");
 
-    let user_config_path = get_base_path_from_Components_toml().unwrap_or_default();
+    let user_config_path = ComponentsToml::get_base_path_from_Components_toml().unwrap_or_default();
     let full_path_component = format!("{}/{}", user_config_path, registry_json_path);
 
     // * Converts from "src/components/ui/button.rs" to "src/components/ui"

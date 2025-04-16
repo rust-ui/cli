@@ -8,7 +8,6 @@ use crate::constants::url::URL;
 use crate::{
     command_add::{
         fetch_index_json::fetch_index_content,
-        get_path_from_toml::get_base_path_from_Components_toml,
         models::MyComponent,
     },
     constants::commands::{ADD, COMMAND},
@@ -66,7 +65,7 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
     // println!("All resolved cargo dependencies: {:?}", all_resolved_cargo_dependencies);
 
     // Create components/mod.rs if it does not exist
-    let user_config_path_toml = get_base_path_from_Components_toml().unwrap_or_default();
+    let user_config_path_toml = ComponentsToml::get_base_path_from_Components_toml().unwrap_or_default();
     create_components_mod_if_not_exists_with_pub_mods(user_config_path_toml, all_resolved_parent_dirs.clone());
 
     for component_to_add in all_resolved_components {
