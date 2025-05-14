@@ -1,7 +1,6 @@
 // use dotenv::dotenv;
 use indicatif::ProgressBar;
 // use std::env;
-use colored::Colorize;
 use std::fs;
 use std::process::Command;
 use std::time::Duration;
@@ -81,6 +80,7 @@ fn ensure_leptos_dependencies_are_0_6_13() {
     }
 }
 
+#[allow(unused)]
 fn add_tailwind_fuse_and_leptos_use() {
     let spinner = ProgressBar::new_spinner();
     spinner.set_message("Adding crates: rustui_merge and leptos-use");
@@ -109,6 +109,7 @@ fn add_tailwind_fuse_and_leptos_use() {
     }
 }
 
+#[allow(unused)]
 fn handle_adding_leptos_use_to_ssr_features() {
     match fs::read_to_string(CARGO_TOML_FILE) {
         Ok(mut contents) => {
