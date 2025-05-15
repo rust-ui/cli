@@ -2,7 +2,7 @@ use clap::{Arg, Command};
 use indicatif::ProgressBar;
 use std::time::Duration;
 
-use super::config::AppConfig;
+use super::config::{add_init_dependencies, AppConfig};
 use super::{install::Install, user_input::UserInput};
 use crate::constants::commands::{COMMAND, INIT};
 use crate::constants::file_name::FILE_NAME;
@@ -43,8 +43,8 @@ pub async fn process_init() {
     INIT_TEMPLATE_FILE(&app_config.tailwind_input_file, TEMPLATE::STYLE_TAILWIND_CSS).await;
     INIT_TEMPLATE_FILE(FILE_NAME::TAILWIND_CONFIG_JS, TEMPLATE::TAILWIND_CONFIG).await;
 
-    // Config::handle_cargo_toml().await;
-    // Config::handle_config_schema().await;
+    add_init_dependencies().await;
+
     UserInput::handle_index_styles().await;
 
     Install::tailwind_with_pnpm().await;

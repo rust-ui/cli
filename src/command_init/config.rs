@@ -9,7 +9,7 @@ use std::fs;
 use std::process::Command;
 use std::time::Duration;
 use crate::constants::others::{CARGO_TOML_FILE, SPINNER_UPDATE_DURATION};
-
+use crate::constants::dependencies::INIT_DEPENDENCIES;
 
 ///
 /// AppConfig
@@ -67,6 +67,35 @@ impl Default for AppConfig {
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+#[allow(unused)]
+pub async fn add_init_dependencies() {
+    
+    for dep in INIT_DEPENDENCIES {
+        let spinner = ProgressBar::new_spinner();
+        spinner.set_message(format!("Adding and installing {} crate...", dep.name));
+        spinner.enable_steady_tick(Duration::from_millis(SPINNER_UPDATE_DURATION));
+        
+        let mut args = vec!["add".to_owned(), dep.name.to_owned()];
+        if !dep.features.is_empty() {
+            args.push("--features".to_owned());
+            args.push(dep.features.join(","));
+        }
+        let output = Command::new("cargo")
+            .args(args)
+            .output()
+            .expect("🔸 Failed to add crate!");
+
+        if output.status.success() {
+            spinner.finish_with_message("✔️ Crates added successfully.");
+        } else {
+            spinner.finish_with_message(format!(
+                "🔸 Error adding crates: {}",
+                String::from_utf8_lossy(&output.stderr)
+            ));
+        }
+    }
+
+}
 
 
 #[allow(unused)]

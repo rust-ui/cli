@@ -44,7 +44,7 @@ fn ask_user_choose_style(vec_styles: Vec<serde_json::Value>) {
     // Print available styles
     for (index, style) in vec_styles.iter().enumerate() {
         if let Some(label) = style.get(LABEL) {
-            println!("{}: {}", index + 1, label);
+            println!("\n{}: {}", index + 1, label);
         }
     }
 
