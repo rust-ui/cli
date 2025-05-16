@@ -3,9 +3,8 @@
 use std::io::Write;
 
 // use crate::constants::env::ENV;
-use crate::constants::url::URL;
+use crate::{command_init::config::AppConfig, constants::{file_name::FILE_NAME, url::URL}};
 
-use super::components_toml::ComponentsToml;
 use serde_json;
 
 pub struct Registry {}
@@ -78,8 +77,9 @@ impl RegistryComponent {
     }
 
     pub async fn then_write_to_file(self) -> Result<(), Box<dyn std::error::Error>> {
-        let user_config_path = ComponentsToml::get_base_path().unwrap_or_default();
-        let full_path_component = format!("{}/{}", user_config_path, self.registry_json_path);
+        let components_base_path = 
+            AppConfig::try_reading_app_config(FILE_NAME::APP_CONFIG_TOML)?.base_path_components;
+        let full_path_component = format!("{}/{}", components_base_path, self.registry_json_path);
 
         let full_path_component_without_name_rs = std::path::Path::new(&full_path_component)
             .parent()
