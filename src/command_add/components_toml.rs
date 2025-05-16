@@ -1,7 +1,6 @@
 use std::fs;
 
 use crate::constants::file_name::FILE_NAME;
-use colored::Colorize;
 
 pub struct ComponentsToml {}
 
