@@ -1,6 +1,6 @@
 [package]
 name = "ui-cli"
-version = "0.1.6"
+version = "0.1.7-beta"
 edition = "2024"
 authors = ["Everlabs"]
 description = "A CLI to add components to your app."
@@ -20,6 +20,7 @@ serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 colored = "2"
 indicatif = "0.17"
+toml = "0.8.22"
 
 
 
@@ -30,5 +31,3 @@ path = "src/main.rs"
 
 
 
-# ------- JUST FOR TESTING ---------
-tailwind-input-file = "style/tailwind.css"

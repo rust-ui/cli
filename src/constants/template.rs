@@ -1,8 +1,6 @@
 pub struct TEMPLATE;
 
 impl TEMPLATE {
-    pub const COMPONENTS_TOML: &str = r#"base_path = "src/components"
-"#;
 
     pub const STYLE_TAILWIND_CSS: &str = r#"@import "tailwindcss";
 @import "tw-animate-css";

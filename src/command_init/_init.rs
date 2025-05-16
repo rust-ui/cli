@@ -2,7 +2,8 @@ use clap::{Arg, Command};
 use indicatif::ProgressBar;
 use std::time::Duration;
 
-use super::{config::Config, install::Install, user_input::UserInput};
+use super::config::{add_init_dependencies, AppConfig};
+use super::{install::Install, user_input::UserInput};
 use crate::constants::commands::{COMMAND, INIT};
 use crate::constants::file_name::FILE_NAME;
 use crate::constants::template::TEMPLATE;
@@ -34,20 +35,16 @@ pub async fn init_project() {
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 pub async fn process_init() {
-    let tailwind_input_file = Config::try_extract_tailwind_input_file_from_cargo_toml();
+    // Create app_config.toml file with default values in it
+    let app_config = AppConfig::default();
 
-    if tailwind_input_file.is_err() {
-        eprintln!("{}", tailwind_input_file.unwrap_err());
-        return; // Early return
-    }
-
+    INIT_TEMPLATE_FILE(FILE_NAME::APP_CONFIG_TOML, &toml::to_string_pretty(&app_config).unwrap()).await;
     INIT_TEMPLATE_FILE(FILE_NAME::PACKAGE_JSON, TEMPLATE::PACKAGE_JSON).await;
-    INIT_TEMPLATE_FILE(FILE_NAME::COMPONENTS_TOML, TEMPLATE::COMPONENTS_TOML).await;
-    INIT_TEMPLATE_FILE(&tailwind_input_file.unwrap(), TEMPLATE::STYLE_TAILWIND_CSS).await;
+    INIT_TEMPLATE_FILE(&app_config.tailwind_input_file, TEMPLATE::STYLE_TAILWIND_CSS).await;
     INIT_TEMPLATE_FILE(FILE_NAME::TAILWIND_CONFIG_JS, TEMPLATE::TAILWIND_CONFIG).await;
 
-    Config::handle_cargo_toml().await;
-    Config::handle_config_schema().await;
+    add_init_dependencies().await;
+
     UserInput::handle_index_styles().await;
 
     Install::tailwind_with_pnpm().await;
