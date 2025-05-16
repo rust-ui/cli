@@ -16,13 +16,54 @@ cargo install ui-cli
 
 
 # Usage
-
+*Step 1: Create a cargo project*
 ```bash
+cargo new my_project
+cd my_project
+```
+
+*Step 2: Initialisation*
+```bash
+ui init
+```
+
+*Step 3: Add components*
+```bash
+
 ui add button
 # ui add demo_card demo_button
 # └──> Works with any number of components
 ```
 
+*Step 4: Bolier plate code*
+Create `index.html` in project root directory and update `src/main.rs` with following code
+_src/main.rs_
+```rust
+use leptos::prelude::*;
+
+mod components;    // <--- make sure to add this line
+
+use components::ui::button::Button;
+
+fn main() {
+    leptos::mount::mount_to_body(move || view! { <App/> });
+}
+
+#[component]
+fn App() -> impl IntoView {
+
+    let (count, set_count) = signal(0);
+
+    view! {
+        <div>
+            <p>"Count: "{count}</p>
+            <Button on:click=move |_| set_count.update(|count| *count += 1) >"Hit Me"</Button>
+        </div>
+    }
+}
+```
+
+Now run it with trunk or any other tool like `$ trunk serve`
 
 # Contributions 💪
 
