@@ -51,7 +51,7 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
     // println!("All resolved cargo dependencies: {:?}", all_resolved_cargo_dependencies);
 
     // Create components/mod.rs if it does not exist
-    let components_base_path = UiConfig::try_reading_app_config(FILE_NAME::APP_CONFIG_TOML)?.base_path_components;
+    let components_base_path = UiConfig::try_reading_ui_config(FILE_NAME::UI_CONFIG_TOML)?.base_path_components;
 
     Components::create_components_mod_if_not_exists_with_pub_mods(
         components_base_path.clone(),

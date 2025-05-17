@@ -38,7 +38,7 @@ pub async fn process_init() {
     // Create ui_config.toml file with default values in it
     let ui_config = UiConfig::default();
 
-    INIT_TEMPLATE_FILE(FILE_NAME::APP_CONFIG_TOML, &toml::to_string_pretty(&ui_config).unwrap()).await;
+    INIT_TEMPLATE_FILE(FILE_NAME::UI_CONFIG_TOML, &toml::to_string_pretty(&ui_config).unwrap()).await;
     INIT_TEMPLATE_FILE(FILE_NAME::PACKAGE_JSON, TEMPLATE::PACKAGE_JSON).await;
     INIT_TEMPLATE_FILE(&ui_config.tailwind_input_file, TEMPLATE::STYLE_TAILWIND_CSS).await;
     INIT_TEMPLATE_FILE(FILE_NAME::TAILWIND_CONFIG_JS, TEMPLATE::TAILWIND_CONFIG).await;
