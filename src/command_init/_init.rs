@@ -35,7 +35,6 @@ pub async fn init_project() {
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 pub async fn process_init() {
-    // Create ui_config.toml file with default values in it
     let ui_config = UiConfig::default();
 
     INIT_TEMPLATE_FILE(FILE_NAME::UI_CONFIG_TOML, &toml::to_string_pretty(&ui_config).unwrap()).await;
