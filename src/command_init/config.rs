@@ -1,6 +1,5 @@
 use indicatif::ProgressBar;
 use serde::{Deserialize, Serialize};
-use std::error::Error;
 use std::fs;
 use std::process::Command;
 use std::time::Duration;
@@ -36,7 +35,7 @@ impl UiConfig {
         }
     }
 
-    pub fn try_reading_ui_config(toml_path: &str) -> Result<UiConfig, Box<dyn Error>> {
+    pub fn try_reading_ui_config(toml_path: &str) -> anyhow::Result<UiConfig> {
         let contents = fs::read_to_string(toml_path)?;
         let ui_config: UiConfig = toml::from_str(&contents)?;
         Ok(ui_config)
