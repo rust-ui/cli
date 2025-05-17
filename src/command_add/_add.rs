@@ -5,10 +5,11 @@ use std::vec::Vec;
 
 use super::components::{Components, MyComponent};
 // use crate::constants::env::ENV;
-use super::components_toml::ComponentsToml;
 use super::dependencies::Dependencies;
 use super::registry::{Registry, RegistryComponent};
+use crate::command_init::config::AppConfig;
 use crate::constants::commands::{ADD, COMMAND};
+use crate::constants::file_name::FILE_NAME;
 use crate::constants::url::URL;
 
 pub fn command_add() -> Command {
@@ -24,13 +25,6 @@ pub fn command_add() -> Command {
 //
 pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
     // dotenv().ok();
-
-    let base_path_components = ComponentsToml::try_extract_base_path_components();
-
-    if base_path_components.is_err() {
-        eprintln!("{}", base_path_components.unwrap_err());
-        return Ok(()); // Early return
-    }
 
     // let base_url = env::var(ENV::BASE_URL).unwrap_or_default();
     let url_registry_index_json = URL::URL_REGISTRY_INDEX_JSON;
@@ -57,9 +51,11 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
     // println!("All resolved cargo dependencies: {:?}", all_resolved_cargo_dependencies);
 
     // Create components/mod.rs if it does not exist
-    let user_config_path_toml = ComponentsToml::get_base_path().unwrap_or_default();
+    let components_base_path = AppConfig::try_reading_app_config(FILE_NAME::APP_CONFIG_TOML)?
+        .base_path_components;
+
     Components::create_components_mod_if_not_exists_with_pub_mods(
-        user_config_path_toml,
+        components_base_path.clone(),
         all_resolved_parent_dirs.clone(),
     );
 
