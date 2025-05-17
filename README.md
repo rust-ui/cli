@@ -11,7 +11,7 @@ It works for **Leptos** at the moment, but it will be extended to other framewor
 
 ```bash
 cargo install ui-cli
-# └─> Don't forget to regularly run: `cargo install-update -a` (frequent updates)
+# └─> 💡 If issues, try with `--force`.
 ```
 
 
