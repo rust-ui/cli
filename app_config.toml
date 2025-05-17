@@ -1,0 +1,2 @@
+tailwind_input_file = "style/tailwind.css"
+base_path_components = "src/components"
