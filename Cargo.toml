@@ -12,6 +12,7 @@ repository = "https://github.com/rust-ui/cli"
 
 
 [dependencies]
+anyhow = "1"
 clap = { version = "4", features = ["derive"] }
 dotenv = "0.15"
 tokio = { version = "1", features = ["full"] }
