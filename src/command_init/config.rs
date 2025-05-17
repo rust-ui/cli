@@ -4,7 +4,7 @@ use std::fs;
 use std::process::Command;
 use std::time::Duration;
 
-use crate::constants::dependencies::INIT_DEPENDENCIES;
+use crate::command_init::crates::INIT_CRATES;
 use crate::constants::others::SPINNER_UPDATE_DURATION;
 
 ///
@@ -75,16 +75,17 @@ impl Default for UiConfig {
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-pub async fn add_init_dependencies() {
-    for dep in INIT_DEPENDENCIES {
+pub async fn add_init_crates() {
+    // `crate` is a reserved keyword.
+    for my_crate in INIT_CRATES {
         let spinner = ProgressBar::new_spinner();
-        spinner.set_message(format!("Adding and installing {} crate...", dep.name));
+        spinner.set_message(format!("Adding and installing {} crate...", my_crate.name));
         spinner.enable_steady_tick(Duration::from_millis(SPINNER_UPDATE_DURATION));
 
-        let mut args = vec!["add".to_owned(), dep.name.to_owned()];
-        if !dep.features.is_empty() {
+        let mut args = vec!["add".to_owned(), my_crate.name.to_owned()];
+        if !my_crate.features.is_empty() {
             args.push("--features".to_owned());
-            args.push(dep.features.join(","));
+            args.push(my_crate.features.join(","));
         }
         let output = Command::new("cargo")
             .args(args)

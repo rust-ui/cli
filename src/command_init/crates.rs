@@ -1,13 +1,13 @@
-pub struct Dependency {
+pub struct Crate {
     pub name: &'static str,
     #[allow(unused)] // TODO. Find a way to set the version to "0.8" instead of "0.8.2".
     pub version: Option<&'static str>,
     pub features: &'static [&'static str],
 }
 
-impl Dependency {
+impl Crate {
     const fn new(name: &'static str, version: Option<&'static str>, features: &'static [&'static str]) -> Self {
-        Dependency {
+        Crate {
             name,
             version,
             features,
@@ -16,9 +16,9 @@ impl Dependency {
 }
 
 ///
-/// Dependencies to initialize the ui lib
+/// Crates to initialize the project.
 ///
-pub const INIT_DEPENDENCIES: [Dependency; 2] = [
-    Dependency::new("leptos", None, &["csr"]),
-    Dependency::new("tw_merge", None, &["variant"]),
+pub const INIT_CRATES: [Crate; 2] = [
+    Crate::new("leptos", None, &["csr"]),
+    Crate::new("tw_merge", None, &["variant"]),
 ];
