@@ -14,16 +14,25 @@ use crate::constants::others::SPINNER_UPDATE_DURATION;
 ///
 #[derive(Debug, Deserialize, Serialize, PartialEq, PartialOrd)]
 pub struct UiConfig {
-    pub tailwind_input_file: String,
+    pub base_color: String,
     pub base_path_components: String,
+    pub tailwind_input_file: String,
+    pub tailwind_config_file: String,
 }
 
 #[allow(dead_code)]
 impl UiConfig {
-    pub fn new(tailwind_input_file: &str, base_path_components: &str) -> Self {
+    pub fn new(
+        tailwind_input_file: &str,
+        base_path_components: &str,
+        tailwind_config_file: &str,
+        base_color: &str,
+    ) -> Self {
         UiConfig {
-            tailwind_input_file: tailwind_input_file.to_string(),
+            base_color: base_color.to_string(),
             base_path_components: base_path_components.to_string(),
+            tailwind_config_file: tailwind_config_file.to_string(),
+            tailwind_input_file: tailwind_input_file.to_string(),
         }
     }
 
@@ -45,16 +54,20 @@ impl Default for UiConfig {
     /// assert_eq!(
     ///     ui_config,
     ///     UiConfig {
+    ///         base_color: "neutral".to_string(),
+    ///         base_path_components: "src/components".to_string(),
+    ///         tailwind_config_file: "tailwind.config.js".to_string(),
     ///         tailwind_input_file: "style/tailwind.css".to_string(),
-    ///         base_path_components: "src/components".to_string()
     ///     }
     /// );
     ///
     /// ```
     fn default() -> Self {
         UiConfig {
-            tailwind_input_file: "style/tailwind.css".to_string(),
+            base_color: "neutral".to_string(),
             base_path_components: "src/components".to_string(),
+            tailwind_config_file: "tailwind.config.js".to_string(),
+            tailwind_input_file: "style/tailwind.css".to_string(),
         }
     }
 }
