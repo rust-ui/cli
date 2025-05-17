@@ -7,7 +7,7 @@ use super::components::{Components, MyComponent};
 // use crate::constants::env::ENV;
 use super::dependencies::Dependencies;
 use super::registry::{Registry, RegistryComponent};
-use crate::command_init::config::AppConfig;
+use crate::command_init::config::UiConfig;
 use crate::constants::commands::{ADD, COMMAND};
 use crate::constants::file_name::FILE_NAME;
 use crate::constants::url::URL;
@@ -51,8 +51,7 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
     // println!("All resolved cargo dependencies: {:?}", all_resolved_cargo_dependencies);
 
     // Create components/mod.rs if it does not exist
-    let components_base_path = AppConfig::try_reading_app_config(FILE_NAME::APP_CONFIG_TOML)?
-        .base_path_components;
+    let components_base_path = UiConfig::try_reading_app_config(FILE_NAME::APP_CONFIG_TOML)?.base_path_components;
 
     Components::create_components_mod_if_not_exists_with_pub_mods(
         components_base_path.clone(),

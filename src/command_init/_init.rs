@@ -2,7 +2,7 @@ use clap::{Arg, Command};
 use indicatif::ProgressBar;
 use std::time::Duration;
 
-use super::config::{add_init_dependencies, AppConfig};
+use super::config::{UiConfig, add_init_dependencies};
 use super::{install::Install, user_input::UserInput};
 use crate::constants::commands::{COMMAND, INIT};
 use crate::constants::file_name::FILE_NAME;
@@ -35,12 +35,12 @@ pub async fn init_project() {
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 pub async fn process_init() {
-    // Create app_config.toml file with default values in it
-    let app_config = AppConfig::default();
+    // Create ui_config.toml file with default values in it
+    let ui_config = UiConfig::default();
 
-    INIT_TEMPLATE_FILE(FILE_NAME::APP_CONFIG_TOML, &toml::to_string_pretty(&app_config).unwrap()).await;
+    INIT_TEMPLATE_FILE(FILE_NAME::APP_CONFIG_TOML, &toml::to_string_pretty(&ui_config).unwrap()).await;
     INIT_TEMPLATE_FILE(FILE_NAME::PACKAGE_JSON, TEMPLATE::PACKAGE_JSON).await;
-    INIT_TEMPLATE_FILE(&app_config.tailwind_input_file, TEMPLATE::STYLE_TAILWIND_CSS).await;
+    INIT_TEMPLATE_FILE(&ui_config.tailwind_input_file, TEMPLATE::STYLE_TAILWIND_CSS).await;
     INIT_TEMPLATE_FILE(FILE_NAME::TAILWIND_CONFIG_JS, TEMPLATE::TAILWIND_CONFIG).await;
 
     add_init_dependencies().await;
