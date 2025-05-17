@@ -80,7 +80,7 @@ impl RegistryComponent {
     }
 
     pub async fn then_write_to_file(self) -> Result<(), Box<dyn std::error::Error>> {
-        let components_base_path = UiConfig::try_reading_app_config(FILE_NAME::APP_CONFIG_TOML)?.base_path_components;
+        let components_base_path = UiConfig::try_reading_ui_config(FILE_NAME::UI_CONFIG_TOML)?.base_path_components;
         let full_path_component = format!("{}/{}", components_base_path, self.registry_json_path);
 
         let full_path_component_without_name_rs = std::path::Path::new(&full_path_component)

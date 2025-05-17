@@ -30,7 +30,7 @@ impl UiConfig {
         }
     }
 
-    pub fn try_reading_app_config(toml_path: &str) -> Result<UiConfig, Box<dyn Error>> {
+    pub fn try_reading_ui_config(toml_path: &str) -> Result<UiConfig, Box<dyn Error>> {
         let contents = fs::read_to_string(toml_path)?;
         let ui_config: UiConfig = toml::from_str(&contents)?;
         Ok(ui_config)
