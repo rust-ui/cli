@@ -1,5 +1,4 @@
 pub mod commands;
-pub mod dependencies;
 pub mod env;
 pub mod file_name;
 pub mod others;
