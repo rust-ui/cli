@@ -1,12 +1,12 @@
-pub struct Dependency<'a> {
-    pub name: &'a str,
+pub struct Dependency {
+    pub name: &'static str,
     #[allow(unused)] // TODO. Find a way to set the version to "0.8" instead of "0.8.2".
-    pub version: Option<&'a str>,
-    pub features: &'a [&'a str],
+    pub version: Option<&'static str>,
+    pub features: &'static [&'static str],
 }
 
-impl<'a> Dependency<'a> {
-    const fn new(name: &'a str, version: Option<&'a str>, features: &'a [&'a str]) -> Self {
+impl Dependency {
+    const fn new(name: &'static str, version: Option<&'static str>, features: &'static [&'static str]) -> Self {
         Dependency {
             name,
             version,
@@ -18,7 +18,7 @@ impl<'a> Dependency<'a> {
 ///
 /// Dependencies to initialize the ui lib
 ///
-pub const INIT_DEPENDENCIES: [Dependency<'static>; 2] = [
+pub const INIT_DEPENDENCIES: [Dependency; 2] = [
     Dependency::new("leptos", None, &["csr"]),
     Dependency::new("tw_merge", None, &["variant"]),
 ];
