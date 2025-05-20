@@ -1,4 +1,5 @@
 use clap::{Arg, ArgMatches, Command};
+use std::path::Path;
 // use dotenv::dotenv;
 // use std::env;
 use std::vec::Vec;
@@ -57,6 +58,22 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
         components_base_path.clone(),
         all_resolved_parent_dirs.clone(),
     );
+
+    // TODO: Register `components` module
+    let mut file_path = components_base_path.split("/").collect::<Vec<&str>>();
+    assert_eq!(file_path.pop().unwrap(), "components");
+
+    let file_path = file_path.join("/");
+    let entry_file_path: String;
+
+    if Path::new(&format!("{file_path}/lib.rs")).exists() {
+        entry_file_path = format!("{file_path}/lib.rs");
+    } else {
+        entry_file_path = format!("{file_path}/main.rs");
+    }
+
+    Components::register_components_in_application_entry(entry_file_path.as_str())?;
+
 
     // Components to add
     for component_name_json in all_resolved_components {
