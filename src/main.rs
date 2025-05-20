@@ -9,7 +9,7 @@ mod command_init;
 mod constants;
 mod shared;
 
-use constants::commands::COMMAND;
+use constants::commands::MyCommand;
 
 // * cargo run --bin ui init
 // * cargo run --bin ui add button demo_button demo_button_variants demo_button_sizes
@@ -34,10 +34,10 @@ async fn main() {
 
     // Handle commands
     match matches.subcommand() {
-        Some((COMMAND::INIT, _)) => {
+        Some((MyCommand::INIT, _)) => {
             command_init::_init::init_project().await;
         }
-        Some((COMMAND::ADD, sub_matches)) => {
+        Some((MyCommand::ADD, sub_matches)) => {
             let _ = command_add::_add::process_add(sub_matches).await;
         }
         _ => {

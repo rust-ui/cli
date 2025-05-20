@@ -23,9 +23,9 @@ pub async fn shared_write_template_file(file_path: &str, spinner: &ProgressBar, 
             file.write_all(template.as_bytes())?;
             Ok(())
         }
-        Err(e) => {
-            eprintln!("🔸 Error: {}", e);
-            Err(e)
+        Err(err) => {
+            eprintln!("🔸 Error: {err}");
+            Err(err)
         }
     }
 }

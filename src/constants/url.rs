@@ -1,6 +1,6 @@
-pub struct URL;
+pub struct MyUrl;
 
-impl URL {
+impl MyUrl {
     pub const URL_REGISTRY_INDEX_JSON: &str = "https://www.rust-ui.com/registry/index.json";
     // pub const URL_CONFIG_SCHEMA_JSON: &str = "https://www.rust-ui.com/schema.json";
     pub const URL_REGISTRY_STYLES_JSON: &str = "https://www.rust-ui.com/registry/styles/index.json";
