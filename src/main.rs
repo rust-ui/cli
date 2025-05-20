@@ -1,5 +1,5 @@
 #![warn(clippy::all)]
-// #![deny(clippy::unwrap_used)]
+#![deny(clippy::unwrap_used)]
 
 use clap::Command;
 use std::process;
@@ -41,7 +41,9 @@ async fn main() {
             let _ = command_add::_add::process_add(sub_matches).await;
         }
         _ => {
-            mut_program.print_help().unwrap();
+            if let Err(e) = mut_program.print_help() {
+                eprintln!("Error printing help: {}", e);
+            }
             process::exit(1);
         }
     }
