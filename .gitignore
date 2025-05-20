@@ -14,3 +14,5 @@ end2end/playwright-report/
 playwright/.cache/
 
 **/target/
+
+.DS_Store
