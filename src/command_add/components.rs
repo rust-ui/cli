@@ -68,11 +68,13 @@ impl Components {
     pub fn register_components_in_application_entry(entry_file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
         let file_content = std::fs::read_to_string(entry_file_path)?;
 
-        if file_content.contains("mod components;") {
+        const MOD_COMPONENTS: &str = "mod components;";
+
+        if file_content.contains(MOD_COMPONENTS) {
             return Ok(());
         }
-        let new_contents = format!("{}\n{}", "mod components;", file_content);
-        std::fs::write(entry_file_path, new_contents.as_bytes())?;
+        let mod_components_import = format!("{}\n{}", MOD_COMPONENTS, file_content);
+        std::fs::write(entry_file_path, mod_components_import.as_bytes())?;
         Ok(())
     }
 }
