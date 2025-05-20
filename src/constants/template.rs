@@ -1,7 +1,6 @@
-pub struct TEMPLATE;
+pub struct MyTemplate;
 
-impl TEMPLATE {
-
+impl MyTemplate {
     pub const STYLE_TAILWIND_CSS: &str = r#"@import "tailwindcss";
 @import "tw-animate-css";
 

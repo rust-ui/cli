@@ -5,7 +5,7 @@ use std::io::Write;
 // use crate::constants::env::ENV;
 use crate::{
     command_init::config::UiConfig,
-    constants::{file_name::FILE_NAME, url::URL},
+    constants::{file_name::FILE_NAME, url::MyUrl},
 };
 
 use serde_json;
@@ -24,13 +24,13 @@ impl Registry {
                     resp.text().await?
                 } else {
                     let error_message = format!("🔸 Failed to fetch data: Server returned status {}", resp.status());
-                    println!("{}", error_message); // Print the error message
+                    println!("{error_message}"); // Print the error message
                     return Err(error_message.into());
                 }
             }
-            Err(e) => {
-                let error_message = format!("🔸 Failed to fetch data: {}", e);
-                println!("{}", error_message); // Print the error message
+            Err(err) => {
+                let error_message = format!("🔸 Failed to fetch data: {err}");
+                println!("{error_message}"); // Print the error message
                 return Err(error_message.into());
             }
         };
@@ -38,7 +38,7 @@ impl Registry {
         // Check if the fetched content is empty
         if index_content_from_url.is_empty() {
             let error_message = "🔸 Failed to fetch data: The server returned an empty response.";
-            println!("{}", error_message); // Print the error message
+            println!("{error_message}"); // Print the error message
             return Err(error_message.into());
         }
 
@@ -60,8 +60,8 @@ impl RegistryComponent {
     pub async fn fetch_from_registry(
         component_name_json: String,
     ) -> Result<RegistryComponent, Box<dyn std::error::Error>> {
-        let base_url_styles_default = URL::BASE_URL_STYLES_DEFAULT;
-        let formatted_url_json = format!("{}/{}.json", base_url_styles_default, component_name_json);
+        let base_url_styles_default = MyUrl::BASE_URL_STYLES_DEFAULT;
+        let formatted_url_json = format!("{base_url_styles_default}/{component_name_json}.json");
 
         let response = reqwest::get(&formatted_url_json).await?;
         let json_content: serde_json::Value = response.json().await?;
@@ -108,7 +108,7 @@ impl RegistryComponent {
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 fn write_component_name_in_mod_rs_if_not_exists(component_name: String, full_path_component_without_name_rs: String) {
-    let mod_rs_path = format!("{}/mod.rs", full_path_component_without_name_rs);
+    let mod_rs_path = format!("{full_path_component_without_name_rs}/mod.rs");
 
     // Create the directory if it doesn't exist
     let dir = std::path::Path::new(&mod_rs_path)
@@ -124,18 +124,17 @@ fn write_component_name_in_mod_rs_if_not_exists(component_name: String, full_pat
 
     // Check if the component already exists
     if mod_rs_content.contains(&component_name) {
-        println!("Component {} already exists in mod.rs", component_name);
+        println!("Component {component_name} already exists in mod.rs");
         return; // Exit the function if the component already exists
     }
 
     // Append the component name to mod.rs
     let mut mod_rs_file = std::fs::OpenOptions::new()
-        .write(true)
         .append(true)
         .create(true)
         .open(mod_rs_path)
         .expect("Failed to open mod.rs");
 
     // Write the new component name
-    writeln!(mod_rs_file, "pub mod {};", component_name).expect("Failed to write to mod.rs");
+    writeln!(mod_rs_file, "pub mod {component_name};").expect("Failed to write to mod.rs");
 }

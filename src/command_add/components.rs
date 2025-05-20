@@ -31,7 +31,7 @@ pub struct Components {}
 impl Components {
     // TODO. Have instead all_resolved_parent_dirs instead of compomnents.
     pub fn create_components_mod_if_not_exists_with_pub_mods(user_config_path: String, parent_dirs: Vec<String>) {
-        let components_mod_path = format!("{}/mod.rs", user_config_path);
+        let components_mod_path = format!("{user_config_path}/mod.rs");
 
         // println!("Parent directories to add to components/mod.rs: {:?}", parent_dirs);
 
@@ -51,7 +51,6 @@ impl Components {
 
         // Create or open the mod.rs file for writing
         let mut mod_rs_file = std::fs::OpenOptions::new()
-            .write(true)
             .append(true)
             .create(true)
             .open(components_mod_path)
@@ -59,8 +58,8 @@ impl Components {
 
         // Add each parent directory as a module if it doesn't already exist
         for parent_dir in parent_dirs {
-            if !mod_content.contains(&format!("pub mod {};", parent_dir)) {
-                writeln!(mod_rs_file, "pub mod {};", parent_dir).expect("🔸 Failed to write to mod.rs");
+            if !mod_content.contains(&format!("pub mod {parent_dir};")) {
+                writeln!(mod_rs_file, "pub mod {parent_dir};").expect("🔸 Failed to write to mod.rs");
             }
         }
     }
@@ -73,7 +72,7 @@ impl Components {
         if file_content.contains(MOD_COMPONENTS) {
             return Ok(());
         }
-        let mod_components_import = format!("{}\n{}", MOD_COMPONENTS, file_content);
+        let mod_components_import = format!("{MOD_COMPONENTS}\n{file_content}");
         std::fs::write(entry_file_path, mod_components_import.as_bytes())?;
         Ok(())
     }

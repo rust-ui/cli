@@ -9,14 +9,17 @@ use super::components::{Components, MyComponent};
 use super::dependencies::Dependencies;
 use super::registry::{Registry, RegistryComponent};
 use crate::command_init::config::UiConfig;
-use crate::constants::commands::{ADD, COMMAND};
+use crate::constants::commands::{AddCommand, MyCommand};
 use crate::constants::file_name::FILE_NAME;
-use crate::constants::url::URL;
+use crate::constants::url::MyUrl;
 
 pub fn command_add() -> Command {
-    Command::new(COMMAND::ADD)
-        .about(ADD::ABOUT)
-        .arg(Arg::new(ADD::COMPONENTS).help(ADD::HELP).required(false).num_args(1..))
+    Command::new(MyCommand::ADD).about(AddCommand::ABOUT).arg(
+        Arg::new(AddCommand::COMPONENTS)
+            .help(AddCommand::HELP)
+            .required(false)
+            .num_args(1..),
+    )
 }
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -28,15 +31,15 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
     // dotenv().ok();
 
     // let base_url = env::var(ENV::BASE_URL).unwrap_or_default();
-    let url_registry_index_json = URL::URL_REGISTRY_INDEX_JSON;
+    let url_registry_index_json = MyUrl::URL_REGISTRY_INDEX_JSON;
 
     let user_components: Vec<String> = matches
-        .get_many::<String>(ADD::COMPONENTS)
+        .get_many::<String>(AddCommand::COMPONENTS)
         .unwrap_or_default()
         .cloned()
         .collect();
 
-    let index_content_from_url = Registry::fetch_index_content(&url_registry_index_json).await?;
+    let index_content_from_url = Registry::fetch_index_content(url_registry_index_json).await?;
 
     let vec_components_from_index: Vec<MyComponent> = serde_json::from_str(&index_content_from_url).unwrap();
 
@@ -64,13 +67,11 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
     assert_eq!(file_path.pop().unwrap(), "components");
 
     let file_path = file_path.join("/");
-    let entry_file_path: String;
-
-    if Path::new(&format!("{file_path}/lib.rs")).exists() {
-        entry_file_path = format!("{file_path}/lib.rs");
+    let entry_file_path = if Path::new(&format!("{file_path}/lib.rs")).exists() {
+        format!("{file_path}/lib.rs")
     } else {
-        entry_file_path = format!("{file_path}/main.rs");
-    }
+        format!("{file_path}/main.rs")
+    };
 
     Components::register_components_in_application_entry(entry_file_path.as_str())?;
 

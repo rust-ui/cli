@@ -20,9 +20,7 @@ impl Dependencies {
             .map(|c| (c.name.clone(), c.clone()))
             .collect();
 
-        let resolved = resolve_all_dependencies(&component_map, &user_components).unwrap();
-
-        resolved
+        resolve_all_dependencies(&component_map, &user_components).unwrap()
     }
 
     pub fn get_all_resolved_components(resolved: &HashMap<String, ResolvedComponent>) -> Vec<String> {
@@ -34,7 +32,7 @@ impl Dependencies {
         }
 
         // Add all their dependencies
-        for (_, component) in resolved {
+        for component in resolved.values() {
             for dep in &component.resolved_registry_dependencies {
                 all_components.insert(dep.clone());
             }
@@ -50,7 +48,7 @@ impl Dependencies {
         let mut all_parent_dirs = HashSet::new();
 
         // Add all the resolved component types
-        for (_, component) in resolved {
+        for component in resolved.values() {
             all_parent_dirs.insert(component.component.parent_dir.clone());
         }
 
@@ -64,7 +62,7 @@ impl Dependencies {
         let mut all_cargo_deps = HashSet::new();
 
         // Add all cargo dependencies from all components
-        for (_, component) in resolved {
+        for component in resolved.values() {
             for dep in &component.resolved_cargo_dependencies {
                 all_cargo_deps.insert(dep.clone());
             }
@@ -83,14 +81,14 @@ impl Dependencies {
 
         // Find components that are direct targets (not dependencies of other resolved components)
         let mut dependent_components = HashSet::new();
-        for (_, resolved_comp) in resolved {
+        for resolved_comp in resolved.values() {
             for dep in &resolved_comp.resolved_registry_dependencies {
                 dependent_components.insert(dep.clone());
             }
         }
 
         // Print each target component's tree
-        for (name, _) in resolved {
+        for name in resolved.keys() {
             // Only print the top-level components (not dependencies of other resolved components)
             // Or, remove this condition to print all resolved components at top level
             if !dependent_components.contains(name) {
@@ -126,7 +124,7 @@ impl Dependencies {
             }
 
             // Update the spinner message to show the current crate being installed
-            spinner.set_message(format!("📦 Adding crate: {}", dep));
+            spinner.set_message(format!("📦 Adding crate: {dep}"));
 
             // Execute the CLI command to add the dependency
             let output = std::process::Command::new("cargo").arg("add").arg(dep).output()?;
@@ -149,7 +147,7 @@ impl Dependencies {
                 .map(|dep| dep.as_str())
                 .collect::<Vec<&str>>()
                 .join(", ");
-            let finish_message = format!("✔️ Successfully added to Cargo.toml: [{}] !", dependencies_str);
+            let finish_message = format!("✔️ Successfully added to Cargo.toml: [{dependencies_str}] !");
             spinner.finish_with_message(finish_message);
         } else {
             spinner.finish_with_message("No new crates to add");
@@ -173,7 +171,7 @@ fn resolve_all_dependencies(
     // Process only the selected components
     for component_name in user_components {
         if !component_map.contains_key(component_name) {
-            return Err(format!("Target component '{}' not found in index", component_name).into());
+            return Err(format!("Target component '{component_name}' not found in index").into());
         }
 
         resolve_component_recursive(
@@ -203,13 +201,13 @@ fn resolve_component_recursive(
 
     // Prevent infinite recursion
     if !visited.insert(component_name.to_string()) {
-        return Err(format!("Circular dependency detected involving '{}'", component_name).into());
+        return Err(format!("Circular dependency detected involving '{component_name}'").into());
     }
 
     // Get component or return error if not found
     let component = match component_map.get(component_name) {
         Some(c) => c,
-        None => return Err(format!("Component '{}' not found", component_name).into()),
+        None => return Err(format!("Component '{component_name}' not found").into()),
     };
 
     // Collect all dependencies recursively
@@ -278,7 +276,7 @@ fn print_component_tree(
 
         if !filtered_cargo_deps.is_empty() {
             let cargo_indent = "  ".repeat(depth + 1);
-            println!("{}└─ Cargo Dependencies:", cargo_indent);
+            println!("{cargo_indent}└─ Cargo Dependencies:");
 
             // Sort cargo dependencies for consistent output
             let mut cargo_deps = filtered_cargo_deps;
@@ -286,7 +284,7 @@ fn print_component_tree(
 
             for cargo_dep in cargo_deps {
                 let cargo_dep_indent = "  ".repeat(depth + 2);
-                println!("{}└─ {}", cargo_dep_indent, cargo_dep);
+                println!("{cargo_dep_indent}└─ {cargo_dep}");
             }
         }
 
@@ -301,7 +299,7 @@ fn print_component_tree(
             } else {
                 // This is a dependency that wasn't fully resolved (part of another branch)
                 let indent = "  ".repeat(depth + 1);
-                println!("{}└─ {} (external)", indent, dep_name);
+                println!("{indent}└─ {dep_name} (external)");
             }
         }
     }

@@ -4,9 +4,9 @@ use std::time::Duration;
 
 use super::config::{UiConfig, add_init_crates};
 use super::{install::Install, user_input::UserInput};
-use crate::constants::commands::{COMMAND, INIT};
+use crate::constants::commands::{InitCommand, MyCommand};
 use crate::constants::file_name::FILE_NAME;
-use crate::constants::template::TEMPLATE;
+use crate::constants::template::MyTemplate;
 use crate::constants::{others::SPINNER_UPDATE_DURATION, paths::RELATIVE_PATH_PROJECT_DIR};
 use crate::shared::shared_write_template_file::shared_write_template_file;
 
@@ -15,9 +15,13 @@ use crate::shared::shared_write_template_file::shared_write_template_file;
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 pub fn command_init() -> Command {
-    Command::new(COMMAND::INIT)
-        .about(INIT::ABOUT)
-        .arg(Arg::new(INIT::PROJECT_NAME).help(INIT::HELP).required(false))
+    Command::new(MyCommand::INIT)
+        .about(InitCommand::ABOUT)
+        .arg(
+            Arg::new(InitCommand::PROJECT_NAME)
+                .help(InitCommand::HELP)
+                .required(false),
+        )
         .subcommand(Command::new("run").about("Run the initialization logic"))
 }
 
@@ -38,9 +42,9 @@ pub async fn process_init() {
     let ui_config = UiConfig::default();
 
     INIT_TEMPLATE_FILE(FILE_NAME::UI_CONFIG_TOML, &toml::to_string_pretty(&ui_config).unwrap()).await;
-    INIT_TEMPLATE_FILE(FILE_NAME::PACKAGE_JSON, TEMPLATE::PACKAGE_JSON).await;
-    INIT_TEMPLATE_FILE(&ui_config.tailwind_input_file, TEMPLATE::STYLE_TAILWIND_CSS).await;
-    INIT_TEMPLATE_FILE(FILE_NAME::TAILWIND_CONFIG_JS, TEMPLATE::TAILWIND_CONFIG).await;
+    INIT_TEMPLATE_FILE(FILE_NAME::PACKAGE_JSON, MyTemplate::PACKAGE_JSON).await;
+    INIT_TEMPLATE_FILE(&ui_config.tailwind_input_file, MyTemplate::STYLE_TAILWIND_CSS).await;
+    INIT_TEMPLATE_FILE(FILE_NAME::TAILWIND_CONFIG_JS, MyTemplate::TAILWIND_CONFIG).await;
 
     add_init_crates().await;
 
@@ -57,7 +61,7 @@ pub async fn process_init() {
 /// INIT TEMPLATE FILE
 #[allow(non_snake_case)]
 async fn INIT_TEMPLATE_FILE(file_name: &str, template: &str) {
-    let file_path = format!("{}/{}", RELATIVE_PATH_PROJECT_DIR, file_name);
+    let file_path = format!("{RELATIVE_PATH_PROJECT_DIR}/{file_name}");
 
     // if !shared_check_file_exist_and_ask_overwrite(&file_path, file_name_ext).await {
     //     return;
@@ -69,6 +73,6 @@ async fn INIT_TEMPLATE_FILE(file_name: &str, template: &str) {
 
     let _ = shared_write_template_file(&file_path, &spinner, template).await;
 
-    let finish_message = format!("✔️ Writing {} complete.", file_name);
+    let finish_message = format!("✔️ Writing {file_name} complete.");
     spinner.finish_with_message(finish_message);
 }

@@ -5,7 +5,7 @@ use std::io;
 
 use crate::command_init::fetch::Fetch;
 // use crate::constants::env::ENV;
-use crate::constants::url::URL;
+use crate::constants::url::MyUrl;
 
 const LABEL: &str = "label";
 
@@ -21,9 +21,7 @@ impl UserInput {
 
         // let url_registry_styles_json = env::var(ENV::URL_REGISTRY_STYLES_JSON).unwrap_or_default();
 
-        let url_registry_styles_json = URL::URL_REGISTRY_STYLES_JSON;
-
-        let styles_index_result = Fetch::from_url(&url_registry_styles_json).await;
+        let styles_index_result = Fetch::from_url(MyUrl::URL_REGISTRY_STYLES_JSON).await;
         // println!("{}", styles_index_result.as_ref().unwrap());
 
         // Parse the JSON string into Vec<serde_json::Value>
@@ -57,10 +55,8 @@ fn ask_user_choose_style(vec_styles: Vec<serde_json::Value>) {
     // Parse the choice and print the selected style
     if let Ok(index) = user_input.trim().parse::<usize>() {
         if index > 0 && index <= vec_styles.len() {
-            if let Some(selected_style) = vec_styles.get(index - 1) {
-                if let Some(label) = selected_style.get(LABEL) {
-                    println!("You selected: {}", label);
-                }
+            if let Some(label) = vec_styles.get(index - 1).and_then(|s| s.get(LABEL)) {
+                println!("You selected: {label}");
             }
         } else {
             println!(

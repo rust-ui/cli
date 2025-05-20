@@ -13,9 +13,9 @@ impl Fetch {
 
                 Ok(pretty_json)
             }
-            Err(e) => {
-                eprintln!("🔸 Error fetching: {}", e);
-                Err(e)
+            Err(err) => {
+                eprintln!("🔸 Error fetching: {err}");
+                Err(err)
             }
         }
     }
