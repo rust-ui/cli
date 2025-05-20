@@ -41,7 +41,8 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
 
     let index_content_from_url = Registry::fetch_index_content(url_registry_index_json).await?;
 
-    let vec_components_from_index: Vec<MyComponent> = serde_json::from_str(&index_content_from_url).unwrap();
+    let vec_components_from_index: Vec<MyComponent> = serde_json::from_str(&index_content_from_url)
+        .map_err(|e| format!("Failed to parse registry index JSON: {e}"))?;
 
     let all_tree_resolved = Dependencies::all_tree_resolved(user_components, &vec_components_from_index);
     Dependencies::print_dependency_tree(&all_tree_resolved); // Can be commented out
@@ -64,7 +65,7 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
 
     //  Register `components` module
     let mut file_path = components_base_path.split("/").collect::<Vec<&str>>();
-    assert_eq!(file_path.pop().unwrap(), "components");
+    assert_eq!(file_path.pop(), Some("components"));
 
     let file_path = file_path.join("/");
     let entry_file_path = if Path::new(&format!("{file_path}/lib.rs")).exists() {
