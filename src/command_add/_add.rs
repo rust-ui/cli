@@ -59,7 +59,7 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
         all_resolved_parent_dirs.clone(),
     );
 
-    // TODO: Register `components` module
+    //  Register `components` module
     let mut file_path = components_base_path.split("/").collect::<Vec<&str>>();
     assert_eq!(file_path.pop().unwrap(), "components");
 
@@ -73,7 +73,6 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
     }
 
     Components::register_components_in_application_entry(entry_file_path.as_str())?;
-
 
     // Components to add
     for component_name_json in all_resolved_components {
