@@ -64,4 +64,21 @@ impl Components {
             }
         }
     }
+
+        // TODO: Register components module in application entry point file
+    pub fn register_components_in_application_entry(
+        entry_file_path: &str
+    ) -> Result<(), Box<dyn std::error::Error>> {
+        // TODO: read contents of file
+        let file_content = std::fs::read_to_string(entry_file_path)?;
+
+        // TODO: see if `mod components;` already exists
+        if file_content.contains("mod components;") {
+            return Ok(());
+        }
+        // TODO: if it's not, add it
+        let new_contents = format!("{}\n{}", "mod components;", file_content);
+        std::fs::write(entry_file_path, new_contents.as_bytes())?;
+        Ok(())
+    }
 }
