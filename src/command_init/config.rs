@@ -17,7 +17,7 @@ pub struct UiConfig {
     pub base_path_components: String,
     pub tailwind_input_file: String,
     pub tailwind_config_file: String,
-    pub main_entry: String
+    pub components_entry: String
 }
 
 #[allow(dead_code)]
@@ -27,14 +27,14 @@ impl UiConfig {
         base_path_components: &str,
         tailwind_config_file: &str,
         base_color: &str,
-        main_entry: &str
+        components_entry: &str
     ) -> Self {
         UiConfig {
             base_color: base_color.to_string(),
             base_path_components: base_path_components.to_string(),
             tailwind_config_file: tailwind_config_file.to_string(),
             tailwind_input_file: tailwind_input_file.to_string(),
-            main_entry: main_entry.to_string()
+            components_entry: components_entry.to_string()
         }
     }
 
@@ -60,7 +60,7 @@ impl Default for UiConfig {
     ///         base_path_components: "src/components".to_string(),
     ///         tailwind_config_file: "tailwind.config.js".to_string(),
     ///         tailwind_input_file: "style/tailwind.css".to_string(),
-    ///         main_entry: "src/main.rs".to_string()
+    ///         components_entry: "src/main.rs".to_string()
     ///     }
     /// );
     ///
@@ -71,7 +71,7 @@ impl Default for UiConfig {
             base_path_components: "src/components".to_string(),
             tailwind_config_file: "tailwind.config.js".to_string(),
             tailwind_input_file: "style/tailwind.css".to_string(),
-            main_entry: "src/main.rs".to_string()
+            components_entry: "src/main.rs".to_string()
         }
     }
 }

@@ -61,9 +61,9 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
 
     // register components module in application entry point
     // adding `mod components;` in application entry - main.rs
-    let main_entry = UiConfig::try_reading_ui_config(FILE_NAME::UI_CONFIG_TOML)?.main_entry;
+    let components_entry = UiConfig::try_reading_ui_config(FILE_NAME::UI_CONFIG_TOML)?.components_entry;
 
-    Components::register_components_in_application_entry(&main_entry)?;
+    Components::register_components_in_application_entry(&components_entry)?;
 
 
     // Components to add
