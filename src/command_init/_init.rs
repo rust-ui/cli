@@ -43,8 +43,8 @@ pub async fn process_init() {
 
     let ui_config_toml = match toml::to_string_pretty(&ui_config) {
         Ok(s) => s,
-        Err(e) => {
-            eprintln!("Error serializing UiConfig: {}", e);
+        Err(err) => {
+            eprintln!("Error serializing UiConfig: {err}");
             return;
         }
     };
