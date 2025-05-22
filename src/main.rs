@@ -41,8 +41,8 @@ async fn main() {
             let _ = command_add::_add::process_add(sub_matches).await;
         }
         _ => {
-            if let Err(e) = mut_program.print_help() {
-                eprintln!("Error printing help: {}", e);
+            if let Err(err) = mut_program.print_help() {
+                eprintln!("Error printing help: {err}");
             }
             process::exit(1);
         }

@@ -29,7 +29,7 @@ impl UserInput {
             // Convert the String to a Vec<serde_json::Value>
             match serde_json::from_str::<Vec<serde_json::Value>>(&styles_index) {
                 Ok(vec_styles) => ask_user_choose_style(vec_styles),
-                Err(e) => eprintln!("Error parsing styles_index: {}", e),
+                Err(err) => eprintln!("Error parsing styles_index: {err}"),
             }
         }
     }
