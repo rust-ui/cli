@@ -35,7 +35,7 @@ async fn main() {
     // Handle commands
     match matches.subcommand() {
         Some((MyCommand::INIT, _)) => {
-            command_init::_init::init_project().await;
+            command_init::_init::process_init().await;
         }
         Some((MyCommand::ADD, sub_matches)) => {
             let _ = command_add::_add::process_add(sub_matches).await;

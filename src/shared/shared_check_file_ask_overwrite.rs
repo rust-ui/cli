@@ -6,7 +6,6 @@ use std::path::Path;
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-#[allow(dead_code)]
 pub async fn shared_check_file_exist_and_ask_overwrite(file_path: &str, file_name: &str) -> bool {
     if Path::new(file_path).exists() {
         println!(
