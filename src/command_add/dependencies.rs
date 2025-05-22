@@ -171,7 +171,8 @@ fn resolve_all_dependencies(
     // Process only the selected components
     for component_name in user_components {
         if !component_map.contains_key(component_name) {
-            return Err(format!("Target component '{component_name}' not found in index").into());
+            println!("🔸Component not found in registry: {component_name}");
+            continue;
         }
 
         resolve_component_recursive(
