@@ -29,15 +29,6 @@ pub fn command_init() -> Command {
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-#[allow(dead_code)]
-pub async fn init_project() {
-    process_init().await;
-}
-
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                     ✨ FUNCTIONS ✨                        */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
 pub async fn process_init() {
     let ui_config = UiConfig::default();
 
