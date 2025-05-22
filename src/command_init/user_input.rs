@@ -27,8 +27,10 @@ impl UserInput {
         // Parse the JSON string into Vec<serde_json::Value>
         if let Ok(styles_index) = styles_index_result {
             // Convert the String to a Vec<serde_json::Value>
-            let vec_styles: Vec<serde_json::Value> = serde_json::from_str(&styles_index).unwrap();
-            ask_user_choose_style(vec_styles);
+            match serde_json::from_str::<Vec<serde_json::Value>>(&styles_index) {
+                Ok(vec_styles) => ask_user_choose_style(vec_styles),
+                Err(e) => eprintln!("Error parsing styles_index: {}", e),
+            }
         }
     }
 }

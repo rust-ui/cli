@@ -20,7 +20,7 @@ impl Dependencies {
             .map(|c| (c.name.clone(), c.clone()))
             .collect();
 
-        resolve_all_dependencies(&component_map, &user_components).unwrap()
+        resolve_all_dependencies(&component_map, &user_components).expect("Failed to resolve all dependencies")
     }
 
     pub fn get_all_resolved_components(resolved: &HashMap<String, ResolvedComponent>) -> Vec<String> {

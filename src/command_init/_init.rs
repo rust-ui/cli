@@ -41,7 +41,14 @@ pub async fn init_project() {
 pub async fn process_init() {
     let ui_config = UiConfig::default();
 
-    INIT_TEMPLATE_FILE(FILE_NAME::UI_CONFIG_TOML, &toml::to_string_pretty(&ui_config).unwrap()).await;
+    let ui_config_toml = match toml::to_string_pretty(&ui_config) {
+        Ok(s) => s,
+        Err(e) => {
+            eprintln!("Error serializing UiConfig: {}", e);
+            return;
+        }
+    };
+    INIT_TEMPLATE_FILE(FILE_NAME::UI_CONFIG_TOML, &ui_config_toml).await;
     INIT_TEMPLATE_FILE(FILE_NAME::PACKAGE_JSON, MyTemplate::PACKAGE_JSON).await;
     INIT_TEMPLATE_FILE(&ui_config.tailwind_input_file, MyTemplate::STYLE_TAILWIND_CSS).await;
     INIT_TEMPLATE_FILE(FILE_NAME::TAILWIND_CONFIG_JS, MyTemplate::TAILWIND_CONFIG).await;
