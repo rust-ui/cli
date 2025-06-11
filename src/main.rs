@@ -1,6 +1,3 @@
-#![warn(clippy::all)]
-#![deny(clippy::unwrap_used)]
-
 use clap::Command;
 use std::process;
 
