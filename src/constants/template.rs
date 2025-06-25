@@ -85,6 +85,11 @@ impl MyTemplate {
     @apply bg-background text-foreground;
   }
 
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
   dialog {
     margin: auto;
   }
