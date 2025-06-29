@@ -3,6 +3,7 @@ use std::process;
 
 mod command_add;
 mod command_init;
+mod command_starters;
 mod constants;
 mod shared;
 
@@ -11,6 +12,7 @@ use constants::commands::MyCommand;
 // * cargo run --bin ui init
 // * cargo run --bin ui add button demo_button demo_button_variants demo_button_sizes
 // * cargo run --bin ui add demo_use_floating_placement
+// * cargo run --bin ui starters
 
 // TODO 🐛 add [primitives/dialog]
 // └──> 🔸 Write file in primitives/primitives/dialog.tsx
@@ -25,7 +27,8 @@ async fn main() {
         .about(env!("CARGO_PKG_DESCRIPTION"))
         .version(env!("CARGO_PKG_VERSION"))
         .subcommand(command_init::_init::command_init())
-        .subcommand(command_add::_add::command_add());
+        .subcommand(command_add::_add::command_add())
+        .subcommand(command_starters::_starters::command_starters());
 
     let matches = mut_program.clone().get_matches();
 
@@ -36,6 +39,9 @@ async fn main() {
         }
         Some((MyCommand::ADD, sub_matches)) => {
             let _ = command_add::_add::process_add(sub_matches).await;
+        }
+        Some((MyCommand::STARTERS, _)) => {
+            command_starters::_starters::process_starters().await;
         }
         _ => {
             if let Err(err) = mut_program.print_help() {

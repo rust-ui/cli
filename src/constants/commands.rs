@@ -1,6 +1,7 @@
 pub struct MyCommand;
 pub struct AddCommand;
 pub struct InitCommand;
+pub struct StartersCommand;
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                     ✨ FUNCTIONS ✨                        */
@@ -9,6 +10,7 @@ pub struct InitCommand;
 impl MyCommand {
     pub const ADD: &'static str = "add";
     pub const INIT: &'static str = "init";
+    pub const STARTERS: &'static str = "starters";
 }
 
 impl AddCommand {
@@ -21,4 +23,10 @@ impl InitCommand {
     pub const PROJECT_NAME: &'static str = "project_name";
     pub const HELP: &'static str = "The name of the project to initialize";
     pub const ABOUT: &'static str = "Initialize the project";
+}
+
+impl StartersCommand {
+    pub const ABOUT: &'static str = "Choose and install starter templates";
+    pub const STARTER_TEMPLATE: &'static str = "starter_template";
+    pub const HELP: &'static str = "The starter template to install";
 }
