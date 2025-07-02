@@ -2,7 +2,6 @@
 # will have compiled files and executables
 /target/
 pkg
-Cargo.lock
 
 # Node
 /node_modules/
