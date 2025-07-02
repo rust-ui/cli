@@ -27,6 +27,4 @@ impl InitCommand {
 
 impl StartersCommand {
     pub const ABOUT: &'static str = "Choose and install starter templates";
-    pub const STARTER_TEMPLATE: &'static str = "starter_template";
-    pub const HELP: &'static str = "The starter template to install";
 }
