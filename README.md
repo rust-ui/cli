@@ -15,16 +15,16 @@ cargo install ui-cli --force
 
 ## Commands
 
-### 1. Starters (optional)
+### 1. Starters (optional, quick start)
 
 If you want to start very easily with all setup for you, run this:
 
 ```bash
-ui starters
+ui starters # Optional, quick start
 ```
 
 
-### 2. Init
+### 2. Init (existing projects)
 
 If you want add components to an existing project, run this:
 
