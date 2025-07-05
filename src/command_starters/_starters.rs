@@ -30,75 +30,35 @@ pub async fn process_starters() {
         .interact()
         .unwrap();
 
-    match STARTER_TEMPLATES[selection] {
-        TRUNK => {
-            println!("Installing {TRUNK} starter...");
-            let output = ProcessCommand::new("git")
-                .arg("clone")
-                .arg(format!("https://github.com/rust-ui/start-{TRUNK}.git"))
-                .stdout(Stdio::inherit())
-                .stderr(Stdio::inherit())
-                .output();
+    let selected_template = STARTER_TEMPLATES[selection];
+    clone_starter_template(selected_template);
+}
 
-            match output {
-                Ok(output) => {
-                    if output.status.success() {
-                        println!("✅ Successfully cloned {TRUNK} starter template");
-                    } else {
-                        eprintln!("🔸 Failed to clone {TRUNK} starter template");
-                    }
-                }
-                Err(err) => {
-                    eprintln!("🔸 Error executing git clone: {err}");
-                }
+/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/*                     ✨ FUNCTIONS ✨                        */
+/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+/// Helper function to clone a starter template repository
+fn clone_starter_template(template_name: &str) {
+    println!("Installing {template_name} starter...");
+
+    let output = ProcessCommand::new("git")
+        .arg("clone")
+        .arg(format!("https://github.com/rust-ui/start-{template_name}.git"))
+        .stdout(Stdio::inherit())
+        .stderr(Stdio::inherit())
+        .output();
+
+    match output {
+        Ok(output) => {
+            if output.status.success() {
+                println!("✅ Successfully cloned {template_name} starter template");
+            } else {
+                eprintln!("🔸 Failed to clone {template_name} starter template");
             }
         }
-        LEPTOS_SSR => {
-            println!("Installing {LEPTOS_SSR} starter...");
-            let output = ProcessCommand::new("git")
-                .arg("clone")
-                .arg(format!("https://github.com/rust-ui/start-{LEPTOS_SSR}.git"))
-                .stdout(Stdio::inherit())
-                .stderr(Stdio::inherit())
-                .output();
-
-            match output {
-                Ok(output) => {
-                    if output.status.success() {
-                        println!("✅ Successfully cloned {LEPTOS_SSR} starter template");
-                    } else {
-                        eprintln!("🔸 Failed to clone {LEPTOS_SSR} starter template");
-                    }
-                }
-                Err(err) => {
-                    eprintln!("🔸 Error executing git clone: {err}");
-                }
-            }
-        }
-        LEPTOS_SSR_WORKSPACE => {
-            println!("Installing {LEPTOS_SSR_WORKSPACE} starter...");
-            let output = ProcessCommand::new("git")
-                .arg("clone")
-                .arg(format!("https://github.com/rust-ui/start-{LEPTOS_SSR_WORKSPACE}.git"))
-                .stdout(Stdio::inherit())
-                .stderr(Stdio::inherit())
-                .output();
-
-            match output {
-                Ok(output) => {
-                    if output.status.success() {
-                        println!("✅ Successfully cloned {LEPTOS_SSR_WORKSPACE} starter template");
-                    } else {
-                        eprintln!("🔸 Failed to clone {LEPTOS_SSR_WORKSPACE} starter template");
-                    }
-                }
-                Err(err) => {
-                    eprintln!("🔸 Error executing git clone: {err}");
-                }
-            }
-        }
-        _ => {
-            println!("Unknown starter template");
+        Err(err) => {
+            eprintln!("🔸 Error executing git clone: {err}");
         }
     }
 }
