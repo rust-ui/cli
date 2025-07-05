@@ -28,9 +28,9 @@ pub async fn process_starters() {
         .items(STARTER_TEMPLATES)
         .default(0)
         .interact()
-        .unwrap();
+        .expect("Failed to select a starter template");
 
-    let selected_template = STARTER_TEMPLATES[selection];
+    let selected_template = STARTER_TEMPLATES.get(selection).expect("Invalid selection");
     clone_starter_template(selected_template);
 }
 

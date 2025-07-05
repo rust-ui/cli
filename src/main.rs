@@ -1,3 +1,15 @@
+#![cfg_attr(
+    not(test),
+    deny(
+        // clippy::expect_used, // TODO later.
+        clippy::unwrap_used,
+        clippy::panic,
+        clippy::todo,
+        clippy::indexing_slicing,
+    )
+)]
+#![deny(irrefutable_let_patterns)]
+
 use clap::Command;
 use std::process;
 
