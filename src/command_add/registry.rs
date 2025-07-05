@@ -66,9 +66,14 @@ impl RegistryComponent {
         let response = reqwest::get(&formatted_url_json).await?;
         let json_content: serde_json::Value = response.json().await?;
 
-        let registry_json_path = json_content["path"].as_str().ok_or("Path not found")?.to_string();
-        let registry_json_content = json_content["files"][0]["content"]
-            .as_str()
+        let registry_json_path = json_content
+            .get("path")
+            .and_then(|v| v.as_str())
+            .ok_or("Path not found")?
+            .to_string();
+        let registry_json_content = json_content
+            .get("files")
+            .and_then(|v| v.get(0).and_then(|v| v.get("content").and_then(|v| v.as_str())))
             .ok_or("Content not found")?
             .to_string();
 
