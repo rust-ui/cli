@@ -29,26 +29,27 @@ pub fn command_init() -> Command {
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-pub async fn process_init() {
+pub async fn process_init() -> anyhow::Result<()> {
     let ui_config = UiConfig::default();
 
     let ui_config_toml = match toml::to_string_pretty(&ui_config) {
         Ok(s) => s,
         Err(err) => {
             eprintln!("Error serializing UiConfig: {err}");
-            return;
+            return Err(err.into());
         }
     };
-    INIT_TEMPLATE_FILE(FILE_NAME::UI_CONFIG_TOML, &ui_config_toml).await;
-    INIT_TEMPLATE_FILE(FILE_NAME::PACKAGE_JSON, MyTemplate::PACKAGE_JSON).await;
-    INIT_TEMPLATE_FILE(&ui_config.tailwind_input_file, MyTemplate::STYLE_TAILWIND_CSS).await;
-    INIT_TEMPLATE_FILE(FILE_NAME::TAILWIND_CONFIG_JS, MyTemplate::TAILWIND_CONFIG).await;
+    INIT_TEMPLATE_FILE(FILE_NAME::UI_CONFIG_TOML, &ui_config_toml).await?;
+    INIT_TEMPLATE_FILE(FILE_NAME::PACKAGE_JSON, MyTemplate::PACKAGE_JSON).await?;
+    INIT_TEMPLATE_FILE(&ui_config.tailwind_input_file, MyTemplate::STYLE_TAILWIND_CSS).await?;
+    INIT_TEMPLATE_FILE(FILE_NAME::TAILWIND_CONFIG_JS, MyTemplate::TAILWIND_CONFIG).await?;
 
-    add_init_crates().await;
+    add_init_crates().await?;
 
-    UserInput::handle_index_styles().await;
+    UserInput::handle_index_styles().await?;
 
-    Install::tailwind_with_pnpm().await;
+    Install::tailwind_with_pnpm().await?;
+    Ok(())
 }
 
 //
@@ -58,7 +59,7 @@ pub async fn process_init() {
 
 /// INIT TEMPLATE FILE
 #[allow(non_snake_case)]
-async fn INIT_TEMPLATE_FILE(file_name: &str, template: &str) {
+async fn INIT_TEMPLATE_FILE(file_name: &str, template: &str) -> anyhow::Result<()> {
     let file_path = format!("{RELATIVE_PATH_PROJECT_DIR}/{file_name}");
 
     // if !shared_check_file_exist_and_ask_overwrite(&file_path, file_name_ext).await {
@@ -69,8 +70,9 @@ async fn INIT_TEMPLATE_FILE(file_name: &str, template: &str) {
     spinner.set_message("Writing to file...");
     spinner.enable_steady_tick(Duration::from_millis(SPINNER_UPDATE_DURATION));
 
-    let _ = shared_write_template_file(&file_path, &spinner, template).await;
+    shared_write_template_file(&file_path, &spinner, template).await?;
 
     let finish_message = format!("✔️ Writing {file_name} complete.");
     spinner.finish_with_message(finish_message);
+    Ok(())
 }

@@ -6,7 +6,8 @@ use std::path::Path;
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-pub async fn shared_check_file_exist_and_ask_overwrite(file_path: &str, file_name: &str) -> bool {
+#[allow(dead_code)]
+pub async fn shared_check_file_exist_and_ask_overwrite(file_path: &str, file_name: &str) -> anyhow::Result<bool> {
     if Path::new(file_path).exists() {
         println!(
             "⚠️ {} {} {} {}",
@@ -17,19 +18,19 @@ pub async fn shared_check_file_exist_and_ask_overwrite(file_path: &str, file_nam
         );
 
         let mut input = String::new();
-        io::stdin().read_line(&mut input).expect("Failed to read line");
+        io::stdin().read_line(&mut input)?;
 
         match input.trim().to_lowercase().as_str() {
-            "y" | "yes" => return true, // User confirmed overwrite
+            "y" | "yes" => return Ok(true), // User confirmed overwrite
             _ => {
                 println!(
                     "{} {}",
                     "🚧 Operation canceled.".blue().bold(),
                     "The file will not be overwritten".blue()
                 );
-                return false; // User declined overwrite
+                return Ok(false); // User declined overwrite
             }
         }
     }
-    true // File does not exist, proceed
+    Ok(true) // File does not exist, proceed
 }

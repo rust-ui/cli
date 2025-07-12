@@ -14,13 +14,13 @@ impl Dependencies {
     pub fn all_tree_resolved(
         user_components: Vec<String>,
         vec_components_from_index: &[MyComponent],
-    ) -> HashMap<String, ResolvedComponent> {
+    ) -> anyhow::Result<HashMap<String, ResolvedComponent>> {
         let component_map: HashMap<String, MyComponent> = vec_components_from_index
             .iter()
             .map(|c| (c.name.clone(), c.clone()))
             .collect();
 
-        resolve_all_dependencies(&component_map, &user_components).expect("Failed to resolve all dependencies")
+        resolve_all_dependencies(&component_map, &user_components)
     }
 
     pub fn get_all_resolved_components(resolved: &HashMap<String, ResolvedComponent>) -> Vec<String> {
@@ -99,7 +99,7 @@ impl Dependencies {
 
     //
 
-    pub fn add_cargo_dep_to_toml(cargo_deps: &[String]) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn add_cargo_dep_to_toml(cargo_deps: &[String]) -> anyhow::Result<()> {
         // Find Cargo.toml file in the current directory or parent directories
         let cargo_toml_path = find_cargo_toml()?;
 
@@ -164,7 +164,7 @@ impl Dependencies {
 fn resolve_all_dependencies(
     component_map: &HashMap<String, MyComponent>,
     user_components: &[String],
-) -> Result<HashMap<String, ResolvedComponent>, Box<dyn std::error::Error>> {
+) -> anyhow::Result<HashMap<String, ResolvedComponent>> {
     // Map to store resolved components
     let mut resolved_components: HashMap<String, ResolvedComponent> = HashMap::new();
 
@@ -191,7 +191,7 @@ fn resolve_component_recursive(
     component_map: &HashMap<String, MyComponent>,
     resolved_components: &mut HashMap<String, ResolvedComponent>,
     visited: &mut HashSet<String>,
-) -> Result<(HashSet<String>, HashSet<String>), Box<dyn std::error::Error>> {
+) -> anyhow::Result<(HashSet<String>, HashSet<String>)> {
     // Return cached result if already processed
     if let Some(resolved) = resolved_components.get(component_name) {
         return Ok((
@@ -202,13 +202,13 @@ fn resolve_component_recursive(
 
     // Prevent infinite recursion
     if !visited.insert(component_name.to_string()) {
-        return Err(format!("Circular dependency detected involving '{component_name}'").into());
+        return Err(anyhow::anyhow!("Circular dependency detected involving '{component_name}'"));
     }
 
     // Get component or return error if not found
     let component = match component_map.get(component_name) {
         Some(c) => c,
-        None => return Err(format!("Component '{component_name}' not found").into()),
+        None => return Err(anyhow::anyhow!("Component '{component_name}' not found")),
     };
 
     // Collect all dependencies recursively
@@ -310,7 +310,7 @@ fn print_component_tree(
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-fn find_cargo_toml() -> Result<String, Box<dyn std::error::Error>> {
+fn find_cargo_toml() -> anyhow::Result<String> {
     // Start with the current directory
     let mut current_dir = std::env::current_dir()?;
 
@@ -328,5 +328,5 @@ fn find_cargo_toml() -> Result<String, Box<dyn std::error::Error>> {
         }
     }
 
-    Err("Could not find Cargo.toml in the current directory or any parent directories".into())
+    Err(anyhow::anyhow!("Could not find Cargo.toml in the current directory or any parent directories"))
 }

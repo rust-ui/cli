@@ -30,7 +30,7 @@ pub struct Components {}
 
 impl Components {
     // TODO. Have instead all_resolved_parent_dirs instead of compomnents.
-    pub fn create_components_mod_if_not_exists_with_pub_mods(user_config_path: String, parent_dirs: Vec<String>) {
+    pub fn create_components_mod_if_not_exists_with_pub_mods(user_config_path: String, parent_dirs: Vec<String>) -> anyhow::Result<()> {
         let components_mod_path = format!("{user_config_path}/mod.rs");
 
         // println!("Parent directories to add to components/mod.rs: {:?}", parent_dirs);
@@ -38,33 +38,33 @@ impl Components {
         // Create the directory if it doesn't exist
         let dir = std::path::Path::new(&components_mod_path)
             .parent()
-            .expect("Failed to get parent directory");
-        std::fs::create_dir_all(dir).expect("Failed to create directories");
+            .ok_or_else(|| anyhow::anyhow!("Failed to get parent directory for {}", components_mod_path))?;
+        std::fs::create_dir_all(dir)?;
 
         // Initialize mod_content
         let mut mod_content = String::new();
 
         // Check if the mod.rs file already exists
         if std::path::Path::new(&components_mod_path).exists() {
-            mod_content = std::fs::read_to_string(&components_mod_path).expect("Failed to read mod.rs");
+            mod_content = std::fs::read_to_string(&components_mod_path)?;
         }
 
         // Create or open the mod.rs file for writing
         let mut mod_rs_file = std::fs::OpenOptions::new()
             .append(true)
             .create(true)
-            .open(components_mod_path)
-            .expect("Failed to open mod.rs");
+            .open(components_mod_path)?;
 
         // Add each parent directory as a module if it doesn't already exist
         for parent_dir in parent_dirs {
             if !mod_content.contains(&format!("pub mod {parent_dir};")) {
-                writeln!(mod_rs_file, "pub mod {parent_dir};").expect("🔸 Failed to write to mod.rs");
+                writeln!(mod_rs_file, "pub mod {parent_dir};")?;
             }
         }
+        Ok(())
     }
 
-    pub fn register_components_in_application_entry(entry_file_path: &str) -> Result<(), Box<dyn std::error::Error>> {
+    pub fn register_components_in_application_entry(entry_file_path: &str) -> anyhow::Result<()> {
         let file_content = std::fs::read_to_string(entry_file_path)?;
 
         const MOD_COMPONENTS: &str = "mod components;";

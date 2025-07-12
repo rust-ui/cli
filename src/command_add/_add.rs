@@ -27,7 +27,7 @@ pub fn command_add() -> Command {
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 //
-pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error::Error>> {
+pub async fn process_add(matches: &ArgMatches) -> anyhow::Result<()> {
     // dotenv().ok();
 
     // let base_url = env::var(ENV::BASE_URL).unwrap_or_default();
@@ -42,9 +42,9 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
     let index_content_from_url = Registry::fetch_index_content(url_registry_index_json).await?;
 
     let vec_components_from_index: Vec<MyComponent> = serde_json::from_str(&index_content_from_url)
-        .map_err(|e| format!("Failed to parse registry index JSON: {e}"))?;
+        .map_err(|e| anyhow::anyhow!("Failed to parse registry index JSON: {e}"))?;
 
-    let all_tree_resolved = Dependencies::all_tree_resolved(user_components, &vec_components_from_index);
+    let all_tree_resolved = Dependencies::all_tree_resolved(user_components, &vec_components_from_index)?;
     Dependencies::print_dependency_tree(&all_tree_resolved); // Can be commented out
     let all_resolved_components = Dependencies::get_all_resolved_components(&all_tree_resolved);
     let all_resolved_parent_dirs = Dependencies::get_all_resolved_parent_dirs(&all_tree_resolved);
@@ -61,18 +61,20 @@ pub async fn process_add(matches: &ArgMatches) -> Result<(), Box<dyn std::error:
     Components::create_components_mod_if_not_exists_with_pub_mods(
         components_base_path.clone(),
         all_resolved_parent_dirs.clone(),
-    );
+    )?;
 
     //  Register `components` module
-    let mut file_path = components_base_path.split("/").collect::<Vec<&str>>();
-    assert_eq!(file_path.pop(), Some("components"));
-
-    let file_path = file_path.join("/");
-    let entry_file_path = if Path::new(&format!("{file_path}/lib.rs")).exists() {
-        format!("{file_path}/lib.rs")
+    let components_path = Path::new(&components_base_path);
+    let parent_path = components_path.parent()
+        .ok_or_else(|| anyhow::anyhow!("Invalid components path: no parent directory"))?;
+    
+    let entry_file_path = if parent_path.join("lib.rs").exists() {
+        parent_path.join("lib.rs")
     } else {
-        format!("{file_path}/main.rs")
+        parent_path.join("main.rs")
     };
+    
+    let entry_file_path = entry_file_path.to_string_lossy().to_string();
 
     Components::register_components_in_application_entry(entry_file_path.as_str())?;
 

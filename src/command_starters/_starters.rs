@@ -22,16 +22,17 @@ const LEPTOS_SSR: &str = "leptos-ssr";
 const LEPTOS_SSR_WORKSPACE: &str = "leptos-ssr-workspace";
 const STARTER_TEMPLATES: &[&str] = &[TRUNK, LEPTOS_SSR, LEPTOS_SSR_WORKSPACE];
 
-pub async fn process_starters() {
+pub async fn process_starters() -> anyhow::Result<()> {
     let selection = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Select a starter template")
         .items(STARTER_TEMPLATES)
         .default(0)
-        .interact()
-        .expect("Failed to select a starter template");
+        .interact()?;
 
-    let selected_template = STARTER_TEMPLATES.get(selection).expect("Invalid selection");
-    clone_starter_template(selected_template);
+    let selected_template = STARTER_TEMPLATES.get(selection)
+        .ok_or_else(|| anyhow::anyhow!("Invalid selection: {}", selection))?;
+    clone_starter_template(selected_template)?;
+    Ok(())
 }
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -39,7 +40,7 @@ pub async fn process_starters() {
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 /// Helper function to clone a starter template repository
-fn clone_starter_template(template_name: &str) {
+fn clone_starter_template(template_name: &str) -> anyhow::Result<()> {
     println!("Installing {template_name} starter...");
 
     let output = ProcessCommand::new("git")
@@ -55,10 +56,13 @@ fn clone_starter_template(template_name: &str) {
                 println!("✅ Successfully cloned {template_name} starter template");
             } else {
                 eprintln!("🔸 Failed to clone {template_name} starter template");
+                return Err(anyhow::anyhow!("Failed to clone {template_name} starter template"));
             }
         }
         Err(err) => {
             eprintln!("🔸 Error executing git clone: {err}");
+            return Err(err.into());
         }
     }
+    Ok(())
 }

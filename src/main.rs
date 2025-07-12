@@ -1,7 +1,7 @@
 #![cfg_attr(
     not(test),
     deny(
-        // clippy::expect_used, // TODO later.
+        clippy::expect_used,
         clippy::unwrap_used,
         clippy::panic,
         clippy::todo,
@@ -47,13 +47,22 @@ async fn main() {
     // Handle commands
     match matches.subcommand() {
         Some((MyCommand::INIT, _)) => {
-            command_init::_init::process_init().await;
+            if let Err(e) = command_init::_init::process_init().await {
+                eprintln!("Error processing init command: {e}");
+                process::exit(1);
+            }
         }
         Some((MyCommand::ADD, sub_matches)) => {
-            let _ = command_add::_add::process_add(sub_matches).await;
+            if let Err(e) = command_add::_add::process_add(sub_matches).await {
+                eprintln!("Error processing add command: {e}");
+                process::exit(1);
+            }
         }
         Some((MyCommand::STARTERS, _)) => {
-            command_starters::_starters::process_starters().await;
+            if let Err(e) = command_starters::_starters::process_starters().await {
+                eprintln!("Error processing starters command: {e}");
+                process::exit(1);
+            }
         }
         _ => {
             if let Err(err) = mut_program.print_help() {

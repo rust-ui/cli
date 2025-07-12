@@ -75,7 +75,7 @@ impl Default for UiConfig {
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-pub async fn add_init_crates() {
+pub async fn add_init_crates() -> anyhow::Result<()> {
     // `crate` is a reserved keyword.
     for my_crate in INIT_CRATES {
         let spinner = ProgressBar::new_spinner();
@@ -89,8 +89,7 @@ pub async fn add_init_crates() {
         }
         let output = Command::new("cargo")
             .args(args)
-            .output()
-            .expect("🔸 Failed to add crate!");
+            .output()?;
 
         if output.status.success() {
             spinner.finish_with_message("✔️ Crates added successfully.");
@@ -101,4 +100,5 @@ pub async fn add_init_crates() {
             ));
         }
     }
+    Ok(())
 }
