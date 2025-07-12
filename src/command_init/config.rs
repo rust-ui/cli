@@ -36,9 +36,9 @@ impl UiConfig {
 
     pub fn try_reading_ui_config(toml_path: &str) -> Result<UiConfig> {
         let contents = fs::read_to_string(toml_path)
-            .map_err(|e| CliError::file_operation(format!("Failed to read config file '{toml_path}': {e}")))?;
+            .map_err(|e| CliError::file_operation(&format!("Failed to read config file '{toml_path}': {e}")))?;
         let ui_config: UiConfig = toml::from_str(&contents)
-            .map_err(|e| CliError::config(format!("Failed to parse config file '{toml_path}': {e}")))?;
+            .map_err(|e| CliError::config(&format!("Failed to parse config file '{toml_path}': {e}")))?;
         Ok(ui_config)
     }
 }
@@ -89,12 +89,12 @@ pub async fn add_init_crates() -> Result<()> {
         let output = Command::new("cargo")
             .args(args)
             .output()
-            .map_err(|e| CliError::cargo_operation(format!("Failed to execute cargo add {}: {}", my_crate.name, e)))?;
+            .map_err(|e| CliError::cargo_operation(&format!("Failed to execute cargo add {}: {}", my_crate.name, e)))?;
 
         if output.status.success() {
             spinner.finish_success("Crates added successfully.");
         } else {
-            return Err(CliError::cargo_operation(format!(
+            return Err(CliError::cargo_operation(&format!(
                 "Failed to add crate '{}': {}",
                 my_crate.name,
                 String::from_utf8_lossy(&output.stderr)
