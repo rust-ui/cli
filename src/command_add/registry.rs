@@ -6,7 +6,7 @@ use std::io::Write;
 use crate::{
     command_init::config::UiConfig,
     constants::{file_name::FileName, url::MyUrl},
-    shared::cli_error::{CliError, Result},
+    shared::cli_error::{CliError, CliResult},
 };
 
 use serde_json;
@@ -14,7 +14,7 @@ use serde_json;
 pub struct Registry {}
 
 impl Registry {
-    pub async fn fetch_index_content(url: &str) -> Result<String> {
+    pub async fn fetch_index_content(url: &str) -> CliResult<String> {
         // Attempt to fetch the content from the URL
         let response = reqwest::get(url).await
             .map_err(|e| CliError::registry_fetch(&format!("Failed to fetch from {url}: {e}")))?;
@@ -53,7 +53,7 @@ pub struct RegistryComponent {
 impl RegistryComponent {
     pub async fn fetch_from_registry(
         component_name_json: String,
-    ) -> Result<RegistryComponent> {
+    ) -> CliResult<RegistryComponent> {
         let base_url_styles_default = MyUrl::BASE_URL_STYLES_DEFAULT;
         let formatted_url_json = format!("{base_url_styles_default}/{component_name_json}.json");
 
@@ -86,7 +86,7 @@ impl RegistryComponent {
         })
     }
 
-    pub async fn then_write_to_file(self) -> Result<()> {
+    pub async fn then_write_to_file(self) -> CliResult<()> {
         let components_base_path = UiConfig::try_reading_ui_config(FileName::UI_CONFIG_TOML)?.base_path_components;
         let full_path_component = std::path::Path::new(&components_base_path).join(&self.registry_json_path);
 
@@ -116,7 +116,7 @@ impl RegistryComponent {
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-fn write_component_name_in_mod_rs_if_not_exists(component_name: String, full_path_component_without_name_rs: String) -> Result<()> {
+fn write_component_name_in_mod_rs_if_not_exists(component_name: String, full_path_component_without_name_rs: String) -> CliResult<()> {
     let mod_rs_path = std::path::Path::new(&full_path_component_without_name_rs).join("mod.rs");
 
     // Create the directory if it doesn't exist

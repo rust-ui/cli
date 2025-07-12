@@ -12,7 +12,7 @@ use crate::command_init::config::UiConfig;
 use crate::constants::commands::{AddCommand, MyCommand};
 use crate::constants::file_name::FileName;
 use crate::constants::url::MyUrl;
-use crate::shared::cli_error::{CliError, Result};
+use crate::shared::cli_error::{CliError, CliResult};
 
 pub fn command_add() -> Command {
     Command::new(MyCommand::ADD).about(AddCommand::ABOUT).arg(
@@ -28,7 +28,7 @@ pub fn command_add() -> Command {
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 //
-pub async fn process_add(matches: &ArgMatches) -> Result<()> {
+pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     // dotenv().ok();
 
     // let base_url = env::var(ENV::BASE_URL).unwrap_or_default();

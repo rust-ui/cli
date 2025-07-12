@@ -2,7 +2,7 @@ use crate::constants::commands::{MyCommand, StartersCommand};
 use clap::Command;
 use dialoguer::{Select, theme::ColorfulTheme};
 use std::process::{Command as ProcessCommand, Stdio};
-use crate::shared::cli_error::{CliError, Result};
+use crate::shared::cli_error::{CliError, CliResult};
 
 // TODO. Use cargo-generate later for more customization.
 
@@ -23,7 +23,7 @@ const LEPTOS_SSR: &str = "leptos-ssr";
 const LEPTOS_SSR_WORKSPACE: &str = "leptos-ssr-workspace";
 const STARTER_TEMPLATES: &[&str] = &[TRUNK, LEPTOS_SSR, LEPTOS_SSR_WORKSPACE];
 
-pub async fn process_starters() -> Result<()> {
+pub async fn process_starters() -> CliResult<()> {
     let selection = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Select a starter template")
         .items(STARTER_TEMPLATES)
@@ -42,7 +42,7 @@ pub async fn process_starters() -> Result<()> {
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 /// Helper function to clone a starter template repository
-fn clone_starter_template(template_name: &str) -> Result<()> {
+fn clone_starter_template(template_name: &str) -> CliResult<()> {
     println!("Installing {template_name} starter...");
 
     let output = ProcessCommand::new("git")

@@ -6,7 +6,7 @@ use std::io;
 use crate::command_init::fetch::Fetch;
 // use crate::constants::env::ENV;
 use crate::constants::url::MyUrl;
-use crate::shared::cli_error::{CliError, Result};
+use crate::shared::cli_error::{CliError, CliResult};
 
 const LABEL: &str = "label";
 
@@ -17,7 +17,7 @@ const LABEL: &str = "label";
 pub struct UserInput {}
 
 impl UserInput {
-    pub async fn handle_index_styles() -> Result<()> {
+    pub async fn handle_index_styles() -> CliResult<()> {
         // dotenv().ok();
 
         // let url_registry_styles_json = env::var(ENV::URL_REGISTRY_STYLES_JSON).unwrap_or_default();
@@ -41,7 +41,7 @@ impl UserInput {
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 /// Ask user to choose a style
-fn ask_user_choose_style(vec_styles: Vec<serde_json::Value>) -> Result<()> {
+fn ask_user_choose_style(vec_styles: Vec<serde_json::Value>) -> CliResult<()> {
     // Print available styles
     for (index, style) in vec_styles.iter().enumerate() {
         if let Some(label) = style.get(LABEL) {
