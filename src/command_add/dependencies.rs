@@ -107,7 +107,7 @@ impl Dependencies {
 
         // Read the current Cargo.toml content
         let mut cargo_toml_content = fs::read_to_string(&cargo_toml_path)
-            .map_err(|e| CliError::file_operation(&format!("Failed to read Cargo.toml at '{cargo_toml_path}': {e}")))?;
+            .map_err(|_| CliError::file_read_failed())?;
 
         // Check if dependencies section exists
         if !cargo_toml_content.contains("[dependencies]") {
@@ -130,16 +130,12 @@ impl Dependencies {
                 .arg("add")
                 .arg(dep)
                 .output()
-                .map_err(|e| CliError::cargo_operation(&format!("Failed to execute 'cargo add {dep}': {e}")))?;
+                .map_err(|_| CliError::cargo_operation("Failed to execute cargo add"))?;
 
             if output.status.success() {
                 added_deps.push(dep);
             } else {
-                return Err(CliError::cargo_operation(&format!(
-                    "Failed to add dependency '{}': {}",
-                    dep,
-                    String::from_utf8_lossy(&output.stderr)
-                )));
+                return Err(CliError::cargo_operation("Failed to add dependency"));
             }
         }
 
@@ -315,7 +311,7 @@ fn print_component_tree(
 fn find_cargo_toml() -> CliResult<String> {
     // Start with the current directory
     let mut current_dir = std::env::current_dir()
-        .map_err(|e| CliError::file_operation(&format!("Failed to get current directory: {e}")))?;
+        .map_err(|_| CliError::file_operation("Failed to get current directory"))?;
 
     loop {
         let cargo_toml_path = current_dir.join("Cargo.toml");
@@ -331,7 +327,5 @@ fn find_cargo_toml() -> CliResult<String> {
         }
     }
 
-    Err(CliError::file_operation(
-        "Could not find Cargo.toml in the current directory or any parent directories",
-    ))
+    Err(CliError::file_not_found())
 }

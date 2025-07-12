@@ -6,8 +6,9 @@ pub enum CliError {
     #[error("🔸 Circular dependency detected involving component '{name}'")]
     CircularDependency { name: String },
 
-    #[error("🔸 Failed to fetch registry data: {message}")]
-    RegistryFetch { message: String },
+    #[error("🔸 Registry request failed")]
+    RegistryRequestFailed,
+
 
     #[error("🔸 Network request failed: {source}")]
     Network {
@@ -17,6 +18,18 @@ pub enum CliError {
 
     #[error("🔸 File operation failed: {message}")]
     FileOperation { message: String },
+
+    #[error("🔸 File not found")]
+    FileNotFound,
+
+    #[error("🔸 Failed to create directory")]
+    DirectoryCreateFailed,
+
+    #[error("🔸 Failed to write file")]
+    FileWriteFailed,
+
+    #[error("🔸 Failed to read file")]
+    FileReadFailed,
 
     #[error("🔸 IO error: {source}")]
     Io {
@@ -45,11 +58,11 @@ pub enum CliError {
         source: serde_json::Error,
     },
 
-    #[error("🔸 Process execution failed: {command} - {message}")]
-    ProcessExecution { command: String, message: String },
+    #[error("🔸 npm install failed")]
+    NpmInstallFailed,
 
-    #[error("🔸 Git operation failed: {operation} - {message}")]
-    GitOperation { operation: String, message: String },
+    #[error("🔸 Git clone failed")]
+    GitCloneFailed,
 
     #[error("🔸 Cargo operation failed: {message}")]
     CargoOperation { message: String },
@@ -57,11 +70,18 @@ pub enum CliError {
     #[error("🔸 Path validation error: {path} - {reason}")]
     InvalidPath { path: String, reason: String },
 
+
     #[error("🔸 Validation error: {message}")]
     Validation { message: String },
 
     #[error("🔸 Registry index is malformed: {reason}")]
     MalformedRegistry { reason: String },
+
+    #[error("🔸 Registry component missing required fields")]
+    RegistryComponentMissing,
+
+    #[error("🔸 Registry has invalid format")]
+    RegistryInvalidFormat,
 }
 
 impl CliError {
@@ -73,11 +93,6 @@ impl CliError {
         Self::CircularDependency { name: name.to_string() }
     }
 
-    pub fn registry_fetch(message: &str) -> Self {
-        Self::RegistryFetch {
-            message: message.to_string(),
-        }
-    }
 
     pub fn file_operation(message: &str) -> Self {
         Self::FileOperation {
@@ -85,25 +100,16 @@ impl CliError {
         }
     }
 
+
     pub fn config(message: &str) -> Self {
         Self::Config {
             message: message.to_string(),
         }
     }
 
-    pub fn process_execution(command: &str, message: &str) -> Self {
-        Self::ProcessExecution {
-            command: command.to_string(),
-            message: message.to_string(),
-        }
-    }
 
-    pub fn git_operation(operation: &str, message: &str) -> Self {
-        Self::GitOperation {
-            operation: operation.to_string(),
-            message: message.to_string(),
-        }
-    }
+
+
 
     pub fn cargo_operation(message: &str) -> Self {
         Self::CargoOperation {
@@ -118,6 +124,7 @@ impl CliError {
         }
     }
 
+
     pub fn validation(message: &str) -> Self {
         Self::Validation {
             message: message.to_string(),
@@ -128,6 +135,44 @@ impl CliError {
         Self::MalformedRegistry {
             reason: reason.to_string(),
         }
+    }
+
+
+
+    pub fn registry_request_failed() -> Self {
+        Self::RegistryRequestFailed
+    }
+
+    pub fn file_not_found() -> Self {
+        Self::FileNotFound
+    }
+
+    pub fn directory_create_failed() -> Self {
+        Self::DirectoryCreateFailed
+    }
+
+    pub fn file_write_failed() -> Self {
+        Self::FileWriteFailed
+    }
+
+    pub fn file_read_failed() -> Self {
+        Self::FileReadFailed
+    }
+
+    pub fn npm_install_failed() -> Self {
+        Self::NpmInstallFailed
+    }
+
+    pub fn git_clone_failed() -> Self {
+        Self::GitCloneFailed
+    }
+
+    pub fn registry_component_missing() -> Self {
+        Self::RegistryComponentMissing
+    }
+
+    pub fn registry_invalid_format() -> Self {
+        Self::RegistryInvalidFormat
     }
 }
 

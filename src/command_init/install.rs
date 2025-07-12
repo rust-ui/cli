@@ -20,15 +20,12 @@ impl Install {
         }
 
         let output = cmd.output()
-            .map_err(|e| CliError::process_execution("pnpm install", &format!("Failed to execute pnpm install: {e}")))?;
+            .map_err(|_| CliError::npm_install_failed())?;
 
         if output.status.success() {
             spinner.finish_success("All TailwindCSS dependencies installed successfully");
         } else {
-            return Err(CliError::process_execution(
-                &format!("pnpm install {deps_list}"),
-                &String::from_utf8_lossy(&output.stderr)
-            ));
+            return Err(CliError::npm_install_failed());
         }
         
         Ok(())
