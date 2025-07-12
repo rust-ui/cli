@@ -6,9 +6,6 @@ pub enum CliError {
     #[error("🔸 Circular dependency detected involving component '{name}'")]
     CircularDependency { name: String },
 
-    #[error("🔸 Invalid component name '{name}': {reason}")]
-    InvalidComponentName { name: String, reason: String },
-
     #[error("🔸 Failed to fetch registry data: {message}")]
     RegistryFetch { message: String },
 
@@ -60,20 +57,11 @@ pub enum CliError {
     #[error("🔸 Path validation error: {path} - {reason}")]
     InvalidPath { path: String, reason: String },
 
-    #[error("🔸 Missing required dependency: {dependency}")]
-    MissingDependency { dependency: String },
-
     #[error("🔸 Validation error: {message}")]
     Validation { message: String },
 
-    #[error("🔸 Template processing error: {message}")]
-    Template { message: String },
-
     #[error("🔸 Registry index is malformed: {reason}")]
     MalformedRegistry { reason: String },
-
-    #[error("🔸 Component dependency resolution failed: {message}")]
-    DependencyResolution { message: String },
 }
 
 impl CliError {
@@ -83,13 +71,6 @@ impl CliError {
 
     pub fn circular_dependency(name: &str) -> Self {
         Self::CircularDependency { name: name.to_string() }
-    }
-
-    pub fn invalid_component_name(name: &str, reason: &str) -> Self {
-        Self::InvalidComponentName {
-            name: name.to_string(),
-            reason: reason.to_string(),
-        }
     }
 
     pub fn registry_fetch(message: &str) -> Self {
@@ -137,20 +118,8 @@ impl CliError {
         }
     }
 
-    pub fn missing_dependency(dependency: &str) -> Self {
-        Self::MissingDependency {
-            dependency: dependency.to_string(),
-        }
-    }
-
     pub fn validation(message: &str) -> Self {
         Self::Validation {
-            message: message.to_string(),
-        }
-    }
-
-    pub fn template(message: &str) -> Self {
-        Self::Template {
             message: message.to_string(),
         }
     }
@@ -158,12 +127,6 @@ impl CliError {
     pub fn malformed_registry(reason: &str) -> Self {
         Self::MalformedRegistry {
             reason: reason.to_string(),
-        }
-    }
-
-    pub fn dependency_resolution(message: &str) -> Self {
-        Self::DependencyResolution {
-            message: message.to_string(),
         }
     }
 }
