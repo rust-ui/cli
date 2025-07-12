@@ -78,93 +78,93 @@ pub enum CliError {
 }
 
 impl CliError {
-    pub fn component_not_found(name: impl Into<String>) -> Self {
-        Self::ComponentNotFound { name: name.into() }
+    pub fn component_not_found(name: &str) -> Self {
+        Self::ComponentNotFound { name: name.to_string() }
     }
 
-    pub fn circular_dependency(name: impl Into<String>) -> Self {
-        Self::CircularDependency { name: name.into() }
+    pub fn circular_dependency(name: &str) -> Self {
+        Self::CircularDependency { name: name.to_string() }
     }
 
-    pub fn invalid_component_name(name: impl Into<String>, reason: impl Into<String>) -> Self {
+    pub fn invalid_component_name(name: &str, reason: &str) -> Self {
         Self::InvalidComponentName {
-            name: name.into(),
-            reason: reason.into(),
+            name: name.to_string(),
+            reason: reason.to_string(),
         }
     }
 
-    pub fn registry_fetch(message: impl Into<String>) -> Self {
+    pub fn registry_fetch(message: &str) -> Self {
         Self::RegistryFetch {
-            message: message.into(),
+            message: message.to_string(),
         }
     }
 
-    pub fn file_operation(message: impl Into<String>) -> Self {
+    pub fn file_operation(message: &str) -> Self {
         Self::FileOperation {
-            message: message.into(),
+            message: message.to_string(),
         }
     }
 
-    pub fn config(message: impl Into<String>) -> Self {
+    pub fn config(message: &str) -> Self {
         Self::Config {
-            message: message.into(),
+            message: message.to_string(),
         }
     }
 
-    pub fn process_execution(command: impl Into<String>, message: impl Into<String>) -> Self {
+    pub fn process_execution(command: &str, message: &str) -> Self {
         Self::ProcessExecution {
-            command: command.into(),
-            message: message.into(),
+            command: command.to_string(),
+            message: message.to_string(),
         }
     }
 
-    pub fn git_operation(operation: impl Into<String>, message: impl Into<String>) -> Self {
+    pub fn git_operation(operation: &str, message: &str) -> Self {
         Self::GitOperation {
-            operation: operation.into(),
-            message: message.into(),
+            operation: operation.to_string(),
+            message: message.to_string(),
         }
     }
 
-    pub fn cargo_operation(message: impl Into<String>) -> Self {
+    pub fn cargo_operation(message: &str) -> Self {
         Self::CargoOperation {
-            message: message.into(),
+            message: message.to_string(),
         }
     }
 
-    pub fn invalid_path(path: impl Into<String>, reason: impl Into<String>) -> Self {
+    pub fn invalid_path(path: &str, reason: &str) -> Self {
         Self::InvalidPath {
-            path: path.into(),
-            reason: reason.into(),
+            path: path.to_string(),
+            reason: reason.to_string(),
         }
     }
 
-    pub fn missing_dependency(dependency: impl Into<String>) -> Self {
+    pub fn missing_dependency(dependency: &str) -> Self {
         Self::MissingDependency {
-            dependency: dependency.into(),
+            dependency: dependency.to_string(),
         }
     }
 
-    pub fn validation(message: impl Into<String>) -> Self {
+    pub fn validation(message: &str) -> Self {
         Self::Validation {
-            message: message.into(),
+            message: message.to_string(),
         }
     }
 
-    pub fn template(message: impl Into<String>) -> Self {
+    pub fn template(message: &str) -> Self {
         Self::Template {
-            message: message.into(),
+            message: message.to_string(),
         }
     }
 
-    pub fn malformed_registry(reason: impl Into<String>) -> Self {
+    pub fn malformed_registry(reason: &str) -> Self {
         Self::MalformedRegistry {
-            reason: reason.into(),
+            reason: reason.to_string(),
         }
     }
 
-    pub fn dependency_resolution(message: impl Into<String>) -> Self {
+    pub fn dependency_resolution(message: &str) -> Self {
         Self::DependencyResolution {
-            message: message.into(),
+            message: message.to_string(),
         }
     }
 }

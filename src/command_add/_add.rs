@@ -43,7 +43,7 @@ pub async fn process_add(matches: &ArgMatches) -> Result<()> {
     let index_content_from_url = Registry::fetch_index_content(url_registry_index_json).await?;
 
     let vec_components_from_index: Vec<MyComponent> = serde_json::from_str(&index_content_from_url)
-        .map_err(|e| CliError::malformed_registry(format!("Failed to parse registry index JSON: {e}")))?;
+        .map_err(|e| CliError::malformed_registry(&format!("Failed to parse registry index JSON: {e}")))?;
 
     let all_tree_resolved = Dependencies::all_tree_resolved(user_components, &vec_components_from_index)?;
     Dependencies::print_dependency_tree(&all_tree_resolved); // Can be commented out

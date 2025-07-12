@@ -29,7 +29,7 @@ impl UserInput {
         if let Ok(styles_index) = styles_index_result {
             // Convert the String to a Vec<serde_json::Value>
             let vec_styles = serde_json::from_str::<Vec<serde_json::Value>>(&styles_index)
-                .map_err(|e| CliError::malformed_registry(format!("Failed to parse styles index JSON: {e}")))?;
+                .map_err(|e| CliError::malformed_registry(&format!("Failed to parse styles index JSON: {e}")))?;
             ask_user_choose_style(vec_styles)?
         }
         Ok(())
@@ -54,7 +54,7 @@ fn ask_user_choose_style(vec_styles: Vec<serde_json::Value>) -> Result<()> {
 
     let mut user_input = String::new();
     io::stdin().read_line(&mut user_input)
-        .map_err(|e| CliError::validation(format!("Failed to read user input: {e}")))?;
+        .map_err(|e| CliError::validation(&format!("Failed to read user input: {e}")))?;
 
     // Parse the choice and print the selected style
     if let Ok(index) = user_input.trim().parse::<usize>() {
@@ -63,13 +63,13 @@ fn ask_user_choose_style(vec_styles: Vec<serde_json::Value>) -> Result<()> {
                 println!("You selected: {label}");
             }
         } else {
-            return Err(CliError::validation(format!(
+            return Err(CliError::validation(&format!(
                 "Invalid choice. Please select a number between 1 and {}.",
                 vec_styles.len()
             )));
         }
     } else {
-        return Err(CliError::validation("Invalid input. Please enter a number.".to_string()));
+        return Err(CliError::validation("Invalid input. Please enter a number."));
     }
     Ok(())
 }
