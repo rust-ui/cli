@@ -3,7 +3,7 @@ use std::io::Write;
 use std::collections::HashSet;
 
 use serde::{Deserialize, Serialize};
-use crate::shared::cli_error::{CliError, Result};
+use crate::shared::cli_error::{CliError, CliResult};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MyComponent {
@@ -31,7 +31,7 @@ pub struct Components {}
 
 impl Components {
     // TODO. Have instead all_resolved_parent_dirs instead of compomnents.
-    pub fn create_components_mod_if_not_exists_with_pub_mods(user_config_path: String, parent_dirs: Vec<String>) -> Result<()> {
+    pub fn create_components_mod_if_not_exists_with_pub_mods(user_config_path: String, parent_dirs: Vec<String>) -> CliResult<()> {
         let components_mod_path = std::path::Path::new(&user_config_path).join("mod.rs");
 
         // println!("Parent directories to add to components/mod.rs: {:?}", parent_dirs);
@@ -70,7 +70,7 @@ impl Components {
         Ok(())
     }
 
-    pub fn register_components_in_application_entry(entry_file_path: &str) -> Result<()> {
+    pub fn register_components_in_application_entry(entry_file_path: &str) -> CliResult<()> {
         let file_content = std::fs::read_to_string(entry_file_path)
             .map_err(|e| CliError::file_operation(&format!("Failed to read entry file '{entry_file_path}': {e}")))?;
 

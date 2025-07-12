@@ -1,8 +1,8 @@
 use std::collections::{HashMap, HashSet};
 use std::fs;
 
+use crate::shared::cli_error::{CliError, CliResult};
 use crate::shared::task_spinner::TaskSpinner;
-use crate::shared::cli_error::{CliError, Result};
 
 use super::components::{MyComponent, ResolvedComponent};
 
@@ -14,7 +14,7 @@ impl Dependencies {
     pub fn all_tree_resolved(
         user_components: Vec<String>,
         vec_components_from_index: &[MyComponent],
-    ) -> Result<HashMap<String, ResolvedComponent>> {
+    ) -> CliResult<HashMap<String, ResolvedComponent>> {
         let component_map: HashMap<String, MyComponent> = vec_components_from_index
             .iter()
             .map(|c| (c.name.clone(), c.clone()))
@@ -99,7 +99,7 @@ impl Dependencies {
 
     //
 
-    pub fn add_cargo_dep_to_toml(cargo_deps: &[String]) -> Result<()> {
+    pub fn add_cargo_dep_to_toml(cargo_deps: &[String]) -> CliResult<()> {
         // Find Cargo.toml file in the current directory or parent directories
         let cargo_toml_path = find_cargo_toml()?;
 
@@ -126,7 +126,10 @@ impl Dependencies {
             spinner.set_message(&format!("📦 Adding crate: {dep}"));
 
             // Execute the CLI command to add the dependency
-            let output = std::process::Command::new("cargo").arg("add").arg(dep).output()
+            let output = std::process::Command::new("cargo")
+                .arg("add")
+                .arg(dep)
+                .output()
                 .map_err(|e| CliError::cargo_operation(&format!("Failed to execute 'cargo add {dep}': {e}")))?;
 
             if output.status.success() {
@@ -164,7 +167,7 @@ impl Dependencies {
 fn resolve_all_dependencies(
     component_map: &HashMap<String, MyComponent>,
     user_components: &[String],
-) -> Result<HashMap<String, ResolvedComponent>> {
+) -> CliResult<HashMap<String, ResolvedComponent>> {
     // Map to store resolved components
     let mut resolved_components: HashMap<String, ResolvedComponent> = HashMap::new();
 
@@ -190,7 +193,7 @@ fn resolve_component_recursive(
     component_map: &HashMap<String, MyComponent>,
     resolved_components: &mut HashMap<String, ResolvedComponent>,
     visited: &mut HashSet<String>,
-) -> Result<(HashSet<String>, HashSet<String>)> {
+) -> CliResult<(HashSet<String>, HashSet<String>)> {
     // Return cached result if already processed
     if let Some(resolved) = resolved_components.get(component_name) {
         return Ok((
@@ -309,7 +312,7 @@ fn print_component_tree(
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-fn find_cargo_toml() -> Result<String> {
+fn find_cargo_toml() -> CliResult<String> {
     // Start with the current directory
     let mut current_dir = std::env::current_dir()
         .map_err(|e| CliError::file_operation(&format!("Failed to get current directory: {e}")))?;
@@ -328,5 +331,7 @@ fn find_cargo_toml() -> Result<String> {
         }
     }
 
-    Err(CliError::file_operation("Could not find Cargo.toml in the current directory or any parent directories"))
+    Err(CliError::file_operation(
+        "Could not find Cargo.toml in the current directory or any parent directories",
+    ))
 }

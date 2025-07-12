@@ -1,4 +1,3 @@
-
 #[derive(Debug, thiserror::Error)]
 pub enum CliError {
     #[error("🔸 Component '{name}' not found in registry")]
@@ -169,7 +168,7 @@ impl CliError {
     }
 }
 
-pub type Result<T> = std::result::Result<T, CliError>;
+pub type CliResult<T> = std::result::Result<T, CliError>;
 
 impl From<anyhow::Error> for CliError {
     fn from(err: anyhow::Error) -> Self {

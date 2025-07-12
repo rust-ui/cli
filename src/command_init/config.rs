@@ -4,7 +4,7 @@ use std::process::Command;
 
 use crate::command_init::crates::INIT_CRATES;
 use crate::shared::task_spinner::TaskSpinner;
-use crate::shared::cli_error::{CliError, Result};
+use crate::shared::cli_error::{CliError, CliResult};
 
 ///
 /// UiConfig
@@ -34,7 +34,7 @@ impl UiConfig {
         }
     }
 
-    pub fn try_reading_ui_config(toml_path: &str) -> Result<UiConfig> {
+    pub fn try_reading_ui_config(toml_path: &str) -> CliResult<UiConfig> {
         let contents = fs::read_to_string(toml_path)
             .map_err(|e| CliError::file_operation(&format!("Failed to read config file '{toml_path}': {e}")))?;
         let ui_config: UiConfig = toml::from_str(&contents)
@@ -76,7 +76,7 @@ impl Default for UiConfig {
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-pub async fn add_init_crates() -> Result<()> {
+pub async fn add_init_crates() -> CliResult<()> {
     // `crate` is a reserved keyword.
     for my_crate in INIT_CRATES {
         let spinner = TaskSpinner::new(&format!("Adding and installing {} crate...", my_crate.name));

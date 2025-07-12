@@ -2,12 +2,12 @@ use std::process::Command;
 
 use crate::constants::others::TAILWIND_DEPENDENCIES;
 use crate::shared::task_spinner::TaskSpinner;
-use crate::shared::cli_error::{CliError, Result};
+use crate::shared::cli_error::{CliError, CliResult};
 
 pub struct Install {}
 
 impl Install {
-    pub async fn tailwind_with_pnpm() -> Result<()> {
+    pub async fn tailwind_with_pnpm() -> CliResult<()> {
         let deps_list = TAILWIND_DEPENDENCIES.join(" ");
         let message = format!("Installing TailwindCSS dependencies: {deps_list}");
         let spinner = TaskSpinner::new(&message);
