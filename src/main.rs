@@ -17,6 +17,7 @@ mod command_add;
 mod command_init;
 mod command_starters;
 mod constants;
+mod error;
 mod shared;
 
 use constants::commands::MyCommand;
@@ -48,19 +49,19 @@ async fn main() {
     match matches.subcommand() {
         Some((MyCommand::INIT, _)) => {
             if let Err(e) = command_init::_init::process_init().await {
-                eprintln!("Error processing init command: {e}");
+                eprintln!("{e}");
                 process::exit(1);
             }
         }
         Some((MyCommand::ADD, sub_matches)) => {
             if let Err(e) = command_add::_add::process_add(sub_matches).await {
-                eprintln!("Error processing add command: {e}");
+                eprintln!("{e}");
                 process::exit(1);
             }
         }
         Some((MyCommand::STARTERS, _)) => {
             if let Err(e) = command_starters::_starters::process_starters().await {
-                eprintln!("Error processing starters command: {e}");
+                eprintln!("{e}");
                 process::exit(1);
             }
         }

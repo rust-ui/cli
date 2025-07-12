@@ -6,6 +6,7 @@ use std::io::Write;
 use crate::{
     command_init::config::UiConfig,
     constants::{file_name::FILE_NAME, url::MyUrl},
+    error::{CliError, Result},
 };
 
 use serde_json;
@@ -13,33 +14,26 @@ use serde_json;
 pub struct Registry {}
 
 impl Registry {
-    pub async fn fetch_index_content(url: &str) -> anyhow::Result<String> {
+    pub async fn fetch_index_content(url: &str) -> Result<String> {
         // Attempt to fetch the content from the URL
-        let response = reqwest::get(url).await;
+        let response = reqwest::get(url).await
+            .map_err(|e| CliError::registry_fetch(format!("Failed to fetch from {}: {}", url, e)))?;
 
-        // Check if the request was successful
-        let index_content_from_url = match response {
-            Ok(resp) => {
-                if resp.status().is_success() {
-                    resp.text().await?
-                } else {
-                    let error_message = format!("🔸 Failed to fetch data: Server returned status {}", resp.status());
-                    println!("{error_message}"); // Print the error message
-                    return Err(anyhow::anyhow!(error_message));
-                }
-            }
-            Err(err) => {
-                let error_message = format!("🔸 Failed to fetch data: {err}");
-                println!("{error_message}"); // Print the error message
-                return Err(anyhow::anyhow!(error_message));
-            }
-        };
+        let status = response.status();
+        if !status.is_success() {
+            return Err(CliError::registry_fetch(format!(
+                "Server returned status {}: {}",
+                status.as_u16(),
+                status.canonical_reason().unwrap_or("Unknown error")
+            )));
+        }
+
+        let index_content_from_url = response.text().await
+            .map_err(|e| CliError::registry_fetch(format!("Failed to read response body: {}", e)))?;
 
         // Check if the fetched content is empty
         if index_content_from_url.is_empty() {
-            let error_message = "🔸 Failed to fetch data: The server returned an empty response.";
-            println!("{error_message}"); // Print the error message
-            return Err(anyhow::anyhow!(error_message));
+            return Err(CliError::registry_fetch("The server returned an empty response".to_string()));
         }
 
         Ok(index_content_from_url)
@@ -59,22 +53,30 @@ pub struct RegistryComponent {
 impl RegistryComponent {
     pub async fn fetch_from_registry(
         component_name_json: String,
-    ) -> anyhow::Result<RegistryComponent> {
+    ) -> Result<RegistryComponent> {
         let base_url_styles_default = MyUrl::BASE_URL_STYLES_DEFAULT;
         let formatted_url_json = format!("{base_url_styles_default}/{component_name_json}.json");
 
-        let response = reqwest::get(&formatted_url_json).await?;
-        let json_content: serde_json::Value = response.json().await?;
+        let response = reqwest::get(&formatted_url_json).await
+            .map_err(|e| CliError::registry_fetch(format!("Failed to fetch component '{}': {}", component_name_json, e)))?;
+        
+        let status = response.status();
+        if !status.is_success() {
+            return Err(CliError::component_not_found(component_name_json));
+        }
+        
+        let json_content: serde_json::Value = response.json().await
+            .map_err(|e| CliError::registry_fetch(format!("Failed to parse component JSON for '{}': {}", component_name_json, e)))?;
 
         let registry_json_path = json_content
             .get("path")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| anyhow::anyhow!("Path not found"))?
+            .ok_or_else(|| CliError::malformed_registry(format!("Path field missing for component '{}'", component_name_json)))?
             .to_string();
         let registry_json_content = json_content
             .get("files")
             .and_then(|v| v.get(0).and_then(|v| v.get("content").and_then(|v| v.as_str())))
-            .ok_or_else(|| anyhow::anyhow!("Content not found"))?
+            .ok_or_else(|| CliError::malformed_registry(format!("Content field missing for component '{}'", component_name_json)))?
             .to_string();
 
         Ok(RegistryComponent {
@@ -84,25 +86,27 @@ impl RegistryComponent {
         })
     }
 
-    pub async fn then_write_to_file(self) -> anyhow::Result<()> {
+    pub async fn then_write_to_file(self) -> Result<()> {
         let components_base_path = UiConfig::try_reading_ui_config(FILE_NAME::UI_CONFIG_TOML)?.base_path_components;
         let full_path_component = std::path::Path::new(&components_base_path).join(&self.registry_json_path);
 
         let full_path_component_without_name_rs = full_path_component
             .parent()
-            .ok_or_else(|| anyhow::anyhow!("Failed to get parent directory"))?
+            .ok_or_else(|| CliError::file_operation("Failed to get parent directory".to_string()))?
             .to_str()
-            .ok_or_else(|| anyhow::anyhow!("Failed to convert path to string"))?
+            .ok_or_else(|| CliError::file_operation("Failed to convert path to string".to_string()))?
             .to_string();
 
         write_component_name_in_mod_rs_if_not_exists(self.component_name_json, full_path_component_without_name_rs)?;
 
         let dir = full_path_component
             .parent()
-            .ok_or_else(|| anyhow::anyhow!("Failed to get parent directory"))?;
-        std::fs::create_dir_all(dir)?;
+            .ok_or_else(|| CliError::file_operation("Failed to get parent directory".to_string()))?;
+        std::fs::create_dir_all(dir)
+            .map_err(|e| CliError::file_operation(format!("Failed to create directory '{}': {}", dir.display(), e)))?;
 
-        std::fs::write(&full_path_component, self.registry_json_content)?;
+        std::fs::write(&full_path_component, self.registry_json_content)
+            .map_err(|e| CliError::file_operation(format!("Failed to write component file '{}': {}", full_path_component.display(), e)))?;
 
         Ok(())
     }
@@ -112,19 +116,21 @@ impl RegistryComponent {
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-fn write_component_name_in_mod_rs_if_not_exists(component_name: String, full_path_component_without_name_rs: String) -> anyhow::Result<()> {
+fn write_component_name_in_mod_rs_if_not_exists(component_name: String, full_path_component_without_name_rs: String) -> Result<()> {
     let mod_rs_path = std::path::Path::new(&full_path_component_without_name_rs).join("mod.rs");
 
     // Create the directory if it doesn't exist
     let dir = mod_rs_path
         .parent()
-        .ok_or_else(|| anyhow::anyhow!("Failed to get parent directory for {}", mod_rs_path.display()))?;
-    std::fs::create_dir_all(dir)?;
+        .ok_or_else(|| CliError::file_operation(format!("Failed to get parent directory for {}", mod_rs_path.display())))?;
+    std::fs::create_dir_all(dir)
+        .map_err(|e| CliError::file_operation(format!("Failed to create directory '{}': {}", dir.display(), e)))?;
 
     // Check if the mod.rs file already exists
     let mut mod_rs_content = String::new();
     if mod_rs_path.exists() {
-        mod_rs_content = std::fs::read_to_string(&mod_rs_path)?;
+        mod_rs_content = std::fs::read_to_string(&mod_rs_path)
+            .map_err(|e| CliError::file_operation(format!("Failed to read mod.rs file '{}': {}", mod_rs_path.display(), e)))?;
     }
 
     // Check if the component already exists
@@ -137,9 +143,12 @@ fn write_component_name_in_mod_rs_if_not_exists(component_name: String, full_pat
     let mut mod_rs_file = std::fs::OpenOptions::new()
         .append(true)
         .create(true)
-        .open(&mod_rs_path)?;
+        .open(&mod_rs_path)
+        .map_err(|e| CliError::file_operation(format!("Failed to open mod.rs file '{}': {}", mod_rs_path.display(), e)))?;
 
     // Write the new component name
-    writeln!(mod_rs_file, "pub mod {component_name};")?;
+    writeln!(mod_rs_file, "pub mod {component_name};").map_err(|e| {
+        CliError::file_operation(format!("Failed to write to mod.rs file '{}': {}", mod_rs_path.display(), e))
+    })?;
     Ok(())
 }

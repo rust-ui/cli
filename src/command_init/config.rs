@@ -4,6 +4,7 @@ use std::process::Command;
 
 use crate::command_init::crates::INIT_CRATES;
 use crate::shared::task_spinner::TaskSpinner;
+use crate::error::{CliError, Result};
 
 ///
 /// UiConfig
@@ -33,9 +34,11 @@ impl UiConfig {
         }
     }
 
-    pub fn try_reading_ui_config(toml_path: &str) -> anyhow::Result<UiConfig> {
-        let contents = fs::read_to_string(toml_path)?;
-        let ui_config: UiConfig = toml::from_str(&contents)?;
+    pub fn try_reading_ui_config(toml_path: &str) -> Result<UiConfig> {
+        let contents = fs::read_to_string(toml_path)
+            .map_err(|e| CliError::file_operation(format!("Failed to read config file '{}': {}", toml_path, e)))?;
+        let ui_config: UiConfig = toml::from_str(&contents)
+            .map_err(|e| CliError::config(format!("Failed to parse config file '{}': {}", toml_path, e)))?;
         Ok(ui_config)
     }
 }
@@ -73,7 +76,7 @@ impl Default for UiConfig {
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-pub async fn add_init_crates() -> anyhow::Result<()> {
+pub async fn add_init_crates() -> Result<()> {
     // `crate` is a reserved keyword.
     for my_crate in INIT_CRATES {
         let spinner = TaskSpinner::new(&format!("Adding and installing {} crate...", my_crate.name));
@@ -85,15 +88,17 @@ pub async fn add_init_crates() -> anyhow::Result<()> {
         }
         let output = Command::new("cargo")
             .args(args)
-            .output()?;
+            .output()
+            .map_err(|e| CliError::cargo_operation(format!("Failed to execute cargo add {}: {}", my_crate.name, e)))?;
 
         if output.status.success() {
             spinner.finish_success("Crates added successfully.");
         } else {
-            spinner.finish_info(&format!(
-                "Error adding crates: {}",
+            return Err(CliError::cargo_operation(format!(
+                "Failed to add crate '{}': {}",
+                my_crate.name,
                 String::from_utf8_lossy(&output.stderr)
-            ));
+            )));
         }
     }
     Ok(())

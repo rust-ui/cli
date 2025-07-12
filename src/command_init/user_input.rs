@@ -6,6 +6,7 @@ use std::io;
 use crate::command_init::fetch::Fetch;
 // use crate::constants::env::ENV;
 use crate::constants::url::MyUrl;
+use crate::error::{CliError, Result};
 
 const LABEL: &str = "label";
 
@@ -16,7 +17,7 @@ const LABEL: &str = "label";
 pub struct UserInput {}
 
 impl UserInput {
-    pub async fn handle_index_styles() -> anyhow::Result<()> {
+    pub async fn handle_index_styles() -> Result<()> {
         // dotenv().ok();
 
         // let url_registry_styles_json = env::var(ENV::URL_REGISTRY_STYLES_JSON).unwrap_or_default();
@@ -27,10 +28,9 @@ impl UserInput {
         // Parse the JSON string into Vec<serde_json::Value>
         if let Ok(styles_index) = styles_index_result {
             // Convert the String to a Vec<serde_json::Value>
-            match serde_json::from_str::<Vec<serde_json::Value>>(&styles_index) {
-                Ok(vec_styles) => ask_user_choose_style(vec_styles)?,
-                Err(err) => eprintln!("Error parsing styles_index: {err}"),
-            }
+            let vec_styles = serde_json::from_str::<Vec<serde_json::Value>>(&styles_index)
+                .map_err(|e| CliError::malformed_registry(format!("Failed to parse styles index JSON: {}", e)))?;
+            ask_user_choose_style(vec_styles)?
         }
         Ok(())
     }
@@ -41,7 +41,7 @@ impl UserInput {
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 /// Ask user to choose a style
-fn ask_user_choose_style(vec_styles: Vec<serde_json::Value>) -> anyhow::Result<()> {
+fn ask_user_choose_style(vec_styles: Vec<serde_json::Value>) -> Result<()> {
     // Print available styles
     for (index, style) in vec_styles.iter().enumerate() {
         if let Some(label) = style.get(LABEL) {
@@ -53,7 +53,8 @@ fn ask_user_choose_style(vec_styles: Vec<serde_json::Value>) -> anyhow::Result<(
     println!("Please choose a style by entering the corresponding number:");
 
     let mut user_input = String::new();
-    io::stdin().read_line(&mut user_input)?;
+    io::stdin().read_line(&mut user_input)
+        .map_err(|e| CliError::validation(format!("Failed to read user input: {}", e)))?;
 
     // Parse the choice and print the selected style
     if let Ok(index) = user_input.trim().parse::<usize>() {
@@ -62,13 +63,13 @@ fn ask_user_choose_style(vec_styles: Vec<serde_json::Value>) -> anyhow::Result<(
                 println!("You selected: {label}");
             }
         } else {
-            println!(
-                "🔸 Invalid choice. Please select a number between 1 and {}.",
+            return Err(CliError::validation(format!(
+                "Invalid choice. Please select a number between 1 and {}.",
                 vec_styles.len()
-            );
+            )));
         }
     } else {
-        println!("🔸 Invalid input. Please enter a number.");
+        return Err(CliError::validation("Invalid input. Please enter a number.".to_string()));
     }
     Ok(())
 }
