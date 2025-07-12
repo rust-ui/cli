@@ -53,23 +53,6 @@ if !mod_content.contains(&mod_declaration) {
 
 ## Architectural Improvements
 
-### 5. Error Type Strategy
-
-**Current**: Using `Box<dyn std::error::Error>` everywhere
-**Better**: Create domain-specific error types
-
-```rust
-#[derive(Debug, thiserror::Error)]
-pub enum CliError {
-    #[error("Component not found: {name}")]
-    ComponentNotFound { name: String },
-    #[error("IO error: {0}")]
-    Io(#[from] std::io::Error),
-    #[error("Network error: {0}")]
-    Network(#[from] reqwest::Error),
-}
-```
-
 ### 6. Constants Organization
 
 **Problem**: Using structs with associated constants instead of modules or enums
