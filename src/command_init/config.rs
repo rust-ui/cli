@@ -1,11 +1,9 @@
-use indicatif::ProgressBar;
 use serde::{Deserialize, Serialize};
 use std::fs;
 use std::process::Command;
-use std::time::Duration;
 
 use crate::command_init::crates::INIT_CRATES;
-use crate::constants::others::SPINNER_UPDATE_DURATION;
+use crate::shared::task_spinner::TaskSpinner;
 
 ///
 /// UiConfig
@@ -78,9 +76,7 @@ impl Default for UiConfig {
 pub async fn add_init_crates() -> anyhow::Result<()> {
     // `crate` is a reserved keyword.
     for my_crate in INIT_CRATES {
-        let spinner = ProgressBar::new_spinner();
-        spinner.set_message(format!("Adding and installing {} crate...", my_crate.name));
-        spinner.enable_steady_tick(Duration::from_millis(SPINNER_UPDATE_DURATION));
+        let spinner = TaskSpinner::new(&format!("Adding and installing {} crate...", my_crate.name));
 
         let mut args = vec!["add".to_owned(), my_crate.name.to_owned()];
         if !my_crate.features.is_empty() {
@@ -92,10 +88,10 @@ pub async fn add_init_crates() -> anyhow::Result<()> {
             .output()?;
 
         if output.status.success() {
-            spinner.finish_with_message("✔️ Crates added successfully.");
+            spinner.finish_success("Crates added successfully.");
         } else {
-            spinner.finish_with_message(format!(
-                "🔸 Error adding crates: {}",
+            spinner.finish_info(&format!(
+                "Error adding crates: {}",
                 String::from_utf8_lossy(&output.stderr)
             ));
         }

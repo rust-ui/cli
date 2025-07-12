@@ -30,7 +30,6 @@ async fn write_template_file(file_name: &str, template: &str) -> Result<(), std:
 
 **Problem**: Similar code repeated across modules
 **Examples**:
-- Spinner creation and management
 - File writing with error handling
 - JSON field extraction patterns
 
@@ -118,33 +117,7 @@ pub mod file_names {
 
 ## Specific Refactoring Suggestions
 
-### A. Spinner Utility
-
-Create a reusable spinner utility:
-```rust
-pub struct TaskSpinner {
-    spinner: ProgressBar,
-}
-
-impl TaskSpinner {
-    pub fn new(message: &str) -> Self {
-        let spinner = ProgressBar::new_spinner();
-        spinner.set_message(message.to_string());
-        spinner.enable_steady_tick(Duration::from_millis(80));
-        Self { spinner }
-    }
-    
-    pub fn finish_success(self, message: &str) {
-        self.spinner.finish_with_message(format!("✔️ {message}"));
-    }
-    
-    pub fn finish_error(self, message: &str) {
-        self.spinner.finish_with_message(format!("❌ {message}"));
-    }
-}
-```
-
-### B. File Operations Utility
+### A. File Operations Utility
 
 Centralize file operations with consistent error handling:
 ```rust
@@ -167,7 +140,7 @@ pub mod file_utils {
 }
 ```
 
-### C. Configuration Validation
+### B. Configuration Validation
 
 Add validation to the config module:
 ```rust
@@ -185,6 +158,8 @@ impl UiConfig {
 ## Implementation Priority
 
 1. **Phase 1 (Medium)**: Extract utilities, reduce code duplication
+   - File operations utility
+   - Configuration validation
 2. **Phase 2 (Enhancement)**: Add tests, improve documentation, optimize performance
 
 ## Estimated Impact

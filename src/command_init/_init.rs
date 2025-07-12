@@ -1,14 +1,13 @@
 use clap::{Arg, Command};
-use indicatif::ProgressBar;
-use std::time::Duration;
 
 use super::config::{UiConfig, add_init_crates};
 use super::{install::Install, user_input::UserInput};
 use crate::constants::commands::{InitCommand, MyCommand};
 use crate::constants::file_name::FILE_NAME;
 use crate::constants::template::MyTemplate;
-use crate::constants::{others::SPINNER_UPDATE_DURATION, paths::RELATIVE_PATH_PROJECT_DIR};
+use crate::constants::paths::RELATIVE_PATH_PROJECT_DIR;
 use crate::shared::shared_write_template_file::shared_write_template_file;
+use crate::shared::task_spinner::TaskSpinner;
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                        🦀 MAIN 🦀                          */
@@ -66,13 +65,11 @@ async fn INIT_TEMPLATE_FILE(file_name: &str, template: &str) -> anyhow::Result<(
     //     return;
     // }
 
-    let spinner: ProgressBar = ProgressBar::new_spinner();
-    spinner.set_message("Writing to file...");
-    spinner.enable_steady_tick(Duration::from_millis(SPINNER_UPDATE_DURATION));
+    let spinner = TaskSpinner::new("Writing to file...");
 
-    shared_write_template_file(&file_path.to_string_lossy(), &spinner, template).await?;
+    shared_write_template_file(&file_path.to_string_lossy(), template).await?;
 
-    let finish_message = format!("✔️ Writing {file_name} complete.");
-    spinner.finish_with_message(finish_message);
+    let finish_message = format!("Writing {file_name} complete.");
+    spinner.finish_success(&finish_message);
     Ok(())
 }
