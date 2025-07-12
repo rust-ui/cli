@@ -36,9 +36,9 @@ impl UiConfig {
 
     pub fn try_reading_ui_config(toml_path: &str) -> Result<UiConfig> {
         let contents = fs::read_to_string(toml_path)
-            .map_err(|e| CliError::file_operation(format!("Failed to read config file '{}': {}", toml_path, e)))?;
+            .map_err(|e| CliError::file_operation(format!("Failed to read config file '{toml_path}': {e}")))?;
         let ui_config: UiConfig = toml::from_str(&contents)
-            .map_err(|e| CliError::config(format!("Failed to parse config file '{}': {}", toml_path, e)))?;
+            .map_err(|e| CliError::config(format!("Failed to parse config file '{toml_path}': {e}")))?;
         Ok(ui_config)
     }
 }
