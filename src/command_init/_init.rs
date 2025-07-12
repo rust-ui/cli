@@ -8,7 +8,7 @@ use crate::constants::template::MyTemplate;
 use crate::constants::paths::RELATIVE_PATH_PROJECT_DIR;
 use crate::shared::shared_write_template_file::shared_write_template_file;
 use crate::shared::task_spinner::TaskSpinner;
-use crate::error::{CliError, Result};
+use crate::shared::error::{CliError, Result};
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                        🦀 MAIN 🦀                          */

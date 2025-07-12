@@ -17,7 +17,6 @@ mod command_add;
 mod command_init;
 mod command_starters;
 mod constants;
-mod error;
 mod shared;
 
 use constants::commands::MyCommand;
