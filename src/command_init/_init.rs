@@ -5,10 +5,9 @@ use super::{install::Install, user_input::UserInput};
 use crate::constants::commands::{InitCommand, MyCommand};
 use crate::constants::file_name::FileName;
 use crate::constants::template::MyTemplate;
-use crate::constants::paths::RELATIVE_PATH_PROJECT_DIR;
+use crate::shared::error::{CliError, Result};
 use crate::shared::shared_write_template_file::shared_write_template_file;
 use crate::shared::task_spinner::TaskSpinner;
-use crate::shared::error::{CliError, Result};
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                        🦀 MAIN 🦀                          */
@@ -55,7 +54,7 @@ pub async fn process_init() -> Result<()> {
 /// INIT TEMPLATE FILE
 #[allow(non_snake_case)]
 async fn INIT_TEMPLATE_FILE(file_name: &str, template: &str) -> Result<()> {
-    let file_path = std::path::Path::new(RELATIVE_PATH_PROJECT_DIR).join(file_name);
+    let file_path = std::path::Path::new(".").join(file_name);
 
     // if !shared_check_file_exist_and_ask_overwrite(&file_path, file_name_ext).await {
     //     return;
