@@ -5,7 +5,7 @@ use super::{install::Install, user_input::UserInput};
 use crate::constants::commands::{InitCommand, MyCommand};
 use crate::constants::file_name::FileName;
 use crate::constants::template::MyTemplate;
-use crate::shared::error::{CliError, Result};
+use crate::shared::cli_error::{CliError, Result};
 use crate::shared::shared_write_template_file::shared_write_template_file;
 use crate::shared::task_spinner::TaskSpinner;
 

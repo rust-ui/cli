@@ -2,7 +2,7 @@ use std::process::Command;
 
 use crate::constants::others::TAILWIND_DEPENDENCIES;
 use crate::shared::task_spinner::TaskSpinner;
-use crate::shared::error::{CliError, Result};
+use crate::shared::cli_error::{CliError, Result};
 
 pub struct Install {}
 

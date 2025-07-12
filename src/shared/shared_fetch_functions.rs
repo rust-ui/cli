@@ -1,4 +1,4 @@
-use crate::shared::error::{CliError, Result};
+use crate::shared::cli_error::{CliError, Result};
 
 // ADD + INIT
 pub async fn shared_fetch_registry_return_json(url: &str) -> Result<serde_json::Value> {
