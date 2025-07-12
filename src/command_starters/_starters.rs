@@ -2,6 +2,7 @@ use crate::constants::commands::{MyCommand, StartersCommand};
 use clap::Command;
 use dialoguer::{Select, theme::ColorfulTheme};
 use std::process::{Command as ProcessCommand, Stdio};
+use crate::error::{CliError, Result};
 
 // TODO. Use cargo-generate later for more customization.
 
@@ -22,15 +23,16 @@ const LEPTOS_SSR: &str = "leptos-ssr";
 const LEPTOS_SSR_WORKSPACE: &str = "leptos-ssr-workspace";
 const STARTER_TEMPLATES: &[&str] = &[TRUNK, LEPTOS_SSR, LEPTOS_SSR_WORKSPACE];
 
-pub async fn process_starters() -> anyhow::Result<()> {
+pub async fn process_starters() -> Result<()> {
     let selection = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Select a starter template")
         .items(STARTER_TEMPLATES)
         .default(0)
-        .interact()?;
+        .interact()
+        .map_err(|e| CliError::validation(format!("Failed to get user selection: {}", e)))?;
 
     let selected_template = STARTER_TEMPLATES.get(selection)
-        .ok_or_else(|| anyhow::anyhow!("Invalid selection: {}", selection))?;
+        .ok_or_else(|| CliError::validation(format!("Invalid selection: {}", selection)))?;
     clone_starter_template(selected_template)?;
     Ok(())
 }
@@ -40,7 +42,7 @@ pub async fn process_starters() -> anyhow::Result<()> {
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 /// Helper function to clone a starter template repository
-fn clone_starter_template(template_name: &str) -> anyhow::Result<()> {
+fn clone_starter_template(template_name: &str) -> Result<()> {
     println!("Installing {template_name} starter...");
 
     let output = ProcessCommand::new("git")
@@ -48,21 +50,16 @@ fn clone_starter_template(template_name: &str) -> anyhow::Result<()> {
         .arg(format!("https://github.com/rust-ui/start-{template_name}.git"))
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
-        .output();
+        .output()
+        .map_err(|e| CliError::git_operation("clone".to_string(), format!("Failed to execute git clone: {}", e)))?;
 
-    match output {
-        Ok(output) => {
-            if output.status.success() {
-                println!("✅ Successfully cloned {template_name} starter template");
-            } else {
-                eprintln!("🔸 Failed to clone {template_name} starter template");
-                return Err(anyhow::anyhow!("Failed to clone {template_name} starter template"));
-            }
-        }
-        Err(err) => {
-            eprintln!("🔸 Error executing git clone: {err}");
-            return Err(err.into());
-        }
+    if output.status.success() {
+        println!("✅ Successfully cloned {template_name} starter template");
+    } else {
+        return Err(CliError::git_operation(
+            "clone".to_string(),
+            format!("Failed to clone {} starter template", template_name)
+        ));
     }
     Ok(())
 }

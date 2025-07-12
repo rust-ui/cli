@@ -12,6 +12,7 @@ use crate::command_init::config::UiConfig;
 use crate::constants::commands::{AddCommand, MyCommand};
 use crate::constants::file_name::FILE_NAME;
 use crate::constants::url::MyUrl;
+use crate::error::{CliError, Result};
 
 pub fn command_add() -> Command {
     Command::new(MyCommand::ADD).about(AddCommand::ABOUT).arg(
@@ -27,7 +28,7 @@ pub fn command_add() -> Command {
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 //
-pub async fn process_add(matches: &ArgMatches) -> anyhow::Result<()> {
+pub async fn process_add(matches: &ArgMatches) -> Result<()> {
     // dotenv().ok();
 
     // let base_url = env::var(ENV::BASE_URL).unwrap_or_default();
@@ -42,7 +43,7 @@ pub async fn process_add(matches: &ArgMatches) -> anyhow::Result<()> {
     let index_content_from_url = Registry::fetch_index_content(url_registry_index_json).await?;
 
     let vec_components_from_index: Vec<MyComponent> = serde_json::from_str(&index_content_from_url)
-        .map_err(|e| anyhow::anyhow!("Failed to parse registry index JSON: {e}"))?;
+        .map_err(|e| CliError::malformed_registry(format!("Failed to parse registry index JSON: {e}")))?;
 
     let all_tree_resolved = Dependencies::all_tree_resolved(user_components, &vec_components_from_index)?;
     Dependencies::print_dependency_tree(&all_tree_resolved); // Can be commented out
@@ -66,7 +67,7 @@ pub async fn process_add(matches: &ArgMatches) -> anyhow::Result<()> {
     //  Register `components` module
     let components_path = Path::new(&components_base_path);
     let parent_path = components_path.parent()
-        .ok_or_else(|| anyhow::anyhow!("Invalid components path: no parent directory"))?;
+        .ok_or_else(|| CliError::invalid_path(&components_base_path, "no parent directory"))?;
     
     let entry_file_path = if parent_path.join("lib.rs").exists() {
         parent_path.join("lib.rs")

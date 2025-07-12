@@ -2,6 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 
 use crate::shared::task_spinner::TaskSpinner;
+use crate::error::{CliError, Result};
 
 use super::components::{MyComponent, ResolvedComponent};
 
@@ -13,7 +14,7 @@ impl Dependencies {
     pub fn all_tree_resolved(
         user_components: Vec<String>,
         vec_components_from_index: &[MyComponent],
-    ) -> anyhow::Result<HashMap<String, ResolvedComponent>> {
+    ) -> Result<HashMap<String, ResolvedComponent>> {
         let component_map: HashMap<String, MyComponent> = vec_components_from_index
             .iter()
             .map(|c| (c.name.clone(), c.clone()))
@@ -98,14 +99,15 @@ impl Dependencies {
 
     //
 
-    pub fn add_cargo_dep_to_toml(cargo_deps: &[String]) -> anyhow::Result<()> {
+    pub fn add_cargo_dep_to_toml(cargo_deps: &[String]) -> Result<()> {
         // Find Cargo.toml file in the current directory or parent directories
         let cargo_toml_path = find_cargo_toml()?;
 
         let spinner = TaskSpinner::new("Adding crates to Cargo.toml...");
 
         // Read the current Cargo.toml content
-        let mut cargo_toml_content = fs::read_to_string(&cargo_toml_path)?;
+        let mut cargo_toml_content = fs::read_to_string(&cargo_toml_path)
+            .map_err(|e| CliError::file_operation(format!("Failed to read Cargo.toml at '{}': {}", cargo_toml_path, e)))?;
 
         // Check if dependencies section exists
         if !cargo_toml_content.contains("[dependencies]") {
@@ -124,16 +126,17 @@ impl Dependencies {
             spinner.set_message(&format!("📦 Adding crate: {dep}"));
 
             // Execute the CLI command to add the dependency
-            let output = std::process::Command::new("cargo").arg("add").arg(dep).output()?;
+            let output = std::process::Command::new("cargo").arg("add").arg(dep).output()
+                .map_err(|e| CliError::cargo_operation(format!("Failed to execute 'cargo add {}': {}", dep, e)))?;
 
             if output.status.success() {
                 added_deps.push(dep);
             } else {
-                eprintln!(
-                    "Failed to add dependency {}: {}",
+                return Err(CliError::cargo_operation(format!(
+                    "Failed to add dependency '{}': {}",
                     dep,
                     String::from_utf8_lossy(&output.stderr)
-                );
+                )));
             }
         }
 
@@ -161,15 +164,14 @@ impl Dependencies {
 fn resolve_all_dependencies(
     component_map: &HashMap<String, MyComponent>,
     user_components: &[String],
-) -> anyhow::Result<HashMap<String, ResolvedComponent>> {
+) -> Result<HashMap<String, ResolvedComponent>> {
     // Map to store resolved components
     let mut resolved_components: HashMap<String, ResolvedComponent> = HashMap::new();
 
     // Process only the selected components
     for component_name in user_components {
         if !component_map.contains_key(component_name) {
-            println!("🔸Component not found in registry: {component_name}");
-            continue;
+            return Err(CliError::component_not_found(component_name));
         }
 
         resolve_component_recursive(
@@ -188,7 +190,7 @@ fn resolve_component_recursive(
     component_map: &HashMap<String, MyComponent>,
     resolved_components: &mut HashMap<String, ResolvedComponent>,
     visited: &mut HashSet<String>,
-) -> anyhow::Result<(HashSet<String>, HashSet<String>)> {
+) -> Result<(HashSet<String>, HashSet<String>)> {
     // Return cached result if already processed
     if let Some(resolved) = resolved_components.get(component_name) {
         return Ok((
@@ -199,13 +201,13 @@ fn resolve_component_recursive(
 
     // Prevent infinite recursion
     if !visited.insert(component_name.to_string()) {
-        return Err(anyhow::anyhow!("Circular dependency detected involving '{component_name}'"));
+        return Err(CliError::circular_dependency(component_name));
     }
 
     // Get component or return error if not found
     let component = match component_map.get(component_name) {
         Some(c) => c,
-        None => return Err(anyhow::anyhow!("Component '{component_name}' not found")),
+        None => return Err(CliError::component_not_found(component_name)),
     };
 
     // Collect all dependencies recursively
@@ -307,9 +309,10 @@ fn print_component_tree(
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-fn find_cargo_toml() -> anyhow::Result<String> {
+fn find_cargo_toml() -> Result<String> {
     // Start with the current directory
-    let mut current_dir = std::env::current_dir()?;
+    let mut current_dir = std::env::current_dir()
+        .map_err(|e| CliError::file_operation(format!("Failed to get current directory: {}", e)))?;
 
     loop {
         let cargo_toml_path = current_dir.join("Cargo.toml");
@@ -325,5 +328,5 @@ fn find_cargo_toml() -> anyhow::Result<String> {
         }
     }
 
-    Err(anyhow::anyhow!("Could not find Cargo.toml in the current directory or any parent directories"))
+    Err(CliError::file_operation("Could not find Cargo.toml in the current directory or any parent directories".to_string()))
 }
