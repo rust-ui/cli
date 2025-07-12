@@ -1,8 +1,7 @@
-use indicatif::ProgressBar;
 use std::collections::{HashMap, HashSet};
-use std::{fs, time::Duration};
+use std::fs;
 
-use crate::constants::others::SPINNER_UPDATE_DURATION;
+use crate::shared::task_spinner::TaskSpinner;
 
 use super::components::{MyComponent, ResolvedComponent};
 
@@ -103,9 +102,7 @@ impl Dependencies {
         // Find Cargo.toml file in the current directory or parent directories
         let cargo_toml_path = find_cargo_toml()?;
 
-        let spinner = ProgressBar::new_spinner();
-        spinner.set_message("Adding crates to Cargo.toml...");
-        spinner.enable_steady_tick(Duration::from_millis(SPINNER_UPDATE_DURATION));
+        let spinner = TaskSpinner::new("Adding crates to Cargo.toml...");
 
         // Read the current Cargo.toml content
         let mut cargo_toml_content = fs::read_to_string(&cargo_toml_path)?;
@@ -124,7 +121,7 @@ impl Dependencies {
             }
 
             // Update the spinner message to show the current crate being installed
-            spinner.set_message(format!("📦 Adding crate: {dep}"));
+            spinner.set_message(&format!("📦 Adding crate: {dep}"));
 
             // Execute the CLI command to add the dependency
             let output = std::process::Command::new("cargo").arg("add").arg(dep).output()?;
@@ -147,8 +144,8 @@ impl Dependencies {
                 .map(|dep| dep.as_str())
                 .collect::<Vec<&str>>()
                 .join(", ");
-            let finish_message = format!("✔️ Successfully added to Cargo.toml: [{dependencies_str}] !");
-            spinner.finish_with_message(finish_message);
+            let finish_message = format!("Successfully added to Cargo.toml: [{dependencies_str}] !");
+            spinner.finish_success(&finish_message);
         } else {
             spinner.finish_with_message("No new crates to add");
         }
