@@ -6,7 +6,7 @@ use std::io::Write;
 use crate::{
     command_init::config::UiConfig,
     constants::{file_name::FileName, url::MyUrl},
-    shared::error::{CliError, Result},
+    shared::cli_error::{CliError, Result},
 };
 
 use serde_json;

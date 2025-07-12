@@ -12,7 +12,7 @@ use crate::command_init::config::UiConfig;
 use crate::constants::commands::{AddCommand, MyCommand};
 use crate::constants::file_name::FileName;
 use crate::constants::url::MyUrl;
-use crate::shared::error::{CliError, Result};
+use crate::shared::cli_error::{CliError, Result};
 
 pub fn command_add() -> Command {
     Command::new(MyCommand::ADD).about(AddCommand::ABOUT).arg(

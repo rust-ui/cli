@@ -2,7 +2,7 @@ use crate::constants::commands::{MyCommand, StartersCommand};
 use clap::Command;
 use dialoguer::{Select, theme::ColorfulTheme};
 use std::process::{Command as ProcessCommand, Stdio};
-use crate::shared::error::{CliError, Result};
+use crate::shared::cli_error::{CliError, Result};
 
 // TODO. Use cargo-generate later for more customization.
 

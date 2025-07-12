@@ -3,7 +3,7 @@ use std::io::Write;
 use std::collections::HashSet;
 
 use serde::{Deserialize, Serialize};
-use crate::shared::error::{CliError, Result};
+use crate::shared::cli_error::{CliError, Result};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MyComponent {
