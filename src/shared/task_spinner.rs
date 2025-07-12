@@ -23,19 +23,7 @@ impl TaskSpinner {
         self.spinner.finish_with_message(format!("✔️ {message}"));
     }
 
-    pub fn finish_error(self, message: &str) {
-        self.spinner.finish_with_message(format!("❌ {message}"));
-    }
-
-    pub fn finish_info(self, message: &str) {
-        self.spinner.finish_with_message(format!("🔸 {message}"));
-    }
-
     pub fn finish_with_message(self, message: &str) {
         self.spinner.finish_with_message(message.to_string());
-    }
-
-    pub fn finish(self) {
-        self.spinner.finish();
     }
 }
