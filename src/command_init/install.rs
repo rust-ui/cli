@@ -6,7 +6,7 @@ use crate::constants::others::{SPINNER_UPDATE_DURATION, TAILWIND_DEPENDENCIES};
 pub struct Install {}
 
 impl Install {
-    pub async fn tailwind_with_pnpm() {
+    pub async fn tailwind_with_pnpm() -> anyhow::Result<()> {
         let spinner = ProgressBar::new_spinner();
 
         for dep in TAILWIND_DEPENDENCIES {
@@ -22,5 +22,6 @@ impl Install {
             }
         }
         spinner.finish();
+        Ok(())
     }
 }

@@ -16,7 +16,7 @@ const LABEL: &str = "label";
 pub struct UserInput {}
 
 impl UserInput {
-    pub async fn handle_index_styles() {
+    pub async fn handle_index_styles() -> anyhow::Result<()> {
         // dotenv().ok();
 
         // let url_registry_styles_json = env::var(ENV::URL_REGISTRY_STYLES_JSON).unwrap_or_default();
@@ -28,10 +28,11 @@ impl UserInput {
         if let Ok(styles_index) = styles_index_result {
             // Convert the String to a Vec<serde_json::Value>
             match serde_json::from_str::<Vec<serde_json::Value>>(&styles_index) {
-                Ok(vec_styles) => ask_user_choose_style(vec_styles),
+                Ok(vec_styles) => ask_user_choose_style(vec_styles)?,
                 Err(err) => eprintln!("Error parsing styles_index: {err}"),
             }
         }
+        Ok(())
     }
 }
 
@@ -40,7 +41,7 @@ impl UserInput {
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 /// Ask user to choose a style
-fn ask_user_choose_style(vec_styles: Vec<serde_json::Value>) {
+fn ask_user_choose_style(vec_styles: Vec<serde_json::Value>) -> anyhow::Result<()> {
     // Print available styles
     for (index, style) in vec_styles.iter().enumerate() {
         if let Some(label) = style.get(LABEL) {
@@ -52,7 +53,7 @@ fn ask_user_choose_style(vec_styles: Vec<serde_json::Value>) {
     println!("Please choose a style by entering the corresponding number:");
 
     let mut user_input = String::new();
-    io::stdin().read_line(&mut user_input).expect("🔸 Failed to read line");
+    io::stdin().read_line(&mut user_input)?;
 
     // Parse the choice and print the selected style
     if let Ok(index) = user_input.trim().parse::<usize>() {
@@ -69,4 +70,5 @@ fn ask_user_choose_style(vec_styles: Vec<serde_json::Value>) {
     } else {
         println!("🔸 Invalid input. Please enter a number.");
     }
+    Ok(())
 }
