@@ -29,10 +29,10 @@ pub async fn process_starters() -> CliResult<()> {
         .items(STARTER_TEMPLATES)
         .default(0)
         .interact()
-        .map_err(|e| CliError::validation(&format!("Failed to get user selection: {e}")))?;
+        .map_err(|_| CliError::validation("Failed to get user selection"))?;
 
     let selected_template = STARTER_TEMPLATES.get(selection)
-        .ok_or_else(|| CliError::validation(&format!("Invalid selection: {selection}")))?;
+        .ok_or_else(|| CliError::validation("Invalid selection"))?;
     clone_starter_template(selected_template)?;
     Ok(())
 }
@@ -51,15 +51,12 @@ fn clone_starter_template(template_name: &str) -> CliResult<()> {
         .stdout(Stdio::inherit())
         .stderr(Stdio::inherit())
         .output()
-        .map_err(|e| CliError::git_operation("clone", &format!("Failed to execute git clone: {e}")))?;
+        .map_err(|_| CliError::git_clone_failed())?;
 
     if output.status.success() {
         println!("✅ Successfully cloned {template_name} starter template");
     } else {
-        return Err(CliError::git_operation(
-            "clone",
-            &format!("Failed to clone {template_name} starter template")
-        ));
+        return Err(CliError::git_clone_failed());
     }
     Ok(())
 }
