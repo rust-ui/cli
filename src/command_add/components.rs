@@ -72,7 +72,7 @@ impl Components {
 
     pub fn register_components_in_application_entry(entry_file_path: &str) -> Result<()> {
         let file_content = std::fs::read_to_string(entry_file_path)
-            .map_err(|e| CliError::file_operation(format!("Failed to read entry file '{}': {}", entry_file_path, e)))?;
+            .map_err(|e| CliError::file_operation(format!("Failed to read entry file '{entry_file_path}': {e}")))?;
 
         const MOD_COMPONENTS: &str = "mod components;";
 
@@ -81,7 +81,7 @@ impl Components {
         }
         let mod_components_import = format!("{MOD_COMPONENTS}\n{file_content}");
         std::fs::write(entry_file_path, mod_components_import.as_bytes())
-            .map_err(|e| CliError::file_operation(format!("Failed to write entry file '{}': {}", entry_file_path, e)))?;
+            .map_err(|e| CliError::file_operation(format!("Failed to write entry file '{entry_file_path}': {e}")))?;
         Ok(())
     }
 }

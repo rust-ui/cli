@@ -17,7 +17,7 @@ impl Registry {
     pub async fn fetch_index_content(url: &str) -> Result<String> {
         // Attempt to fetch the content from the URL
         let response = reqwest::get(url).await
-            .map_err(|e| CliError::registry_fetch(format!("Failed to fetch from {}: {}", url, e)))?;
+            .map_err(|e| CliError::registry_fetch(format!("Failed to fetch from {url}: {e}")))?;
 
         let status = response.status();
         if !status.is_success() {
@@ -29,7 +29,7 @@ impl Registry {
         }
 
         let index_content_from_url = response.text().await
-            .map_err(|e| CliError::registry_fetch(format!("Failed to read response body: {}", e)))?;
+            .map_err(|e| CliError::registry_fetch(format!("Failed to read response body: {e}")))?;
 
         // Check if the fetched content is empty
         if index_content_from_url.is_empty() {
@@ -58,7 +58,7 @@ impl RegistryComponent {
         let formatted_url_json = format!("{base_url_styles_default}/{component_name_json}.json");
 
         let response = reqwest::get(&formatted_url_json).await
-            .map_err(|e| CliError::registry_fetch(format!("Failed to fetch component '{}': {}", component_name_json, e)))?;
+            .map_err(|e| CliError::registry_fetch(format!("Failed to fetch component '{component_name_json}': {e}")))?;
         
         let status = response.status();
         if !status.is_success() {
@@ -66,17 +66,17 @@ impl RegistryComponent {
         }
         
         let json_content: serde_json::Value = response.json().await
-            .map_err(|e| CliError::registry_fetch(format!("Failed to parse component JSON for '{}': {}", component_name_json, e)))?;
+            .map_err(|e| CliError::registry_fetch(format!("Failed to parse component JSON for '{component_name_json}': {e}")))?;
 
         let registry_json_path = json_content
             .get("path")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| CliError::malformed_registry(format!("Path field missing for component '{}'", component_name_json)))?
+            .ok_or_else(|| CliError::malformed_registry(format!("Path field missing for component '{component_name_json}'")))?
             .to_string();
         let registry_json_content = json_content
             .get("files")
             .and_then(|v| v.get(0).and_then(|v| v.get("content").and_then(|v| v.as_str())))
-            .ok_or_else(|| CliError::malformed_registry(format!("Content field missing for component '{}'", component_name_json)))?
+            .ok_or_else(|| CliError::malformed_registry(format!("Content field missing for component '{component_name_json}'")))?
             .to_string();
 
         Ok(RegistryComponent {
