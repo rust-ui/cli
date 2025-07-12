@@ -10,7 +10,7 @@ use super::dependencies::Dependencies;
 use super::registry::{Registry, RegistryComponent};
 use crate::command_init::config::UiConfig;
 use crate::constants::commands::{AddCommand, MyCommand};
-use crate::constants::file_name::FILE_NAME;
+use crate::constants::file_name::FileName;
 use crate::constants::url::MyUrl;
 use crate::shared::error::{CliError, Result};
 
@@ -57,7 +57,7 @@ pub async fn process_add(matches: &ArgMatches) -> Result<()> {
     // println!("All resolved cargo dependencies: {:?}", all_resolved_cargo_dependencies);
 
     // Create components/mod.rs if it does not exist
-    let components_base_path = UiConfig::try_reading_ui_config(FILE_NAME::UI_CONFIG_TOML)?.base_path_components;
+    let components_base_path = UiConfig::try_reading_ui_config(FileName::UI_CONFIG_TOML)?.base_path_components;
 
     Components::create_components_mod_if_not_exists_with_pub_mods(
         components_base_path.clone(),

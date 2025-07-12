@@ -5,7 +5,7 @@ use std::io::Write;
 // use crate::constants::env::ENV;
 use crate::{
     command_init::config::UiConfig,
-    constants::{file_name::FILE_NAME, url::MyUrl},
+    constants::{file_name::FileName, url::MyUrl},
     shared::error::{CliError, Result},
 };
 
@@ -87,7 +87,7 @@ impl RegistryComponent {
     }
 
     pub async fn then_write_to_file(self) -> Result<()> {
-        let components_base_path = UiConfig::try_reading_ui_config(FILE_NAME::UI_CONFIG_TOML)?.base_path_components;
+        let components_base_path = UiConfig::try_reading_ui_config(FileName::UI_CONFIG_TOML)?.base_path_components;
         let full_path_component = std::path::Path::new(&components_base_path).join(&self.registry_json_path);
 
         let full_path_component_without_name_rs = full_path_component

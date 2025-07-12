@@ -3,7 +3,7 @@ use clap::{Arg, Command};
 use super::config::{UiConfig, add_init_crates};
 use super::{install::Install, user_input::UserInput};
 use crate::constants::commands::{InitCommand, MyCommand};
-use crate::constants::file_name::FILE_NAME;
+use crate::constants::file_name::FileName;
 use crate::constants::template::MyTemplate;
 use crate::constants::paths::RELATIVE_PATH_PROJECT_DIR;
 use crate::shared::shared_write_template_file::shared_write_template_file;
@@ -34,10 +34,10 @@ pub async fn process_init() -> Result<()> {
 
     let ui_config_toml = toml::to_string_pretty(&ui_config)
         .map_err(|e| CliError::config(format!("Failed to serialize UiConfig: {e}")))?;
-    INIT_TEMPLATE_FILE(FILE_NAME::UI_CONFIG_TOML, &ui_config_toml).await?;
-    INIT_TEMPLATE_FILE(FILE_NAME::PACKAGE_JSON, MyTemplate::PACKAGE_JSON).await?;
+    INIT_TEMPLATE_FILE(FileName::UI_CONFIG_TOML, &ui_config_toml).await?;
+    INIT_TEMPLATE_FILE(FileName::PACKAGE_JSON, MyTemplate::PACKAGE_JSON).await?;
     INIT_TEMPLATE_FILE(&ui_config.tailwind_input_file, MyTemplate::STYLE_TAILWIND_CSS).await?;
-    INIT_TEMPLATE_FILE(FILE_NAME::TAILWIND_CONFIG_JS, MyTemplate::TAILWIND_CONFIG).await?;
+    INIT_TEMPLATE_FILE(FileName::TAILWIND_CONFIG_JS, MyTemplate::TAILWIND_CONFIG).await?;
 
     add_init_crates().await?;
 
