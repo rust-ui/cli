@@ -86,9 +86,9 @@ impl RegistryComponent {
 
     pub async fn then_write_to_file(self) -> anyhow::Result<()> {
         let components_base_path = UiConfig::try_reading_ui_config(FILE_NAME::UI_CONFIG_TOML)?.base_path_components;
-        let full_path_component = format!("{}/{}", components_base_path, self.registry_json_path);
+        let full_path_component = std::path::Path::new(&components_base_path).join(&self.registry_json_path);
 
-        let full_path_component_without_name_rs = std::path::Path::new(&full_path_component)
+        let full_path_component_without_name_rs = full_path_component
             .parent()
             .ok_or_else(|| anyhow::anyhow!("Failed to get parent directory"))?
             .to_str()
@@ -97,12 +97,12 @@ impl RegistryComponent {
 
         write_component_name_in_mod_rs_if_not_exists(self.component_name_json, full_path_component_without_name_rs)?;
 
-        let dir = std::path::Path::new(&full_path_component)
+        let dir = full_path_component
             .parent()
             .ok_or_else(|| anyhow::anyhow!("Failed to get parent directory"))?;
         std::fs::create_dir_all(dir)?;
 
-        std::fs::write(full_path_component, self.registry_json_content)?;
+        std::fs::write(&full_path_component, self.registry_json_content)?;
 
         Ok(())
     }
@@ -113,17 +113,17 @@ impl RegistryComponent {
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 fn write_component_name_in_mod_rs_if_not_exists(component_name: String, full_path_component_without_name_rs: String) -> anyhow::Result<()> {
-    let mod_rs_path = format!("{full_path_component_without_name_rs}/mod.rs");
+    let mod_rs_path = std::path::Path::new(&full_path_component_without_name_rs).join("mod.rs");
 
     // Create the directory if it doesn't exist
-    let dir = std::path::Path::new(&mod_rs_path)
+    let dir = mod_rs_path
         .parent()
-        .ok_or_else(|| anyhow::anyhow!("Failed to get parent directory for {}", mod_rs_path))?;
+        .ok_or_else(|| anyhow::anyhow!("Failed to get parent directory for {}", mod_rs_path.display()))?;
     std::fs::create_dir_all(dir)?;
 
     // Check if the mod.rs file already exists
     let mut mod_rs_content = String::new();
-    if std::path::Path::new(&mod_rs_path).exists() {
+    if mod_rs_path.exists() {
         mod_rs_content = std::fs::read_to_string(&mod_rs_path)?;
     }
 
@@ -137,7 +137,7 @@ fn write_component_name_in_mod_rs_if_not_exists(component_name: String, full_pat
     let mut mod_rs_file = std::fs::OpenOptions::new()
         .append(true)
         .create(true)
-        .open(mod_rs_path)?;
+        .open(&mod_rs_path)?;
 
     // Write the new component name
     writeln!(mod_rs_file, "pub mod {component_name};")?;

@@ -60,7 +60,7 @@ pub async fn process_init() -> anyhow::Result<()> {
 /// INIT TEMPLATE FILE
 #[allow(non_snake_case)]
 async fn INIT_TEMPLATE_FILE(file_name: &str, template: &str) -> anyhow::Result<()> {
-    let file_path = format!("{RELATIVE_PATH_PROJECT_DIR}/{file_name}");
+    let file_path = std::path::Path::new(RELATIVE_PATH_PROJECT_DIR).join(file_name);
 
     // if !shared_check_file_exist_and_ask_overwrite(&file_path, file_name_ext).await {
     //     return;
@@ -70,7 +70,7 @@ async fn INIT_TEMPLATE_FILE(file_name: &str, template: &str) -> anyhow::Result<(
     spinner.set_message("Writing to file...");
     spinner.enable_steady_tick(Duration::from_millis(SPINNER_UPDATE_DURATION));
 
-    shared_write_template_file(&file_path, &spinner, template).await?;
+    shared_write_template_file(&file_path.to_string_lossy(), &spinner, template).await?;
 
     let finish_message = format!("✔️ Writing {file_name} complete.");
     spinner.finish_with_message(finish_message);
