@@ -4,7 +4,7 @@ use std::process::Command;
 
 use crate::command_init::crates::INIT_CRATES;
 use crate::shared::task_spinner::TaskSpinner;
-use crate::error::{CliError, Result};
+use crate::shared::error::{CliError, Result};
 
 ///
 /// UiConfig

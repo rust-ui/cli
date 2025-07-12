@@ -1,5 +1,5 @@
 use crate::shared::shared_fetch_functions::shared_fetch_registry_return_json;
-use crate::error::{CliError, Result};
+use crate::shared::error::{CliError, Result};
 
 pub struct Fetch {}
 

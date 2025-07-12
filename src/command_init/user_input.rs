@@ -6,7 +6,7 @@ use std::io;
 use crate::command_init::fetch::Fetch;
 // use crate::constants::env::ENV;
 use crate::constants::url::MyUrl;
-use crate::error::{CliError, Result};
+use crate::shared::error::{CliError, Result};
 
 const LABEL: &str = "label";
 

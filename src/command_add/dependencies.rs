@@ -2,7 +2,7 @@ use std::collections::{HashMap, HashSet};
 use std::fs;
 
 use crate::shared::task_spinner::TaskSpinner;
-use crate::error::{CliError, Result};
+use crate::shared::error::{CliError, Result};
 
 use super::components::{MyComponent, ResolvedComponent};
 
