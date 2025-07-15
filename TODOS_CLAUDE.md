@@ -1,7 +1,7 @@
 
 
 - CliError::file_operation("Failed to get parent directory")
-  - should not pass str as param but just have the ffuction withtout str param
+  - should not pass str as param but just have the ffuction without str param
 
 
 
