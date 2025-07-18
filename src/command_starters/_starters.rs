@@ -1,4 +1,3 @@
-use crate::constants::commands::{MyCommand, StartersCommand};
 use clap::Command;
 use dialoguer::{Select, theme::ColorfulTheme};
 use std::process::{Command as ProcessCommand, Stdio};
@@ -11,7 +10,7 @@ use crate::shared::cli_error::{CliError, CliResult};
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 pub fn command_starters() -> Command {
-    Command::new(MyCommand::STARTERS).about(StartersCommand::ABOUT)
+    Command::new("starters").about("Choose and install starter templates")
 }
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
