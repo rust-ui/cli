@@ -4,6 +4,7 @@
 
 The `src/command_init/` module is responsible for initializing new Rust/Leptos projects with UI components support. After analyzing all files in the module, several improvement opportunities have been identified to enhance code quality, user experience, and maintainability.
 
+
 ## Module Structure Analysis
 
 ### Current Architecture
@@ -49,10 +50,6 @@ src/command_init/
 
 ### 2. Performance Issues
 
-**File: `install.rs:10-28`**
-- **Issue**: Sequential pnpm installations instead of batch
-- **Problem**: `pnpm install dep1 && pnpm install dep2 && pnpm install dep3`
-- **Impact**: 3x slower than `pnpm install dep1 dep2 dep3`
 
 **File: `_init.rs:37-40`**
 - **Issue**: Sequential file writes without concurrency
@@ -71,10 +68,6 @@ src/command_init/
 - **Problem**: Unnecessary abstraction - should be a simple function
 - **Impact**: Overengineering, harder to understand
 
-**File: `crates.rs:3-4`**
-- **Issue**: Unused version field with TODO comment
-- **Problem**: Technical debt and unclear implementation intentions
-- **Impact**: Code maintenance burden
 
 ### 4. Configuration & Flexibility Issues
 
@@ -83,10 +76,6 @@ src/command_init/
 - **Problem**: No customization options during initialization
 - **Impact**: Limited flexibility for different project setups
 
-**File: `crates.rs:21-24`**
-- **Issue**: Hardcoded crate list and features
-- **Problem**: Cannot customize base dependencies
-- **Impact**: All projects get identical dependencies regardless of needs
 
 ### 5. Network & Registry Issues
 
@@ -113,12 +102,6 @@ if let Err(e) = UserInput::handle_index_styles().await {
 }
 ```
 
-**B. Batch Package Installation**
-```rust
-// In install.rs:tailwind_with_pnpm()
-let deps_str = TAILWIND_DEPENDENCIES.join(" ");
-Command::new("pnpm").args(["install", &deps_str])
-```
 
 **C. Fix Function Naming**
 ```rust
@@ -215,8 +198,3 @@ const DEFAULT_STYLES: &str = include_str!("../assets/default_styles.json");
 - Set appropriate file permissions on created files
 - Avoid writing sensitive data to temporary files
 
-## Conclusion
-
-The command_init module requires significant improvements in error handling, performance, and user experience. The recommended changes would transform it from a fragile, sequential process to a robust, concurrent initialization system with proper error recovery and user feedback.
-
-Priority should be given to making the initialization process more resilient to failures and faster to complete, while maintaining code quality standards established in the rest of the codebase.
