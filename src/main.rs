@@ -19,7 +19,6 @@ mod command_starters;
 mod constants;
 mod shared;
 
-use constants::commands::MyCommand;
 
 // * cargo run --bin ui init
 // * cargo run --bin ui add button demo_button demo_button_variants demo_button_sizes
@@ -46,19 +45,19 @@ async fn main() {
 
     // Handle commands
     match matches.subcommand() {
-        Some((MyCommand::INIT, _)) => {
+        Some(("init", _)) => {
             if let Err(e) = command_init::_init::process_init().await {
                 eprintln!("{e}");
                 process::exit(1);
             }
         }
-        Some((MyCommand::ADD, sub_matches)) => {
+        Some(("add", sub_matches)) => {
             if let Err(e) = command_add::_add::process_add(sub_matches).await {
                 eprintln!("{e}");
                 process::exit(1);
             }
         }
-        Some((MyCommand::STARTERS, _)) => {
+        Some(("starters", _)) => {
             if let Err(e) = command_starters::_starters::process_starters().await {
                 eprintln!("{e}");
                 process::exit(1);

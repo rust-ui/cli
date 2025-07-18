@@ -2,7 +2,6 @@ use clap::{Arg, Command};
 
 use super::config::{UiConfig, add_init_crates};
 use super::{install::Install, user_input::UserInput};
-use crate::constants::commands::{InitCommand, MyCommand};
 use crate::constants::file_name::FileName;
 use crate::constants::template::MyTemplate;
 use crate::shared::cli_error::{CliError, CliResult};
@@ -14,11 +13,11 @@ use crate::shared::task_spinner::TaskSpinner;
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 pub fn command_init() -> Command {
-    Command::new(MyCommand::INIT)
-        .about(InitCommand::ABOUT)
+    Command::new("init")
+        .about("Initialize the project")
         .arg(
-            Arg::new(InitCommand::PROJECT_NAME)
-                .help(InitCommand::HELP)
+            Arg::new("project_name")
+                .help("The name of the project to initialize")
                 .required(false),
         )
         .subcommand(Command::new("run").about("Run the initialization logic"))

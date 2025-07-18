@@ -9,15 +9,14 @@ use super::components::{Components, MyComponent};
 use super::dependencies::Dependencies;
 use super::registry::{Registry, RegistryComponent};
 use crate::command_init::config::UiConfig;
-use crate::constants::commands::{AddCommand, MyCommand};
 use crate::constants::file_name::FileName;
 use crate::constants::url::MyUrl;
 use crate::shared::cli_error::{CliError, CliResult};
 
 pub fn command_add() -> Command {
-    Command::new(MyCommand::ADD).about(AddCommand::ABOUT).arg(
-        Arg::new(AddCommand::COMPONENTS)
-            .help(AddCommand::HELP)
+    Command::new("add").about("Add components and dependencies to your project").arg(
+        Arg::new("components")
+            .help("The components to add (space-separated)")
             .required(false)
             .num_args(1..),
     )
@@ -35,7 +34,7 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     let url_registry_index_json = MyUrl::URL_REGISTRY_INDEX_JSON;
 
     let user_components: Vec<String> = matches
-        .get_many::<String>(AddCommand::COMPONENTS)
+        .get_many::<String>("components")
         .unwrap_or_default()
         .cloned()
         .collect();
