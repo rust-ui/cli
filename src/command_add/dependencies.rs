@@ -1,5 +1,4 @@
 use std::collections::{HashMap, HashSet};
-use std::fs;
 
 use crate::shared::cli_error::{CliError, CliResult};
 use crate::shared::task_spinner::TaskSpinner;
@@ -58,21 +57,8 @@ pub fn print_dependency_tree(resolved: &HashMap<String, ResolvedComponent>) {
 }
 
 pub fn add_cargo_dep_to_toml(cargo_deps: &[String]) -> CliResult<()> {
-    // Find Cargo.toml file in the current directory or parent directories
-    let cargo_toml_path = find_cargo_toml()?;
-
     let spinner = TaskSpinner::new("Adding crates to Cargo.toml...");
 
-    // Read the current Cargo.toml content
-    let mut cargo_toml_content = fs::read_to_string(&cargo_toml_path)
-        .map_err(|_| CliError::file_read_failed())?;
-
-    // Check if dependencies section exists
-    if !cargo_toml_content.contains("[dependencies]") {
-        cargo_toml_content.push_str("\n[dependencies]\n");
-    }
-
-    // Add each dependency using the CLI command
     let mut added_deps = Vec::new();
     for dep in cargo_deps {
         // Skip "std" as it's a standard library and not a dependency to add
@@ -97,13 +83,8 @@ pub fn add_cargo_dep_to_toml(cargo_deps: &[String]) -> CliResult<()> {
         }
     }
 
-    // Only write to the file if we've added new dependencies
     if !added_deps.is_empty() {
-        let dependencies_str = added_deps
-            .iter()
-            .map(|dep| dep.as_str())
-            .collect::<Vec<&str>>()
-            .join(", ");
+        let dependencies_str = added_deps.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(", ");
         let finish_message = format!("Successfully added to Cargo.toml: [{dependencies_str}] !");
         spinner.finish_success(&finish_message);
     } else {
@@ -280,24 +261,3 @@ fn print_component_tree(
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-fn find_cargo_toml() -> CliResult<String> {
-    // Start with the current directory
-    let mut current_dir = std::env::current_dir()
-        .map_err(|_| CliError::file_operation("Failed to get current directory"))?;
-
-    loop {
-        let cargo_toml_path = current_dir.join("Cargo.toml");
-
-        if cargo_toml_path.exists() {
-            return Ok(cargo_toml_path.to_string_lossy().to_string());
-        }
-
-        // Move to the parent directory
-        if !current_dir.pop() {
-            // No parent directory (we're at the root)
-            break;
-        }
-    }
-
-    Err(CliError::file_not_found())
-}
