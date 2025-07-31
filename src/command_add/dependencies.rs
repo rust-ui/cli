@@ -120,10 +120,11 @@ fn resolve_all_dependencies(
     // Map to store resolved components
     let mut resolved_components: HashMap<String, ResolvedComponent> = HashMap::new();
 
-    // Process only the selected components
+    // Process only the selected components, skipping invalid ones
     for component_name in user_components {
         if !component_map.contains_key(component_name) {
-            return Err(CliError::component_not_found(component_name));
+            println!("⚠️  Skipping component '{component_name}' - not found in registry");
+            continue;
         }
 
         resolve_component_recursive(
