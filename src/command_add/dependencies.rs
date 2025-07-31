@@ -24,54 +24,19 @@ impl Dependencies {
     }
 
     pub fn get_all_resolved_components(resolved: &HashMap<String, ResolvedComponent>) -> Vec<String> {
-        let mut all_components = HashSet::new();
-
-        // Add all the resolved components
-        for name in resolved.keys() {
-            all_components.insert(name.clone());
-        }
-
-        // Add all their dependencies
-        for component in resolved.values() {
-            for dep in &component.resolved_registry_dependencies {
-                all_components.insert(dep.clone());
-            }
-        }
-
-        // Convert to sorted vector for consistent output
-        let mut result: Vec<String> = all_components.into_iter().collect();
-        result.sort();
-        result
+        collect_and_sort(resolved, |component| {
+            let mut items = vec![component.component.name.clone()];
+            items.extend(component.resolved_registry_dependencies.iter().cloned());
+            items
+        })
     }
 
     pub fn get_all_resolved_parent_dirs(resolved: &HashMap<String, ResolvedComponent>) -> Vec<String> {
-        let mut all_parent_dirs = HashSet::new();
-
-        // Add all the resolved component types
-        for component in resolved.values() {
-            all_parent_dirs.insert(component.component.parent_dir.clone());
-        }
-
-        // Convert to sorted vector for consistent output
-        let mut result: Vec<String> = all_parent_dirs.into_iter().collect();
-        result.sort();
-        result
+        collect_and_sort(resolved, |component| vec![component.component.parent_dir.clone()])
     }
 
     pub fn get_all_resolved_cargo_dependencies(resolved: &HashMap<String, ResolvedComponent>) -> Vec<String> {
-        let mut all_cargo_deps = HashSet::new();
-
-        // Add all cargo dependencies from all components
-        for component in resolved.values() {
-            for dep in &component.resolved_cargo_dependencies {
-                all_cargo_deps.insert(dep.clone());
-            }
-        }
-
-        // Convert to sorted vector for consistent output
-        let mut result: Vec<String> = all_cargo_deps.into_iter().collect();
-        result.sort();
-        result
+        collect_and_sort(resolved, |component| component.resolved_cargo_dependencies.iter().cloned().collect::<Vec<_>>())
     }
 
     //
@@ -156,9 +121,24 @@ impl Dependencies {
     }
 }
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                     ✨ FUNCTIONS ✨                        */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+// Helper function to collect items from resolved components and return sorted vector
+fn collect_and_sort<T, F>(resolved: &HashMap<String, ResolvedComponent>, extractor: F) -> Vec<String>
+where
+    F: Fn(&ResolvedComponent) -> T,
+    T: IntoIterator<Item = String>,
+{
+    let mut items = HashSet::new();
+    
+    for component in resolved.values() {
+        for item in extractor(component) {
+            items.insert(item);
+        }
+    }
+    
+    let mut result: Vec<String> = items.into_iter().collect();
+    result.sort();
+    result
+}
 
 fn resolve_all_dependencies(
     component_map: &HashMap<String, MyComponent>,
