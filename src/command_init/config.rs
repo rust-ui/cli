@@ -82,9 +82,11 @@ pub async fn add_init_crates() -> CliResult<()> {
         let spinner = TaskSpinner::new(&format!("Adding and installing {} crate...", my_crate.name));
 
         let mut args = vec!["add".to_owned(), my_crate.name.to_owned()];
-        if !my_crate.features.is_empty() {
-            args.push("--features".to_owned());
-            args.push(my_crate.features.join(","));
+        if let Some(features) = my_crate.features {
+            if !features.is_empty() {
+                args.push("--features".to_owned());
+                args.push(features.join(","));
+            }
         }
         let output = Command::new("cargo")
             .args(args)
