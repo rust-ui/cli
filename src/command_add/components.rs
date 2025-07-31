@@ -16,7 +16,7 @@ pub struct MyComponent {
     pub parent_dir: String,
 }
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub struct ResolvedComponent {
     pub component: MyComponent,
     pub resolved_registry_dependencies: HashSet<String>, // All dependencies including transitive ones
