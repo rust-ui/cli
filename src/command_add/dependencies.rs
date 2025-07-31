@@ -5,18 +5,186 @@ use crate::shared::task_spinner::TaskSpinner;
 
 use super::components::{MyComponent, ResolvedComponent};
 
-// TODO. Should distinguish clearly between cargo dependencies and registry dependencies.
+/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/*                   🔍 CIRCULAR DEPENDENCY DETECTOR           */
+/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+#[derive(Default)]
+pub struct CircularDependencyDetector {
+    visited: HashSet<String>,
+}
+
+impl CircularDependencyDetector {
+    pub fn check_and_visit(&mut self, component_name: &str) -> CliResult<()> {
+        if !self.visited.insert(component_name.to_string()) {
+            return Err(CliError::circular_dependency(component_name));
+        }
+        Ok(())
+    }
+
+    pub fn mark_completed(&mut self, component_name: &str) {
+        self.visited.remove(component_name);
+    }
+}
+
+
+/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/*                     📦 RESOLUTION CACHE                     */
+/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+#[derive(Default)]
+pub struct ResolutionCache {
+    resolved_components: HashMap<String, ResolvedComponent>,
+}
+
+impl ResolutionCache {
+    pub fn get(&self, component_name: &str) -> Option<&ResolvedComponent> {
+        self.resolved_components.get(component_name)
+    }
+
+    pub fn insert(&mut self, component_name: String, resolved: ResolvedComponent) {
+        self.resolved_components.insert(component_name, resolved);
+    }
+
+    pub fn get_dependencies(&self, component_name: &str) -> Option<(HashSet<String>, HashSet<String>)> {
+        self.resolved_components.get(component_name).map(|resolved| {
+            (
+                resolved.resolved_registry_dependencies.clone(),
+                resolved.resolved_cargo_dependencies.clone(),
+            )
+        })
+    }
+
+    pub fn get_all_resolved(&self) -> &HashMap<String, ResolvedComponent> {
+        &self.resolved_components
+    }
+}
+
+
+/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/*                   🗂️ COMPONENT REGISTRY                     */
+/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+pub struct ComponentRegistry {
+    component_map: HashMap<String, MyComponent>,
+}
+
+impl ComponentRegistry {
+    pub fn new(components: &[MyComponent]) -> Self {
+        let component_map = components
+            .iter()
+            .map(|c| (c.name.clone(), c.clone()))
+            .collect();
+        
+        Self { component_map }
+    }
+
+    pub fn get_component(&self, name: &str) -> Option<&MyComponent> {
+        self.component_map.get(name)
+    }
+
+    pub fn contains(&self, name: &str) -> bool {
+        self.component_map.contains_key(name)
+    }
+
+    pub fn validate_components(&self, component_names: &[String]) -> Vec<String> {
+        component_names
+            .iter()
+            .filter(|name| !self.contains(name))
+            .cloned()
+            .collect()
+    }
+}
+
+/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/*                   🧩 DEPENDENCY RESOLVER                    */
+/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+pub struct DependencyResolver {
+    registry: ComponentRegistry,
+    cache: ResolutionCache,
+}
+
+impl DependencyResolver {
+    pub fn new(registry: ComponentRegistry) -> Self {
+        Self {
+            registry,
+            cache: ResolutionCache::default(),
+        }
+    }
+
+    pub fn resolve_user_components(&mut self, user_components: &[String]) -> CliResult<HashMap<String, ResolvedComponent>> {
+        let invalid_components = self.registry.validate_components(user_components);
+        
+        for invalid in &invalid_components {
+            println!("⚠️  Skipping component '{invalid}' - not found in registry");
+        }
+
+        let mut cycle_detector = CircularDependencyDetector::default();
+        
+        for component_name in user_components {
+            if self.registry.contains(component_name) {
+                self.resolve_component_recursive(component_name, &mut cycle_detector)?;
+            }
+        }
+
+        Ok(self.cache.get_all_resolved().clone())
+    }
+
+    fn resolve_component_recursive(
+        &mut self,
+        component_name: &str,
+        cycle_detector: &mut CircularDependencyDetector,
+    ) -> CliResult<(HashSet<String>, HashSet<String>)> {
+        if let Some(dependencies) = self.cache.get_dependencies(component_name) {
+            return Ok(dependencies);
+        }
+
+        cycle_detector.check_and_visit(component_name)?;
+
+        let component = self.registry
+            .get_component(component_name)
+            .ok_or_else(|| CliError::component_not_found(component_name))?
+            .clone();
+
+        let mut resolved_registry_dependencies = HashSet::new();
+        let mut resolved_cargo_dependencies = HashSet::new();
+
+        for cargo_dep in &component.cargo_dependencies {
+            resolved_cargo_dependencies.insert(cargo_dep.clone());
+        }
+
+        for dep_name in &component.registry_dependencies {
+            resolved_registry_dependencies.insert(dep_name.clone());
+
+            let (transitive_registry_deps, transitive_cargo_deps) =
+                self.resolve_component_recursive(dep_name, cycle_detector)?;
+
+            resolved_registry_dependencies.extend(transitive_registry_deps);
+            resolved_cargo_dependencies.extend(transitive_cargo_deps);
+        }
+
+        cycle_detector.mark_completed(component_name);
+
+        let resolved_component = ResolvedComponent {
+            component,
+            resolved_registry_dependencies: resolved_registry_dependencies.clone(),
+            resolved_cargo_dependencies: resolved_cargo_dependencies.clone(),
+        };
+
+        self.cache.insert(component_name.to_string(), resolved_component);
+
+        Ok((resolved_registry_dependencies, resolved_cargo_dependencies))
+    }
+}
 
 pub fn all_tree_resolved(
     user_components: Vec<String>,
     vec_components_from_index: &[MyComponent],
 ) -> CliResult<HashMap<String, ResolvedComponent>> {
-    let component_map: HashMap<String, MyComponent> = vec_components_from_index
-        .iter()
-        .map(|c| (c.name.clone(), c.clone()))
-        .collect();
-
-    resolve_all_dependencies(&component_map, &user_components)
+    let component_registry = ComponentRegistry::new(vec_components_from_index);
+    let mut dependency_resolver = DependencyResolver::new(component_registry);
+    dependency_resolver.resolve_user_components(&user_components)
 }
 
 pub fn get_all_resolved_components(resolved: &HashMap<String, ResolvedComponent>) -> Vec<String> {
@@ -36,24 +204,7 @@ pub fn get_all_resolved_cargo_dependencies(resolved: &HashMap<String, ResolvedCo
 }
 
 pub fn print_dependency_tree(resolved: &HashMap<String, ResolvedComponent>) {
-    println!("Dependency Tree Resolution:");
-
-    // Find components that are direct targets (not dependencies of other resolved components)
-    let mut dependent_components = HashSet::new();
-    for resolved_comp in resolved.values() {
-        for dep in &resolved_comp.resolved_registry_dependencies {
-            dependent_components.insert(dep.clone());
-        }
-    }
-
-    // Print each target component's tree
-    for name in resolved.keys() {
-        // Only print the top-level components (not dependencies of other resolved components)
-        // Or, remove this condition to print all resolved components at top level
-        if !dependent_components.contains(name) {
-            print_component_tree(name, resolved, resolved, 0);
-        }
-    }
+    DependencyTreePrinter::print_tree(resolved);
 }
 
 pub fn add_cargo_dep_to_toml(cargo_deps: &[String]) -> CliResult<()> {
@@ -113,152 +264,78 @@ where
     result
 }
 
-fn resolve_all_dependencies(
-    component_map: &HashMap<String, MyComponent>,
-    user_components: &[String],
-) -> CliResult<HashMap<String, ResolvedComponent>> {
-    // Map to store resolved components
-    let mut resolved_components: HashMap<String, ResolvedComponent> = HashMap::new();
-
-    // Process only the selected components, skipping invalid ones
-    for component_name in user_components {
-        if !component_map.contains_key(component_name) {
-            println!("⚠️  Skipping component '{component_name}' - not found in registry");
-            continue;
-        }
-
-        resolve_component_recursive(
-            component_name,
-            component_map,
-            &mut resolved_components,
-            &mut HashSet::new(),
-        )?;
-    }
-
-    Ok(resolved_components)
-}
-
-fn resolve_component_recursive(
-    component_name: &str,
-    component_map: &HashMap<String, MyComponent>,
-    resolved_components: &mut HashMap<String, ResolvedComponent>,
-    visited: &mut HashSet<String>,
-) -> CliResult<(HashSet<String>, HashSet<String>)> {
-    // Return cached result if already processed
-    if let Some(resolved) = resolved_components.get(component_name) {
-        return Ok((
-            resolved.resolved_registry_dependencies.clone(),
-            resolved.resolved_cargo_dependencies.clone(),
-        ));
-    }
-
-    // Prevent infinite recursion
-    if !visited.insert(component_name.to_string()) {
-        return Err(CliError::circular_dependency(component_name));
-    }
-
-    // Get component or return error if not found
-    let component = match component_map.get(component_name) {
-        Some(c) => c,
-        None => return Err(CliError::component_not_found(component_name)),
-    };
-
-    // Collect all dependencies recursively
-    let mut resolved_registry_dependencies = HashSet::new();
-    let mut resolved_cargo_dependencies = HashSet::new();
-
-    // Add direct cargo dependencies
-    for cargo_dep in &component.cargo_dependencies {
-        resolved_cargo_dependencies.insert(cargo_dep.clone());
-    }
-
-    // Add direct registry dependencies and their transitive dependencies
-    for dep_name in &component.registry_dependencies {
-        resolved_registry_dependencies.insert(dep_name.clone());
-
-        // Add transitive dependencies (both registry and cargo)
-        let (transitive_registry_deps, transitive_cargo_deps) =
-            resolve_component_recursive(dep_name, component_map, resolved_components, visited)?;
-
-        for trans_dep in transitive_registry_deps {
-            resolved_registry_dependencies.insert(trans_dep);
-        }
-
-        for cargo_dep in transitive_cargo_deps {
-            resolved_cargo_dependencies.insert(cargo_dep);
-        }
-    }
-
-    // Remove component from visited set as we're done with it
-    visited.remove(component_name);
-
-    // Store the resolved component
-    resolved_components.insert(
-        component_name.to_string(),
-        ResolvedComponent {
-            component: component.clone(),
-            resolved_registry_dependencies: resolved_registry_dependencies.clone(),
-            resolved_cargo_dependencies: resolved_cargo_dependencies.clone(),
-        },
-    );
-
-    Ok((resolved_registry_dependencies, resolved_cargo_dependencies))
-}
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                     ✨ FUNCTIONS ✨                        */
+/*                   🌳 DEPENDENCY TREE PRINTER               */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-fn print_component_tree(
-    component_name: &str,
-    all_resolved: &HashMap<String, ResolvedComponent>,
-    current_branch: &HashMap<String, ResolvedComponent>,
-    depth: usize,
-) {
-    if let Some(component) = current_branch.get(component_name) {
-        let indent = "  ".repeat(depth);
-        println!("{}└─ {} ({})", indent, component_name, component.component.parent_dir);
+pub struct DependencyTreePrinter;
 
-        // TODO. Shortfix to remove std. I don't know where it comes from.
-        let filtered_cargo_deps: Vec<&String> = component
-            .component
-            .cargo_dependencies
-            .iter()
-            .filter(|&dep| dep != "std")
-            .collect();
+impl DependencyTreePrinter {
+    pub fn print_tree(resolved: &HashMap<String, ResolvedComponent>) {
+        println!("Dependency Tree Resolution:");
 
-        if !filtered_cargo_deps.is_empty() {
-            let cargo_indent = "  ".repeat(depth + 1);
-            println!("{cargo_indent}└─ Cargo Dependencies:");
+        let dependent_components = Self::find_dependent_components(resolved);
 
-            // Sort cargo dependencies for consistent output
-            let mut cargo_deps = filtered_cargo_deps;
-            cargo_deps.sort();
-
-            for cargo_dep in cargo_deps {
-                let cargo_dep_indent = "  ".repeat(depth + 2);
-                println!("{cargo_dep_indent}└─ {cargo_dep}");
+        for name in resolved.keys() {
+            if !dependent_components.contains(name) {
+                Self::print_component_tree(name, resolved, resolved, 0);
             }
         }
+    }
 
-        // Sort registry dependencies for consistent output
-        let mut deps: Vec<&String> = component.component.registry_dependencies.iter().collect();
-        deps.sort();
+    fn find_dependent_components(resolved: &HashMap<String, ResolvedComponent>) -> HashSet<String> {
+        let mut dependent_components = HashSet::new();
+        for resolved_comp in resolved.values() {
+            for dep in &resolved_comp.resolved_registry_dependencies {
+                dependent_components.insert(dep.clone());
+            }
+        }
+        dependent_components
+    }
 
-        for dep_name in deps {
-            // Only print dependency if it's in our resolved set
-            if all_resolved.contains_key(dep_name) {
-                print_component_tree(dep_name, all_resolved, all_resolved, depth + 1);
-            } else {
-                // This is a dependency that wasn't fully resolved (part of another branch)
-                let indent = "  ".repeat(depth + 1);
-                println!("{indent}└─ {dep_name} (external)");
+    fn print_component_tree(
+        component_name: &str,
+        all_resolved: &HashMap<String, ResolvedComponent>,
+        current_branch: &HashMap<String, ResolvedComponent>,
+        depth: usize,
+    ) {
+        if let Some(component) = current_branch.get(component_name) {
+            let indent = "  ".repeat(depth);
+            println!("{}└─ {} ({})", indent, component_name, component.component.parent_dir);
+
+            let filtered_cargo_deps: Vec<&String> = component
+                .component
+                .cargo_dependencies
+                .iter()
+                .filter(|&dep| dep != "std")
+                .collect();
+
+            if !filtered_cargo_deps.is_empty() {
+                let cargo_indent = "  ".repeat(depth + 1);
+                println!("{cargo_indent}└─ Cargo Dependencies:");
+
+                let mut cargo_deps = filtered_cargo_deps;
+                cargo_deps.sort();
+
+                for cargo_dep in cargo_deps {
+                    let cargo_dep_indent = "  ".repeat(depth + 2);
+                    println!("{cargo_dep_indent}└─ {cargo_dep}");
+                }
+            }
+
+            let mut deps: Vec<&String> = component.component.registry_dependencies.iter().collect();
+            deps.sort();
+
+            for dep_name in deps {
+                if all_resolved.contains_key(dep_name) {
+                    Self::print_component_tree(dep_name, all_resolved, all_resolved, depth + 1);
+                } else {
+                    let indent = "  ".repeat(depth + 1);
+                    println!("{indent}└─ {dep_name} (external)");
+                }
             }
         }
     }
 }
-
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
-/*                     ✨ FUNCTIONS ✨                        */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
