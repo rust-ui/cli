@@ -1,7 +1,6 @@
 // use dotenv::dotenv;
 use serde_json;
 // use std::env;
-use std::io;
 
 use crate::command_init::fetch::Fetch;
 // use crate::constants::env::ENV;
@@ -40,36 +39,27 @@ impl UserInput {
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-/// Ask user to choose a style
+/// Ask user to choose a style (automatically selects Default)
 fn ask_user_choose_style(vec_styles: Vec<serde_json::Value>) -> CliResult<()> {
-    // Print available styles
-    for (index, style) in vec_styles.iter().enumerate() {
+    // Look for "Default" style and select it automatically
+    for style in &vec_styles {
         if let Some(label) = style.get(LABEL) {
-            println!("\n{}: {}", index + 1, label);
-        }
-    }
-
-    // Prompt user for choice
-    println!("Please choose a style by entering the corresponding number:");
-
-    let mut user_input = String::new();
-    io::stdin().read_line(&mut user_input)
-        .map_err(|e| CliError::validation(&format!("Failed to read user input: {e}")))?;
-
-    // Parse the choice and print the selected style
-    if let Ok(index) = user_input.trim().parse::<usize>() {
-        if index > 0 && index <= vec_styles.len() {
-            if let Some(label) = vec_styles.get(index - 1).and_then(|s| s.get(LABEL)) {
-                println!("You selected: {label}");
+            if label.as_str() == Some("Default") {
+                println!("🎨 Automatically selecting Default style (no user input required)");
+                println!("Selected style: {label}");
+                return Ok(());
             }
-        } else {
-            return Err(CliError::validation(&format!(
-                "Invalid choice. Please select a number between 1 and {}.",
-                vec_styles.len()
-            )));
         }
-    } else {
-        return Err(CliError::validation("Invalid input. Please enter a number."));
     }
-    Ok(())
+
+    // Fallback: if no "Default" found, use the first available style
+    if let Some(first_style) = vec_styles.first() {
+        if let Some(label) = first_style.get(LABEL) {
+            println!("🎨 No Default style found, automatically selecting first available style: {label}");
+            return Ok(());
+        }
+    }
+
+    // If no styles available, return an error
+    Err(CliError::validation("No styles available in registry"))
 }
