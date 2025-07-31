@@ -6,7 +6,7 @@ use std::vec::Vec;
 
 use super::components::{Components, MyComponent};
 // use crate::constants::env::ENV;
-use super::dependencies::Dependencies;
+use super::dependencies;
 use super::registry::{Registry, RegistryComponent};
 use crate::command_init::config::UiConfig;
 use crate::constants::file_name::FileName;
@@ -44,11 +44,11 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     let vec_components_from_index: Vec<MyComponent> = serde_json::from_str(&index_content_from_url)
         .map_err(|e| CliError::malformed_registry(&format!("Failed to parse registry index JSON: {e}")))?;
 
-    let all_tree_resolved = Dependencies::all_tree_resolved(user_components, &vec_components_from_index)?;
-    Dependencies::print_dependency_tree(&all_tree_resolved); // Can be commented out
-    let all_resolved_components = Dependencies::get_all_resolved_components(&all_tree_resolved);
-    let all_resolved_parent_dirs = Dependencies::get_all_resolved_parent_dirs(&all_tree_resolved);
-    let all_resolved_cargo_dependencies = Dependencies::get_all_resolved_cargo_dependencies(&all_tree_resolved);
+    let all_tree_resolved = dependencies::all_tree_resolved(user_components, &vec_components_from_index)?;
+    dependencies::print_dependency_tree(&all_tree_resolved); // Can be commented out
+    let all_resolved_components = dependencies::get_all_resolved_components(&all_tree_resolved);
+    let all_resolved_parent_dirs = dependencies::get_all_resolved_parent_dirs(&all_tree_resolved);
+    let all_resolved_cargo_dependencies = dependencies::get_all_resolved_cargo_dependencies(&all_tree_resolved);
 
     // println!("--------------------------------");
     // println!("All resolved components: {:?}", all_resolved_components);
@@ -88,7 +88,7 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
 
     // Handle cargo dependencies if any exist
     if !all_resolved_cargo_dependencies.is_empty() {
-        Dependencies::add_cargo_dep_to_toml(&all_resolved_cargo_dependencies)?;
+        dependencies::add_cargo_dep_to_toml(&all_resolved_cargo_dependencies)?;
     }
 
     Ok(())

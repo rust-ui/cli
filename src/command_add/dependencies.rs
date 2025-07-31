@@ -8,117 +8,109 @@ use super::components::{MyComponent, ResolvedComponent};
 
 // TODO. Should distinguish clearly between cargo dependencies and registry dependencies.
 
-pub struct Dependencies {}
+pub fn all_tree_resolved(
+    user_components: Vec<String>,
+    vec_components_from_index: &[MyComponent],
+) -> CliResult<HashMap<String, ResolvedComponent>> {
+    let component_map: HashMap<String, MyComponent> = vec_components_from_index
+        .iter()
+        .map(|c| (c.name.clone(), c.clone()))
+        .collect();
 
-impl Dependencies {
-    pub fn all_tree_resolved(
-        user_components: Vec<String>,
-        vec_components_from_index: &[MyComponent],
-    ) -> CliResult<HashMap<String, ResolvedComponent>> {
-        let component_map: HashMap<String, MyComponent> = vec_components_from_index
-            .iter()
-            .map(|c| (c.name.clone(), c.clone()))
-            .collect();
+    resolve_all_dependencies(&component_map, &user_components)
+}
 
-        resolve_all_dependencies(&component_map, &user_components)
-    }
+pub fn get_all_resolved_components(resolved: &HashMap<String, ResolvedComponent>) -> Vec<String> {
+    collect_and_sort(resolved, |component| {
+        let mut items = vec![component.component.name.clone()];
+        items.extend(component.resolved_registry_dependencies.iter().cloned());
+        items
+    })
+}
 
-    pub fn get_all_resolved_components(resolved: &HashMap<String, ResolvedComponent>) -> Vec<String> {
-        collect_and_sort(resolved, |component| {
-            let mut items = vec![component.component.name.clone()];
-            items.extend(component.resolved_registry_dependencies.iter().cloned());
-            items
-        })
-    }
+pub fn get_all_resolved_parent_dirs(resolved: &HashMap<String, ResolvedComponent>) -> Vec<String> {
+    collect_and_sort(resolved, |component| vec![component.component.parent_dir.clone()])
+}
 
-    pub fn get_all_resolved_parent_dirs(resolved: &HashMap<String, ResolvedComponent>) -> Vec<String> {
-        collect_and_sort(resolved, |component| vec![component.component.parent_dir.clone()])
-    }
+pub fn get_all_resolved_cargo_dependencies(resolved: &HashMap<String, ResolvedComponent>) -> Vec<String> {
+    collect_and_sort(resolved, |component| component.resolved_cargo_dependencies.iter().cloned().collect::<Vec<_>>())
+}
 
-    pub fn get_all_resolved_cargo_dependencies(resolved: &HashMap<String, ResolvedComponent>) -> Vec<String> {
-        collect_and_sort(resolved, |component| component.resolved_cargo_dependencies.iter().cloned().collect::<Vec<_>>())
-    }
+pub fn print_dependency_tree(resolved: &HashMap<String, ResolvedComponent>) {
+    println!("Dependency Tree Resolution:");
 
-    //
-
-    pub fn print_dependency_tree(resolved: &HashMap<String, ResolvedComponent>) {
-        println!("Dependency Tree Resolution:");
-
-        // Find components that are direct targets (not dependencies of other resolved components)
-        let mut dependent_components = HashSet::new();
-        for resolved_comp in resolved.values() {
-            for dep in &resolved_comp.resolved_registry_dependencies {
-                dependent_components.insert(dep.clone());
-            }
-        }
-
-        // Print each target component's tree
-        for name in resolved.keys() {
-            // Only print the top-level components (not dependencies of other resolved components)
-            // Or, remove this condition to print all resolved components at top level
-            if !dependent_components.contains(name) {
-                print_component_tree(name, resolved, resolved, 0);
-            }
+    // Find components that are direct targets (not dependencies of other resolved components)
+    let mut dependent_components = HashSet::new();
+    for resolved_comp in resolved.values() {
+        for dep in &resolved_comp.resolved_registry_dependencies {
+            dependent_components.insert(dep.clone());
         }
     }
 
-    //
+    // Print each target component's tree
+    for name in resolved.keys() {
+        // Only print the top-level components (not dependencies of other resolved components)
+        // Or, remove this condition to print all resolved components at top level
+        if !dependent_components.contains(name) {
+            print_component_tree(name, resolved, resolved, 0);
+        }
+    }
+}
 
-    pub fn add_cargo_dep_to_toml(cargo_deps: &[String]) -> CliResult<()> {
-        // Find Cargo.toml file in the current directory or parent directories
-        let cargo_toml_path = find_cargo_toml()?;
+pub fn add_cargo_dep_to_toml(cargo_deps: &[String]) -> CliResult<()> {
+    // Find Cargo.toml file in the current directory or parent directories
+    let cargo_toml_path = find_cargo_toml()?;
 
-        let spinner = TaskSpinner::new("Adding crates to Cargo.toml...");
+    let spinner = TaskSpinner::new("Adding crates to Cargo.toml...");
 
-        // Read the current Cargo.toml content
-        let mut cargo_toml_content = fs::read_to_string(&cargo_toml_path)
-            .map_err(|_| CliError::file_read_failed())?;
+    // Read the current Cargo.toml content
+    let mut cargo_toml_content = fs::read_to_string(&cargo_toml_path)
+        .map_err(|_| CliError::file_read_failed())?;
 
-        // Check if dependencies section exists
-        if !cargo_toml_content.contains("[dependencies]") {
-            cargo_toml_content.push_str("\n[dependencies]\n");
+    // Check if dependencies section exists
+    if !cargo_toml_content.contains("[dependencies]") {
+        cargo_toml_content.push_str("\n[dependencies]\n");
+    }
+
+    // Add each dependency using the CLI command
+    let mut added_deps = Vec::new();
+    for dep in cargo_deps {
+        // Skip "std" as it's a standard library and not a dependency to add
+        if dep == "std" {
+            continue;
         }
 
-        // Add each dependency using the CLI command
-        let mut added_deps = Vec::new();
-        for dep in cargo_deps {
-            // Skip "std" as it's a standard library and not a dependency to add
-            if dep == "std" {
-                continue;
-            }
+        // Update the spinner message to show the current crate being installed
+        spinner.set_message(&format!("📦 Adding crate: {dep}"));
 
-            // Update the spinner message to show the current crate being installed
-            spinner.set_message(&format!("📦 Adding crate: {dep}"));
+        // Execute the CLI command to add the dependency
+        let output = std::process::Command::new("cargo")
+            .arg("add")
+            .arg(dep)
+            .output()
+            .map_err(|_| CliError::cargo_operation("Failed to execute cargo add"))?;
 
-            // Execute the CLI command to add the dependency
-            let output = std::process::Command::new("cargo")
-                .arg("add")
-                .arg(dep)
-                .output()
-                .map_err(|_| CliError::cargo_operation("Failed to execute cargo add"))?;
-
-            if output.status.success() {
-                added_deps.push(dep);
-            } else {
-                return Err(CliError::cargo_operation("Failed to add dependency"));
-            }
-        }
-
-        // Only write to the file if we've added new dependencies
-        if !added_deps.is_empty() {
-            let dependencies_str = added_deps
-                .iter()
-                .map(|dep| dep.as_str())
-                .collect::<Vec<&str>>()
-                .join(", ");
-            let finish_message = format!("Successfully added to Cargo.toml: [{dependencies_str}] !");
-            spinner.finish_success(&finish_message);
+        if output.status.success() {
+            added_deps.push(dep);
         } else {
-            spinner.finish_with_message("No new crates to add");
+            return Err(CliError::cargo_operation("Failed to add dependency"));
         }
-
-        Ok(())
     }
+
+    // Only write to the file if we've added new dependencies
+    if !added_deps.is_empty() {
+        let dependencies_str = added_deps
+            .iter()
+            .map(|dep| dep.as_str())
+            .collect::<Vec<&str>>()
+            .join(", ");
+        let finish_message = format!("Successfully added to Cargo.toml: [{dependencies_str}] !");
+        spinner.finish_success(&finish_message);
+    } else {
+        spinner.finish_with_message("No new crates to add");
+    }
+
+    Ok(())
 }
 
 // Helper function to collect items from resolved components and return sorted vector
