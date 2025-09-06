@@ -3,7 +3,7 @@ use clap::{Arg, Command};
 use super::config::{UiConfig, add_init_crates};
 use super::{install::Install, user_input::UserInput};
 use crate::constants::file_name::FileName;
-use crate::constants::template::MyTemplate;
+use crate::command_init::template::MyTemplate;
 use crate::shared::cli_error::{CliError, CliResult};
 use crate::shared::shared_write_template_file::shared_write_template_file;
 use crate::shared::task_spinner::TaskSpinner;
