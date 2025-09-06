@@ -67,12 +67,12 @@ impl RegistryComponent {
         let registry_json_path = json_content
             .get("path")
             .and_then(|v| v.as_str())
-            .ok_or_else(|| CliError::registry_component_missing())?
+            .ok_or_else(CliError::registry_component_missing)?
             .to_string();
         let registry_json_content = json_content
             .get("files")
             .and_then(|v| v.get(0).and_then(|v| v.get("content").and_then(|v| v.as_str())))
-            .ok_or_else(|| CliError::registry_component_missing())?
+            .ok_or_else(CliError::registry_component_missing)?
             .to_string();
 
         Ok(RegistryComponent {

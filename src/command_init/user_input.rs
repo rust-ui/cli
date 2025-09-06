@@ -43,22 +43,20 @@ impl UserInput {
 fn ask_user_choose_style(vec_styles: Vec<serde_json::Value>) -> CliResult<()> {
     // Look for "Default" style and select it automatically
     for style in &vec_styles {
-        if let Some(label) = style.get(LABEL) {
-            if label.as_str() == Some("Default") {
+        if let Some(label) = style.get(LABEL)
+            && label.as_str() == Some("Default") {
                 println!("🎨 Automatically selecting Default style (no user input required)");
                 println!("Selected style: {label}");
                 return Ok(());
             }
-        }
     }
 
     // Fallback: if no "Default" found, use the first available style
-    if let Some(first_style) = vec_styles.first() {
-        if let Some(label) = first_style.get(LABEL) {
+    if let Some(first_style) = vec_styles.first()
+        && let Some(label) = first_style.get(LABEL) {
             println!("🎨 No Default style found, automatically selecting first available style: {label}");
             return Ok(());
         }
-    }
 
     // If no styles available, return an error
     Err(CliError::validation("No styles available in registry"))
