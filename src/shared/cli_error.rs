@@ -19,8 +19,6 @@ pub enum CliError {
     #[error("🔸 File operation failed: {message}")]
     FileOperation { message: String },
 
-    #[error("🔸 File not found")]
-    FileNotFound,
 
     #[error("🔸 Failed to create directory")]
     DirectoryCreateFailed,
@@ -143,9 +141,6 @@ impl CliError {
         Self::RegistryRequestFailed
     }
 
-    pub fn file_not_found() -> Self {
-        Self::FileNotFound
-    }
 
     pub fn directory_create_failed() -> Self {
         Self::DirectoryCreateFailed
