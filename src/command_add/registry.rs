@@ -9,7 +9,6 @@ use crate::{
     shared::cli_error::{CliError, CliResult},
 };
 
-use serde_json;
 
 pub struct Registry {}
 
@@ -41,50 +40,44 @@ impl Registry {
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 pub struct RegistryComponent {
-    pub registry_json_path: String,
-    pub registry_json_content: String,
-    pub component_name_json: String,
+    pub registry_md_path: String,
+    pub registry_md_content: String,
+    pub component_name: String,
 }
 
 impl RegistryComponent {
     pub async fn fetch_from_registry(
-        component_name_json: String,
+        component_name: String,
     ) -> CliResult<RegistryComponent> {
         let base_url_styles_default = MyUrl::BASE_URL_STYLES_DEFAULT;
-        let formatted_url_json = format!("{base_url_styles_default}/{component_name_json}.json");
+        let formatted_url_md = format!("{base_url_styles_default}/{component_name}.md");
 
-        let response = reqwest::get(&formatted_url_json).await
+        let response = reqwest::get(&formatted_url_md).await
             .map_err(|_| CliError::registry_request_failed())?;
         
         let status = response.status();
         if !status.is_success() {
-            return Err(CliError::component_not_found(&component_name_json));
+            return Err(CliError::component_not_found(&component_name));
         }
         
-        let json_content: serde_json::Value = response.json().await
-            .map_err(|_| CliError::registry_invalid_format())?;
+        let markdown_content = response.text().await
+            .map_err(|_| CliError::registry_request_failed())?;
 
-        let registry_json_path = json_content
-            .get("path")
-            .and_then(|v| v.as_str())
-            .ok_or_else(CliError::registry_component_missing)?
-            .to_string();
-        let registry_json_content = json_content
-            .get("files")
-            .and_then(|v| v.get(0).and_then(|v| v.get("content").and_then(|v| v.as_str())))
-            .ok_or_else(CliError::registry_component_missing)?
-            .to_string();
+        let registry_md_content = extract_rust_code_from_markdown(&markdown_content)
+            .ok_or_else(CliError::registry_component_missing)?;
+        
+        let registry_md_path = format!("ui/{}.rs", component_name);
 
         Ok(RegistryComponent {
-            registry_json_path,
-            registry_json_content,
-            component_name_json,
+            registry_md_path,
+            registry_md_content,
+            component_name,
         })
     }
 
     pub async fn then_write_to_file(self) -> CliResult<()> {
         let components_base_path = UiConfig::try_reading_ui_config(FileName::UI_CONFIG_TOML)?.base_path_components;
-        let full_path_component = std::path::Path::new(&components_base_path).join(&self.registry_json_path);
+        let full_path_component = std::path::Path::new(&components_base_path).join(&self.registry_md_path);
 
         let full_path_component_without_name_rs = full_path_component
             .parent()
@@ -93,7 +86,7 @@ impl RegistryComponent {
             .ok_or_else(|| CliError::file_operation("Failed to convert path to string"))?
             .to_string();
 
-        write_component_name_in_mod_rs_if_not_exists(self.component_name_json, full_path_component_without_name_rs)?;
+        write_component_name_in_mod_rs_if_not_exists(self.component_name, full_path_component_without_name_rs)?;
 
         let dir = full_path_component
             .parent()
@@ -101,7 +94,7 @@ impl RegistryComponent {
         std::fs::create_dir_all(dir)
             .map_err(|_| CliError::directory_create_failed())?;
 
-        std::fs::write(&full_path_component, self.registry_json_content)
+        std::fs::write(&full_path_component, self.registry_md_content)
             .map_err(|_| CliError::file_write_failed())?;
 
         Ok(())
@@ -111,6 +104,33 @@ impl RegistryComponent {
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+fn extract_rust_code_from_markdown(markdown: &str) -> Option<String> {
+    let lines: Vec<&str> = markdown.lines().collect();
+    let mut in_rust_block = false;
+    let mut rust_code_lines = Vec::new();
+    
+    for line in lines {
+        if line.trim() == "```rust" {
+            in_rust_block = true;
+            continue;
+        }
+        
+        if in_rust_block && line.trim() == "```" {
+            break;
+        }
+        
+        if in_rust_block {
+            rust_code_lines.push(line);
+        }
+    }
+    
+    if rust_code_lines.is_empty() {
+        None
+    } else {
+        Some(rust_code_lines.join("\n"))
+    }
+}
 
 fn write_component_name_in_mod_rs_if_not_exists(component_name: String, full_path_component_without_name_rs: String) -> CliResult<()> {
     let mod_rs_path = std::path::Path::new(&full_path_component_without_name_rs).join("mod.rs");
