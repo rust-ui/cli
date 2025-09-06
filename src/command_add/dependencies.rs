@@ -38,9 +38,6 @@ pub struct ResolutionCache {
 }
 
 impl ResolutionCache {
-    pub fn get(&self, component_name: &str) -> Option<&ResolvedComponent> {
-        self.resolved_components.get(component_name)
-    }
 
     pub fn insert(&mut self, component_name: String, resolved: ResolvedComponent) {
         self.resolved_components.insert(component_name, resolved);
