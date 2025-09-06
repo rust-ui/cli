@@ -18,22 +18,8 @@ pub struct UiConfig {
     pub tailwind_config_file: String,
 }
 
-#[allow(dead_code)]
-impl UiConfig {
-    pub fn new(
-        tailwind_input_file: &str,
-        base_path_components: &str,
-        tailwind_config_file: &str,
-        base_color: &str,
-    ) -> Self {
-        UiConfig {
-            base_color: base_color.to_string(),
-            base_path_components: base_path_components.to_string(),
-            tailwind_config_file: tailwind_config_file.to_string(),
-            tailwind_input_file: tailwind_input_file.to_string(),
-        }
-    }
 
+impl UiConfig {
     pub fn try_reading_ui_config(toml_path: &str) -> CliResult<UiConfig> {
         let contents = fs::read_to_string(toml_path)
             .map_err(|e| CliError::file_operation(&format!("Failed to read config file '{toml_path}': {e}")))?;

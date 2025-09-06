@@ -1,4 +1,0 @@
-base_color = "neutral"
-base_path_components = "src/components"
-tailwind_input_file = "style/tailwind.css"
-tailwind_config_file = "tailwind.config.js"
