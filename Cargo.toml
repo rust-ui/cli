@@ -12,18 +12,18 @@ repository = "https://github.com/rust-ui/cli"
 
 
 [dependencies]
-anyhow = "1"
-clap = { version = "4", features = ["derive"] }
-colored = "3"
-dialoguer = "0.12"
-dotenv = "0.15"
-indicatif = "0.18"
-reqwest = { version = "0.12", features = ["json", "blocking"], default-features = false}
-serde = { version = "1", features = ["derive"] }
-serde_json = "1"
-thiserror = "2"
-tokio = { version = "1", features = ["full"] }
-toml = "0.9"
+anyhow = { version = "1", default-features = false }
+clap = { version = "4", features = ["derive", "std"], default-features = false }
+colored = { version = "3", default-features = false }
+dialoguer = { version = "0.12", default-features = false }
+dotenv = { version = "0.15", default-features = false }
+indicatif = { version = "0.18", default-features = false }
+reqwest = { version = "0.12", features = ["json", "rustls-tls"], default-features = false }
+serde = { version = "1", features = ["derive"], default-features = false }
+serde_json = { version = "1", default-features = false }
+thiserror = { version = "2", default-features = false }
+tokio = { version = "1", features = ["macros", "rt-multi-thread"], default-features = false }
+toml = { version = "0.9", features = ["parse", "display", "serde"], default-features = false }
 
 
 
