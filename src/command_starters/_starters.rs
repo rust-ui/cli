@@ -3,6 +3,7 @@ use std::process::{Command as ProcessCommand, Stdio};
 use clap::Command;
 use dialoguer::Select;
 use dialoguer::theme::ColorfulTheme;
+use strum::{Display, EnumIter, EnumString, IntoEnumIterator};
 
 use crate::shared::cli_error::{CliError, CliResult};
 
@@ -20,22 +21,29 @@ pub fn command_starters() -> Command {
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-const TRUNK: &str = "trunk";
-const LEPTOS_SSR: &str = "leptos-ssr";
-const LEPTOS_SSR_WORKSPACE: &str = "leptos-ssr-workspace";
-const STARTER_TEMPLATES: &[&str] = &[TRUNK, LEPTOS_SSR, LEPTOS_SSR_WORKSPACE];
+#[derive(Display, EnumString, EnumIter)]
+#[strum(serialize_all = "kebab-case")]
+enum StarterTemplate {
+    Trunk,
+    LeptosSsr,
+    LeptosSsrWorkspace,
+}
 
 pub async fn process_starters() -> CliResult<()> {
+    let templates: Vec<StarterTemplate> = StarterTemplate::iter().collect();
+    let template_names: Vec<String> = templates.iter().map(|t| t.to_string()).collect();
+
     let selection = Select::with_theme(&ColorfulTheme::default())
         .with_prompt("Select a starter template")
-        .items(STARTER_TEMPLATES)
+        .items(&template_names)
         .default(0)
         .interact()
         .map_err(|_| CliError::validation("Failed to get user selection"))?;
 
     let selected_template =
-        STARTER_TEMPLATES.get(selection).ok_or_else(|| CliError::validation("Invalid selection"))?;
+        templates.get(selection).ok_or_else(|| CliError::validation("Invalid selection"))?;
     clone_starter_template(selected_template)?;
+
     Ok(())
 }
 
@@ -44,7 +52,8 @@ pub async fn process_starters() -> CliResult<()> {
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 /// Helper function to clone a starter template repository
-fn clone_starter_template(template_name: &str) -> CliResult<()> {
+fn clone_starter_template(template: &StarterTemplate) -> CliResult<()> {
+    let template_name = template.to_string();
     println!("Installing {template_name} starter...");
 
     let output = ProcessCommand::new("git")
@@ -60,5 +69,6 @@ fn clone_starter_template(template_name: &str) -> CliResult<()> {
     } else {
         return Err(CliError::git_clone_failed());
     }
+
     Ok(())
 }
