@@ -14,7 +14,8 @@ style/tailwind.css
 tailwind.config.js
 ui_config.toml
 package.json
-src/components/*
+src/components/ui/*
+src/components/demos/*
 
 
 # MSVC Windows builds of rustc generate these, which store debugging information
