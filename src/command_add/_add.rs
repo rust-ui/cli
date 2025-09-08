@@ -72,7 +72,7 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
 
     // Handle cargo dependencies if any exist
     if !all_resolved_cargo_dependencies.is_empty() {
-        super::dependencies::add_cargo_dep_to_toml(&all_resolved_cargo_dependencies)?;
+        super::dependencies::process_cargo_deps(&all_resolved_cargo_dependencies)?;
     }
 
     Ok(())
