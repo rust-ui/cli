@@ -1,24 +1,26 @@
-use crate::shared::cli_error::{CliError, CliResult};
-use crate::shared::task_spinner::TaskSpinner;
 use std::collections::HashSet;
 use std::path::Path;
 
+use cargo_toml::Manifest;
+
+use crate::shared::cli_error::{CliError, CliResult};
+use crate::shared::task_spinner::TaskSpinner;
+
 pub fn process_cargo_deps(cargo_deps: &[String]) -> CliResult<()> {
     let spinner = TaskSpinner::new("Checking dependencies...");
-    
+
     // Get existing dependencies from Cargo.toml
     let existing_deps = get_existing_dependencies()?;
-    
+
     // Filter out dependencies that already exist
-    let (new_deps, existing_deps_found): (Vec<_>, Vec<_>) = cargo_deps
-        .iter()
-        .partition(|dep| !existing_deps.contains(*dep));
-    
+    let (new_deps, existing_deps_found): (Vec<_>, Vec<_>) =
+        cargo_deps.iter().partition(|dep| !existing_deps.contains(*dep));
+
     if !existing_deps_found.is_empty() {
         let existing_str = existing_deps_found.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(", ");
         spinner.set_message(&format!("⏭️  Skipping existing dependencies: [{existing_str}]"));
     }
-    
+
     if new_deps.is_empty() {
         spinner.finish_with_message("All dependencies already exist in Cargo.toml");
         return Ok(());
@@ -26,7 +28,7 @@ pub fn process_cargo_deps(cargo_deps: &[String]) -> CliResult<()> {
 
     spinner.set_message("Adding new crates to Cargo.toml...");
     let mut added_deps = Vec::new();
-    
+
     for dep in &new_deps {
         spinner.set_message(&format!("📦 Adding crate: {dep}"));
 
@@ -62,12 +64,12 @@ pub fn process_cargo_deps(cargo_deps: &[String]) -> CliResult<()> {
 /// Check if a crate is already in Cargo.toml dependencies
 fn get_existing_dependencies() -> CliResult<HashSet<String>> {
     let cargo_toml_path = Path::new("Cargo.toml");
-    
+
     if !cargo_toml_path.exists() {
         return Ok(HashSet::new());
     }
 
-    let manifest = cargo_toml::Manifest::from_path(cargo_toml_path)
+    let manifest = Manifest::from_path(cargo_toml_path)
         .map_err(|err| CliError::file_operation(&format!("Failed to parse Cargo.toml: {err}")))?;
 
     let mut existing_deps = HashSet::new();
@@ -77,7 +79,7 @@ fn get_existing_dependencies() -> CliResult<HashSet<String>> {
         existing_deps.insert(dep_name.clone());
     }
 
-    // Check [dev-dependencies] section  
+    // Check [dev-dependencies] section
     for dep_name in manifest.dev_dependencies.keys() {
         existing_deps.insert(dep_name.clone());
     }

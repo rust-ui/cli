@@ -4,9 +4,9 @@ use std::process::Command;
 use serde::{Deserialize, Serialize};
 
 use crate::command_init::crates::INIT_CRATES;
+use crate::command_init::workspace_utils::{detect_workspace, get_component_base_path};
 use crate::shared::cli_error::{CliError, CliResult};
 use crate::shared::task_spinner::TaskSpinner;
-use crate::command_init::workspace_utils::{detect_workspace, get_component_base_path};
 
 ///
 /// UiConfig
@@ -53,7 +53,7 @@ impl Default for UiConfig {
     fn default() -> Self {
         let is_workspace = detect_workspace().unwrap_or(false);
         let base_path_components = get_component_base_path(is_workspace);
-        
+
         UiConfig {
             base_color: "neutral".to_string(),
             base_path_components,

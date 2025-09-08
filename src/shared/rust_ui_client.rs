@@ -58,4 +58,3 @@ impl RustUIClient {
             .map_err(|err| CliError::malformed_registry(&format!("Failed to convert to pretty JSON: {err}")))
     }
 }
-
