@@ -1,6 +1,4 @@
 use std::path::Path;
-// use dotenv::dotenv;
-// use std::env;
 use std::vec::Vec;
 
 const UI_CONFIG_TOML: &str = "ui_config.toml";

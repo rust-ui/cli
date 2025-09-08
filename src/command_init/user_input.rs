@@ -1,9 +1,6 @@
-// use dotenv::dotenv;
 use serde_json;
 
-// use std::env;
 use crate::command_init::fetch::Fetch;
-// use crate::constants::env::ENV;
 use crate::shared::cli_error::{CliError, CliResult};
 use crate::shared::rust_ui_client::RustUIClient;
 
@@ -17,12 +14,7 @@ pub struct UserInput {}
 
 impl UserInput {
     pub async fn handle_index_styles() -> CliResult<()> {
-        // dotenv().ok();
-
-        // let url_registry_styles_json = env::var(ENV::URL_REGISTRY_STYLES_JSON).unwrap_or_default();
-
         let styles_index_result = Fetch::from_url(&RustUIClient::styles_index_url()).await;
-        // println!("{}", styles_index_result.as_ref().unwrap());
 
         // Parse the JSON string into Vec<serde_json::Value>
         if let Ok(styles_index) = styles_index_result {
