@@ -2,10 +2,12 @@
 // use std::env;
 use std::io::Write;
 
+const UI_CONFIG_TOML: &str = "ui_config.toml";
+const BASE_URL_STYLES_DEFAULT: &str = "https://www.rust-ui.com/registry/styles/default";
+
 // use crate::constants::env::ENV;
 use crate::{
     command_init::config::UiConfig,
-    constants::{file_name::FileName, url::MyUrl},
     shared::cli_error::{CliError, CliResult},
 };
 
@@ -45,7 +47,7 @@ pub struct RegistryComponent {
 
 impl RegistryComponent {
     pub async fn fetch_from_registry(component_name: String) -> CliResult<RegistryComponent> {
-        let base_url_styles_default = MyUrl::BASE_URL_STYLES_DEFAULT;
+        let base_url_styles_default = BASE_URL_STYLES_DEFAULT;
         let formatted_url_md = format!("{base_url_styles_default}/{component_name}.md");
 
         let response =
@@ -68,7 +70,7 @@ impl RegistryComponent {
 
     pub async fn then_write_to_file(self) -> CliResult<()> {
         let components_base_path =
-            UiConfig::try_reading_ui_config(FileName::UI_CONFIG_TOML)?.base_path_components;
+            UiConfig::try_reading_ui_config(UI_CONFIG_TOML)?.base_path_components;
         let full_path_component = std::path::Path::new(&components_base_path).join(&self.registry_md_path);
 
         let full_path_component_without_name_rs = full_path_component

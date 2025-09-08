@@ -3,14 +3,15 @@ use std::path::Path;
 // use std::env;
 use std::vec::Vec;
 
+const UI_CONFIG_TOML: &str = "ui_config.toml";
+const URL_REGISTRY_TREE_MD: &str = "https://rust-ui.com/registry/tree.md";
+
 use clap::{Arg, ArgMatches, Command};
 
 use super::components::Components;
 use super::registry::{Registry, RegistryComponent};
 use super::tree_parser::TreeParser;
 use crate::command_init::config::UiConfig;
-use crate::constants::file_name::FileName;
-use crate::constants::url::MyUrl;
 use crate::shared::cli_error::{CliError, CliResult};
 
 pub fn command_add() -> Command {
@@ -25,7 +26,7 @@ pub fn command_add() -> Command {
 
 //
 pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
-    let url_registry_tree_md = MyUrl::URL_REGISTRY_TREE_MD;
+    let url_registry_tree_md = URL_REGISTRY_TREE_MD;
 
     let user_components: Vec<String> =
         matches.get_many::<String>("components").unwrap_or_default().cloned().collect();
@@ -44,7 +45,7 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
 
     // Create components/mod.rs if it does not exist
     let components_base_path =
-        UiConfig::try_reading_ui_config(FileName::UI_CONFIG_TOML)?.base_path_components;
+        UiConfig::try_reading_ui_config(UI_CONFIG_TOML)?.base_path_components;
 
     Components::create_components_mod_if_not_exists_with_pub_mods(
         components_base_path.clone(),

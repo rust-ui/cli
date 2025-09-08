@@ -1,11 +1,13 @@
 use clap::{Arg, Command};
 
+const UI_CONFIG_TOML: &str = "ui_config.toml";
+const PACKAGE_JSON: &str = "package.json";
+
 use super::config::{UiConfig, add_init_crates};
 use super::install::InstallType;
 use super::user_input::UserInput;
 use crate::command_init::install::install_dependencies;
 use crate::command_init::template::MyTemplate;
-use crate::constants::file_name::FileName;
 use crate::shared::cli_error::{CliError, CliResult};
 use crate::shared::shared_write_template_file::shared_write_template_file;
 use crate::shared::task_spinner::TaskSpinner;
@@ -30,8 +32,8 @@ pub async fn process_init() -> CliResult<()> {
 
     let ui_config_toml = toml::to_string_pretty(&ui_config)
         .map_err(|e| CliError::config(&format!("Failed to serialize UiConfig: {e}")))?;
-    INIT_TEMPLATE_FILE(FileName::UI_CONFIG_TOML, &ui_config_toml).await?;
-    INIT_TEMPLATE_FILE(FileName::PACKAGE_JSON, MyTemplate::PACKAGE_JSON).await?;
+    INIT_TEMPLATE_FILE(UI_CONFIG_TOML, &ui_config_toml).await?;
+    INIT_TEMPLATE_FILE(PACKAGE_JSON, MyTemplate::PACKAGE_JSON).await?;
     INIT_TEMPLATE_FILE(&ui_config.tailwind_input_file, MyTemplate::STYLE_TAILWIND_CSS).await?;
 
     add_init_crates().await?;
