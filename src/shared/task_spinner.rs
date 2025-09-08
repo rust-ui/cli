@@ -1,5 +1,6 @@
-use indicatif::ProgressBar;
 use std::time::Duration;
+
+use indicatif::ProgressBar;
 
 const SPINNER_UPDATE_DURATION: u64 = 100;
 

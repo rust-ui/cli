@@ -1,9 +1,11 @@
 use clap::{Arg, Command};
 
 use super::config::{UiConfig, add_init_crates};
-use super::{install::{self, InstallType}, user_input::UserInput};
-use crate::constants::file_name::FileName;
+use super::install::InstallType;
+use super::user_input::UserInput;
+use crate::command_init::install::install_dependencies;
 use crate::command_init::template::MyTemplate;
+use crate::constants::file_name::FileName;
 use crate::shared::cli_error::{CliError, CliResult};
 use crate::shared::shared_write_template_file::shared_write_template_file;
 use crate::shared::task_spinner::TaskSpinner;
@@ -15,11 +17,7 @@ use crate::shared::task_spinner::TaskSpinner;
 pub fn command_init() -> Command {
     Command::new("init")
         .about("Initialize the project")
-        .arg(
-            Arg::new("project_name")
-                .help("The name of the project to initialize")
-                .required(false),
-        )
+        .arg(Arg::new("project_name").help("The name of the project to initialize").required(false))
         .subcommand(Command::new("run").about("Run the initialization logic"))
 }
 
@@ -35,13 +33,12 @@ pub async fn process_init() -> CliResult<()> {
     INIT_TEMPLATE_FILE(FileName::UI_CONFIG_TOML, &ui_config_toml).await?;
     INIT_TEMPLATE_FILE(FileName::PACKAGE_JSON, MyTemplate::PACKAGE_JSON).await?;
     INIT_TEMPLATE_FILE(&ui_config.tailwind_input_file, MyTemplate::STYLE_TAILWIND_CSS).await?;
-    INIT_TEMPLATE_FILE(FileName::TAILWIND_CONFIG_JS, MyTemplate::TAILWIND_CONFIG).await?;
 
     add_init_crates().await?;
 
     UserInput::handle_index_styles().await?;
 
-    install::install_dependencies(&[InstallType::Tailwind]).await?;
+    install_dependencies(&[InstallType::Tailwind]).await?;
     Ok(())
 }
 

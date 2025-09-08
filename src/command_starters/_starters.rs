@@ -1,6 +1,9 @@
-use clap::Command;
-use dialoguer::{Select, theme::ColorfulTheme};
 use std::process::{Command as ProcessCommand, Stdio};
+
+use clap::Command;
+use dialoguer::Select;
+use dialoguer::theme::ColorfulTheme;
+
 use crate::shared::cli_error::{CliError, CliResult};
 
 // TODO. Use cargo-generate later for more customization.
@@ -30,8 +33,8 @@ pub async fn process_starters() -> CliResult<()> {
         .interact()
         .map_err(|_| CliError::validation("Failed to get user selection"))?;
 
-    let selected_template = STARTER_TEMPLATES.get(selection)
-        .ok_or_else(|| CliError::validation("Invalid selection"))?;
+    let selected_template =
+        STARTER_TEMPLATES.get(selection).ok_or_else(|| CliError::validation("Invalid selection"))?;
     clone_starter_template(selected_template)?;
     Ok(())
 }

@@ -6,12 +6,12 @@ pub struct Crate {
 }
 
 impl Crate {
-    const fn new(name: &'static str, version: Option<&'static str>, features: Option<&'static [&'static str]>) -> Self {
-        Crate {
-            name,
-            version,
-            features,
-        }
+    const fn new(
+        name: &'static str,
+        version: Option<&'static str>,
+        features: Option<&'static [&'static str]>,
+    ) -> Self {
+        Crate { name, version, features }
     }
 }
 

@@ -96,27 +96,6 @@ impl MyTemplate {
 }
 "#;
 
-    pub const TAILWIND_CONFIG: &str = r#"/** @type {import('tailwindcss').Config} */
-export default {
-	darkMode: "class",
-	content: {
-		files: ["./src/**/*.rs"],
-	},
-	theme: {
-		container: {
-			center: true,
-			padding: "2rem",
-			screens: {
-				"2xl": "1400px",
-			},
-		},
-		extend: {
-			keyframes: {},
-			animation: {},
-		},
-	}
-};"#;
-
     pub const PACKAGE_JSON: &str = r#"{
 	"type": "module"
 }

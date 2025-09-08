@@ -9,7 +9,6 @@ pub enum CliError {
     #[error("🔸 Registry request failed")]
     RegistryRequestFailed,
 
-
     #[error("🔸 Network request failed: {source}")]
     Network {
         #[from]
@@ -18,7 +17,6 @@ pub enum CliError {
 
     #[error("🔸 File operation failed: {message}")]
     FileOperation { message: String },
-
 
     #[error("🔸 Failed to create directory")]
     DirectoryCreateFailed,
@@ -68,7 +66,6 @@ pub enum CliError {
     #[error("🔸 Path validation error: {path} - {reason}")]
     InvalidPath { path: String, reason: String },
 
-
     #[error("🔸 Validation error: {message}")]
     Validation { message: String },
 
@@ -91,56 +88,33 @@ impl CliError {
         Self::CircularDependency { name: name.to_string() }
     }
 
-
     pub fn file_operation(message: &str) -> Self {
-        Self::FileOperation {
-            message: message.to_string(),
-        }
+        Self::FileOperation { message: message.to_string() }
     }
-
 
     pub fn config(message: &str) -> Self {
-        Self::Config {
-            message: message.to_string(),
-        }
+        Self::Config { message: message.to_string() }
     }
 
-
-
-
-
     pub fn cargo_operation(message: &str) -> Self {
-        Self::CargoOperation {
-            message: message.to_string(),
-        }
+        Self::CargoOperation { message: message.to_string() }
     }
 
     pub fn invalid_path(path: &str, reason: &str) -> Self {
-        Self::InvalidPath {
-            path: path.to_string(),
-            reason: reason.to_string(),
-        }
+        Self::InvalidPath { path: path.to_string(), reason: reason.to_string() }
     }
 
-
     pub fn validation(message: &str) -> Self {
-        Self::Validation {
-            message: message.to_string(),
-        }
+        Self::Validation { message: message.to_string() }
     }
 
     pub fn malformed_registry(reason: &str) -> Self {
-        Self::MalformedRegistry {
-            reason: reason.to_string(),
-        }
+        Self::MalformedRegistry { reason: reason.to_string() }
     }
-
-
 
     pub fn registry_request_failed() -> Self {
         Self::RegistryRequestFailed
     }
-
 
     pub fn directory_create_failed() -> Self {
         Self::DirectoryCreateFailed
@@ -175,8 +149,6 @@ pub type CliResult<T> = std::result::Result<T, CliError>;
 
 impl From<anyhow::Error> for CliError {
     fn from(err: anyhow::Error) -> Self {
-        CliError::Validation {
-            message: err.to_string(),
-        }
+        CliError::Validation { message: err.to_string() }
     }
 }

@@ -1,9 +1,8 @@
 use std::collections::{HashMap, HashSet};
 
+use super::components::{MyComponent, ResolvedComponent};
 use crate::shared::cli_error::{CliError, CliResult};
 use crate::shared::task_spinner::TaskSpinner;
-
-use super::components::{MyComponent, ResolvedComponent};
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                   🔍 CIRCULAR DEPENDENCY DETECTOR           */
@@ -27,7 +26,6 @@ impl CircularDependencyDetector {
     }
 }
 
-
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                     📦 RESOLUTION CACHE                     */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
@@ -38,17 +36,13 @@ pub struct ResolutionCache {
 }
 
 impl ResolutionCache {
-
     pub fn insert(&mut self, component_name: String, resolved: ResolvedComponent) {
         self.resolved_components.insert(component_name, resolved);
     }
 
     pub fn get_dependencies(&self, component_name: &str) -> Option<(HashSet<String>, HashSet<String>)> {
         self.resolved_components.get(component_name).map(|resolved| {
-            (
-                resolved.resolved_registry_dependencies.clone(),
-                resolved.resolved_cargo_dependencies.clone(),
-            )
+            (resolved.resolved_registry_dependencies.clone(), resolved.resolved_cargo_dependencies.clone())
         })
     }
 
@@ -56,7 +50,6 @@ impl ResolutionCache {
         &self.resolved_components
     }
 }
-
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                   🗂️ COMPONENT REGISTRY                     */
@@ -68,11 +61,8 @@ pub struct ComponentRegistry {
 
 impl ComponentRegistry {
     pub fn new(components: &[MyComponent]) -> Self {
-        let component_map = components
-            .iter()
-            .map(|c| (c.name.clone(), c.clone()))
-            .collect();
-        
+        let component_map = components.iter().map(|c| (c.name.clone(), c.clone())).collect();
+
         Self { component_map }
     }
 
@@ -85,11 +75,7 @@ impl ComponentRegistry {
     }
 
     pub fn validate_components(&self, component_names: &[String]) -> Vec<String> {
-        component_names
-            .iter()
-            .filter(|name| !self.contains(name))
-            .cloned()
-            .collect()
+        component_names.iter().filter(|name| !self.contains(name)).cloned().collect()
     }
 }
 
@@ -104,21 +90,21 @@ pub struct DependencyResolver {
 
 impl DependencyResolver {
     pub fn new(registry: ComponentRegistry) -> Self {
-        Self {
-            registry,
-            cache: ResolutionCache::default(),
-        }
+        Self { registry, cache: ResolutionCache::default() }
     }
 
-    pub fn resolve_user_components(&mut self, user_components: &[String]) -> CliResult<HashMap<String, ResolvedComponent>> {
+    pub fn resolve_user_components(
+        &mut self,
+        user_components: &[String],
+    ) -> CliResult<HashMap<String, ResolvedComponent>> {
         let invalid_components = self.registry.validate_components(user_components);
-        
+
         for invalid in &invalid_components {
             println!("⚠️  Skipping component '{invalid}' - not found in registry");
         }
 
         let mut cycle_detector = CircularDependencyDetector::default();
-        
+
         for component_name in user_components {
             if self.registry.contains(component_name) {
                 self.resolve_component_recursive(component_name, &mut cycle_detector)?;
@@ -139,7 +125,8 @@ impl DependencyResolver {
 
         cycle_detector.check_and_visit(component_name)?;
 
-        let component = self.registry
+        let component = self
+            .registry
             .get_component(component_name)
             .ok_or_else(|| CliError::component_not_found(component_name))?
             .clone();
@@ -197,7 +184,9 @@ pub fn get_all_resolved_parent_dirs(resolved: &HashMap<String, ResolvedComponent
 }
 
 pub fn get_all_resolved_cargo_dependencies(resolved: &HashMap<String, ResolvedComponent>) -> Vec<String> {
-    collect_and_sort(resolved, |component| component.resolved_cargo_dependencies.iter().cloned().collect::<Vec<_>>())
+    collect_and_sort(resolved, |component| {
+        component.resolved_cargo_dependencies.iter().cloned().collect::<Vec<_>>()
+    })
 }
 
 pub fn print_dependency_tree(resolved: &HashMap<String, ResolvedComponent>) {
@@ -249,18 +238,17 @@ where
     T: IntoIterator<Item = String>,
 {
     let mut items = HashSet::new();
-    
+
     for component in resolved.values() {
         for item in extractor(component) {
             items.insert(item);
         }
     }
-    
+
     let mut result: Vec<String> = items.into_iter().collect();
     result.sort();
     result
 }
-
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                   🌳 DEPENDENCY TREE PRINTER               */
@@ -301,12 +289,8 @@ impl DependencyTreePrinter {
             let indent = "  ".repeat(depth);
             println!("{}└─ {} ({})", indent, component_name, component.component.parent_dir);
 
-            let filtered_cargo_deps: Vec<&String> = component
-                .component
-                .cargo_dependencies
-                .iter()
-                .filter(|&dep| dep != "std")
-                .collect();
+            let filtered_cargo_deps: Vec<&String> =
+                component.component.cargo_dependencies.iter().filter(|&dep| dep != "std").collect();
 
             if !filtered_cargo_deps.is_empty() {
                 let cargo_indent = "  ".repeat(depth + 1);
@@ -335,4 +319,3 @@ impl DependencyTreePrinter {
         }
     }
 }
-
