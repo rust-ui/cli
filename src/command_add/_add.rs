@@ -4,15 +4,15 @@ use std::path::Path;
 use std::vec::Vec;
 
 const UI_CONFIG_TOML: &str = "ui_config.toml";
-const URL_REGISTRY_TREE_MD: &str = "https://rust-ui.com/registry/tree.md";
 
 use clap::{Arg, ArgMatches, Command};
 
 use super::components::Components;
-use super::registry::{Registry, RegistryComponent};
+use super::registry::RegistryComponent;
 use super::tree_parser::TreeParser;
 use crate::command_init::config::UiConfig;
 use crate::shared::cli_error::{CliError, CliResult};
+use crate::shared::rust_ui_client::RustUIClient;
 
 pub fn command_add() -> Command {
     Command::new("add").about("Add components and dependencies to your project").arg(
@@ -26,26 +26,23 @@ pub fn command_add() -> Command {
 
 //
 pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
-    let url_registry_tree_md = URL_REGISTRY_TREE_MD;
-
     let user_components: Vec<String> =
         matches.get_many::<String>("components").unwrap_or_default().cloned().collect();
 
     // Fetch and parse tree.md
-    let tree_content = Registry::fetch_index_content(url_registry_tree_md).await?;
+    let tree_content = RustUIClient::fetch_tree_md().await?;
     let tree_parser = TreeParser::parse_tree_md(&tree_content)?;
-    
+
     // Resolve dependencies using the new tree-based system
     let resolved_set = tree_parser.resolve_dependencies(&user_components)?;
-    
+
     // Convert HashSets to Vecs for compatibility with existing functions
     let all_resolved_components: Vec<String> = resolved_set.components.into_iter().collect();
     let all_resolved_parent_dirs: Vec<String> = resolved_set.parent_dirs.into_iter().collect();
     let all_resolved_cargo_dependencies: Vec<String> = resolved_set.cargo_deps.into_iter().collect();
 
     // Create components/mod.rs if it does not exist
-    let components_base_path =
-        UiConfig::try_reading_ui_config(UI_CONFIG_TOML)?.base_path_components;
+    let components_base_path = UiConfig::try_reading_ui_config(UI_CONFIG_TOML)?.base_path_components;
 
     Components::create_components_mod_if_not_exists_with_pub_mods(
         components_base_path.clone(),

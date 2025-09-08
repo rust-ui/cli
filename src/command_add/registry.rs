@@ -3,37 +3,11 @@
 use std::io::Write;
 
 const UI_CONFIG_TOML: &str = "ui_config.toml";
-const BASE_URL_STYLES_DEFAULT: &str = "https://www.rust-ui.com/registry/styles/default";
 
 // use crate::constants::env::ENV;
-use crate::{
-    command_init::config::UiConfig,
-    shared::cli_error::{CliError, CliResult},
-};
-
-pub struct Registry {}
-
-impl Registry {
-    pub async fn fetch_index_content(url: &str) -> CliResult<String> {
-        // Attempt to fetch the content from the URL
-        let response = reqwest::get(url).await.map_err(|_| CliError::registry_request_failed())?;
-
-        let status = response.status();
-        if !status.is_success() {
-            return Err(CliError::registry_request_failed());
-        }
-
-        let index_content_from_url =
-            response.text().await.map_err(|_| CliError::registry_request_failed())?;
-
-        // Check if the fetched content is empty
-        if index_content_from_url.is_empty() {
-            return Err(CliError::registry_request_failed());
-        }
-
-        Ok(index_content_from_url)
-    }
-}
+use crate::command_init::config::UiConfig;
+use crate::shared::cli_error::{CliError, CliResult};
+use crate::shared::rust_ui_client::RustUIClient;
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                     ✨ FUNCTIONS ✨                        */
@@ -47,30 +21,14 @@ pub struct RegistryComponent {
 
 impl RegistryComponent {
     pub async fn fetch_from_registry(component_name: String) -> CliResult<RegistryComponent> {
-        let base_url_styles_default = BASE_URL_STYLES_DEFAULT;
-        let formatted_url_md = format!("{base_url_styles_default}/{component_name}.md");
-
-        let response =
-            reqwest::get(&formatted_url_md).await.map_err(|_| CliError::registry_request_failed())?;
-
-        let status = response.status();
-        if !status.is_success() {
-            return Err(CliError::component_not_found(&component_name));
-        }
-
-        let markdown_content = response.text().await.map_err(|_| CliError::registry_request_failed())?;
-
-        let registry_md_content = extract_rust_code_from_markdown(&markdown_content)
-            .ok_or_else(CliError::registry_component_missing)?;
-
+        let registry_md_content = RustUIClient::fetch_styles_default(&component_name).await?;
         let registry_md_path = format!("ui/{}.rs", component_name);
 
         Ok(RegistryComponent { registry_md_path, registry_md_content, component_name })
     }
 
     pub async fn then_write_to_file(self) -> CliResult<()> {
-        let components_base_path =
-            UiConfig::try_reading_ui_config(UI_CONFIG_TOML)?.base_path_components;
+        let components_base_path = UiConfig::try_reading_ui_config(UI_CONFIG_TOML)?.base_path_components;
         let full_path_component = std::path::Path::new(&components_base_path).join(&self.registry_md_path);
 
         let full_path_component_without_name_rs = full_path_component
@@ -100,29 +58,6 @@ impl RegistryComponent {
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
-fn extract_rust_code_from_markdown(markdown: &str) -> Option<String> {
-    let lines: Vec<&str> = markdown.lines().collect();
-    let mut in_rust_block = false;
-    let mut rust_code_lines = Vec::new();
-
-    for line in lines {
-        if line.trim() == "```rust" {
-            in_rust_block = true;
-            continue;
-        }
-
-        if in_rust_block && line.trim() == "```" {
-            break;
-        }
-
-        if in_rust_block {
-            rust_code_lines.push(line);
-        }
-    }
-
-    if rust_code_lines.is_empty() { None } else { Some(rust_code_lines.join("\n")) }
-}
 
 fn write_component_name_in_mod_rs_if_not_exists(
     component_name: String,
