@@ -46,13 +46,9 @@ pub fn process_cargo_deps(cargo_deps: &[String]) -> CliResult<()> {
         }
     }
 
-    if !added_deps.is_empty() {
-        let dependencies_str = added_deps.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(", ");
-        let finish_message = format!("Successfully added to Cargo.toml: [{dependencies_str}] !");
-        spinner.finish_success(&finish_message);
-    } else {
-        spinner.finish_with_message("No new crates to add");
-    }
+    let dependencies_str = added_deps.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(", ");
+    let finish_message = format!("Successfully added to Cargo.toml: [{dependencies_str}] !");
+    spinner.finish_success(&finish_message);
 
     Ok(())
 }
@@ -69,8 +65,7 @@ fn get_existing_dependencies() -> CliResult<HashSet<String>> {
         return Ok(HashSet::new());
     }
 
-    let manifest = Manifest::from_path(cargo_toml_path)
-        .map_err(|err| CliError::file_operation(&format!("Failed to parse Cargo.toml: {err}")))?;
+    let manifest = Manifest::from_path(cargo_toml_path)?;
 
     let mut existing_deps = HashSet::new();
 

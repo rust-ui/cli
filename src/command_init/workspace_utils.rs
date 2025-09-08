@@ -69,13 +69,9 @@ fn load_cargo_manifest(cargo_toml_path: &Path) -> CliResult<Option<Manifest>> {
     match Manifest::from_path(cargo_toml_path) {
         Ok(manifest) => Ok(Some(manifest)),
         Err(_) => {
-            // If workspace resolution fails (e.g., in tests), try parsing without workspace resolution
-            let contents = std::fs::read_to_string(cargo_toml_path)
-                .map_err(|err| CliError::file_operation(&format!("Failed to read Cargo.toml: {err}")))?;
-            
-            let manifest = Manifest::from_slice(contents.as_bytes())
-                .map_err(|err| CliError::file_operation(&format!("Failed to parse Cargo.toml: {err}")))?;
-                
+            // If workspace resolution fails (e.g., in tests), try parsing without workspace resolution  
+            let contents = std::fs::read_to_string(cargo_toml_path)?;
+            let manifest = Manifest::from_slice(contents.as_bytes())?;
             Ok(Some(manifest))
         }
     }

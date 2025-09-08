@@ -40,8 +40,7 @@ pub async fn process_init() -> CliResult<()> {
 
     let ui_config = UiConfig::default();
 
-    let ui_config_toml = toml::to_string_pretty(&ui_config)
-        .map_err(|e| CliError::config(&format!("Failed to serialize UiConfig: {e}")))?;
+    let ui_config_toml = toml::to_string_pretty(&ui_config)?;
 
     INIT_TEMPLATE_FILE(UI_CONFIG_TOML, &ui_config_toml).await?;
     INIT_TEMPLATE_FILE(PACKAGE_JSON, MyTemplate::PACKAGE_JSON).await?;
