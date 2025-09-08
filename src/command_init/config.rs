@@ -17,7 +17,6 @@ pub struct UiConfig {
     pub base_color: String,
     pub base_path_components: String,
     pub tailwind_input_file: String,
-    pub tailwind_config_file: String,
     pub is_workspace: bool,
 }
 
@@ -45,7 +44,6 @@ impl Default for UiConfig {
     ///     UiConfig {
     ///         base_color: "neutral".to_string(),
     ///         base_path_components: "src/components".to_string(),
-    ///         tailwind_config_file: "tailwind.config.js".to_string(),
     ///         tailwind_input_file: "style/tailwind.css".to_string(),
     ///         is_workspace: false, // This depends on workspace detection
     ///     }
@@ -59,7 +57,6 @@ impl Default for UiConfig {
         UiConfig {
             base_color: "neutral".to_string(),
             base_path_components,
-            tailwind_config_file: "tailwind.config.js".to_string(),
             tailwind_input_file: "style/tailwind.css".to_string(),
             is_workspace,
         }
