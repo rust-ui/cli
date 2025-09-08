@@ -1,7 +1,5 @@
 #[derive(Debug, thiserror::Error)]
 pub enum CliError {
-    #[error("🔸 Component '{name}' not found in registry")]
-    ComponentNotFound { name: String },
 
     #[error("🔸 Registry request failed")]
     RegistryRequestFailed,

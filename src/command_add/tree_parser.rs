@@ -1,6 +1,6 @@
 use std::collections::{HashMap, HashSet};
 
-use crate::shared::cli_error::{CliError, CliResult};
+use crate::shared::cli_error::CliResult;
 
 #[derive(Debug, Clone)]
 pub struct TreeParser {
@@ -131,7 +131,7 @@ impl TreeParser {
                     resolved_cargo_deps.insert(cargo_dep.clone());
                 }
             } else {
-                return Err(CliError::component_not_found(component_name));
+                println!("⚠️  Component '{}' not found in registry. Skipping...", component_name);
             }
         }
 
