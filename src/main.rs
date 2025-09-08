@@ -1,24 +1,18 @@
 #![cfg_attr(
     not(test),
-    deny(
-        clippy::expect_used,
-        clippy::unwrap_used,
-        clippy::panic,
-        clippy::todo,
-        clippy::indexing_slicing,
-    )
+    deny(clippy::expect_used, clippy::unwrap_used, clippy::panic, clippy::todo, clippy::indexing_slicing,)
 )]
 #![deny(irrefutable_let_patterns)]
 
-use clap::Command;
 use std::process;
+
+use clap::Command;
 
 mod command_add;
 mod command_init;
 mod command_starters;
 mod constants;
 mod shared;
-
 
 // * cargo run --bin ui init
 // * cargo run --bin ui add button demo_button demo_button_variants demo_button_sizes

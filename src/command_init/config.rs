@@ -1,10 +1,11 @@
-use serde::{Deserialize, Serialize};
 use std::fs;
 use std::process::Command;
 
+use serde::{Deserialize, Serialize};
+
 use crate::command_init::crates::INIT_CRATES;
-use crate::shared::task_spinner::TaskSpinner;
 use crate::shared::cli_error::{CliError, CliResult};
+use crate::shared::task_spinner::TaskSpinner;
 
 ///
 /// UiConfig
@@ -18,11 +19,11 @@ pub struct UiConfig {
     pub tailwind_config_file: String,
 }
 
-
 impl UiConfig {
     pub fn try_reading_ui_config(toml_path: &str) -> CliResult<UiConfig> {
-        let contents = fs::read_to_string(toml_path)
-            .map_err(|e| CliError::file_operation(&format!("Failed to read config file '{toml_path}': {e}")))?;
+        let contents = fs::read_to_string(toml_path).map_err(|e| {
+            CliError::file_operation(&format!("Failed to read config file '{toml_path}': {e}"))
+        })?;
         let ui_config: UiConfig = toml::from_str(&contents)
             .map_err(|e| CliError::config(&format!("Failed to parse config file '{toml_path}': {e}")))?;
         Ok(ui_config)
@@ -69,14 +70,14 @@ pub async fn add_init_crates() -> CliResult<()> {
 
         let mut args = vec!["add".to_owned(), my_crate.name.to_owned()];
         if let Some(features) = my_crate.features
-            && !features.is_empty() {
-                args.push("--features".to_owned());
-                args.push(features.join(","));
-            }
-        let output = Command::new("cargo")
-            .args(args)
-            .output()
-            .map_err(|e| CliError::cargo_operation(&format!("Failed to execute cargo add {}: {}", my_crate.name, e)))?;
+            && !features.is_empty()
+        {
+            args.push("--features".to_owned());
+            args.push(features.join(","));
+        }
+        let output = Command::new("cargo").args(args).output().map_err(|e| {
+            CliError::cargo_operation(&format!("Failed to execute cargo add {}: {}", my_crate.name, e))
+        })?;
 
         if output.status.success() {
             spinner.finish_success("Crates added successfully.");

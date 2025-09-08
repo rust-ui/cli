@@ -16,11 +16,10 @@ impl InstallType {
             Self::Tailwind => &["@tailwindcss/cli", "tailwindcss", "tw-animate-css"],
         }
     }
-    
+
     fn name(&self) -> &str {
         self.as_ref()
     }
-    
 }
 
 #[derive(Debug, Clone, AsRefStr)]
@@ -34,38 +33,29 @@ impl PackageManager {
     fn command(&self) -> &str {
         self.as_ref()
     }
-    
+
     fn is_pnpm_available() -> bool {
-        Command::new("pnpm")
-            .arg("--version")
-            .output()
-            .map(|output| output.status.success())
-            .unwrap_or(false)
+        Command::new("pnpm").arg("--version").output().map(|output| output.status.success()).unwrap_or(false)
     }
-    
+
     fn detect() -> PackageManager {
-        if Self::is_pnpm_available() {
-            PackageManager::Pnpm
-        } else {
-            PackageManager::Npm
-        }
+        if Self::is_pnpm_available() { PackageManager::Pnpm } else { PackageManager::Npm }
     }
 }
 
 pub async fn install_dependencies(install_types: &[InstallType]) -> CliResult<()> {
     let package_manager = PackageManager::detect();
-    
+
     for install_type in install_types {
         install_with_package_manager(install_type.clone(), package_manager.clone())?;
     }
-    
+
     Ok(())
 }
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
-
 
 fn install_with_package_manager(install_type: InstallType, package_manager: PackageManager) -> CliResult<()> {
     let dependencies = install_type.dependencies();
