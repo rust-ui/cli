@@ -28,6 +28,9 @@ thiserror = { version = "2", default-features = false }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"], default-features = false }
 toml = { version = "0.9", features = ["parse", "display", "serde"], default-features = false }
 
+[dev-dependencies]
+tempfile = "3.0"
+
 
 
 [[bin]]

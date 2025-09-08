@@ -6,6 +6,7 @@ use serde::{Deserialize, Serialize};
 use crate::command_init::crates::INIT_CRATES;
 use crate::shared::cli_error::{CliError, CliResult};
 use crate::shared::task_spinner::TaskSpinner;
+use crate::command_init::workspace_utils::{detect_workspace, get_component_base_path};
 
 ///
 /// UiConfig
@@ -17,6 +18,7 @@ pub struct UiConfig {
     pub base_path_components: String,
     pub tailwind_input_file: String,
     pub tailwind_config_file: String,
+    pub is_workspace: bool,
 }
 
 impl UiConfig {
@@ -45,16 +47,21 @@ impl Default for UiConfig {
     ///         base_path_components: "src/components".to_string(),
     ///         tailwind_config_file: "tailwind.config.js".to_string(),
     ///         tailwind_input_file: "style/tailwind.css".to_string(),
+    ///         is_workspace: false, // This depends on workspace detection
     ///     }
     /// );
     ///
     /// ```
     fn default() -> Self {
+        let is_workspace = detect_workspace().unwrap_or(false);
+        let base_path_components = get_component_base_path(is_workspace);
+        
         UiConfig {
             base_color: "neutral".to_string(),
-            base_path_components: "src/components".to_string(),
+            base_path_components,
             tailwind_config_file: "tailwind.config.js".to_string(),
             tailwind_input_file: "style/tailwind.css".to_string(),
+            is_workspace,
         }
     }
 }
