@@ -75,9 +75,6 @@ pub enum CliError {
 }
 
 impl CliError {
-    pub fn component_not_found(name: &str) -> Self {
-        Self::ComponentNotFound { name: name.to_string() }
-    }
 
     pub fn file_operation(message: &str) -> Self {
         Self::FileOperation { message: message.to_string() }
