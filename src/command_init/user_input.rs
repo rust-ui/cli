@@ -2,9 +2,10 @@
 use serde_json;
 
 // use std::env;
+
+const URL_REGISTRY_STYLES_JSON: &str = "https://www.rust-ui.com/registry/styles/index.json";
 use crate::command_init::fetch::Fetch;
 // use crate::constants::env::ENV;
-use crate::constants::url::MyUrl;
 use crate::shared::cli_error::{CliError, CliResult};
 
 const LABEL: &str = "label";
@@ -21,7 +22,7 @@ impl UserInput {
 
         // let url_registry_styles_json = env::var(ENV::URL_REGISTRY_STYLES_JSON).unwrap_or_default();
 
-        let styles_index_result = Fetch::from_url(MyUrl::URL_REGISTRY_STYLES_JSON).await;
+        let styles_index_result = Fetch::from_url(URL_REGISTRY_STYLES_JSON).await;
         // println!("{}", styles_index_result.as_ref().unwrap());
 
         // Parse the JSON string into Vec<serde_json::Value>
