@@ -19,9 +19,6 @@ mod shared;
 // * cargo run --bin ui add demo_use_floating_placement
 // * cargo run --bin ui starters
 
-// TODO 🐛 add [primitives/dialog]
-// └──> 🔸 Write file in primitives/primitives/dialog.tsx
-
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                        🦀 MAIN 🦀                          */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
