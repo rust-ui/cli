@@ -5,10 +5,9 @@ use std::vec::Vec;
 
 use clap::{Arg, ArgMatches, Command};
 
-use super::components::{Components, MyComponent};
-// use crate::constants::env::ENV;
-use super::dependencies;
+use super::components::Components;
 use super::registry::{Registry, RegistryComponent};
+use super::tree_parser::TreeParser;
 use crate::command_init::config::UiConfig;
 use crate::constants::file_name::FileName;
 use crate::constants::url::MyUrl;
@@ -26,30 +25,22 @@ pub fn command_add() -> Command {
 
 //
 pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
-    // dotenv().ok();
-
-    // let base_url = env::var(ENV::BASE_URL).unwrap_or_default();
-    let url_registry_index_json = MyUrl::URL_REGISTRY_INDEX_JSON;
+    let url_registry_tree_md = MyUrl::URL_REGISTRY_TREE_MD;
 
     let user_components: Vec<String> =
         matches.get_many::<String>("components").unwrap_or_default().cloned().collect();
 
-    let index_content_from_url = Registry::fetch_index_content(url_registry_index_json).await?;
-
-    let vec_components_from_index: Vec<MyComponent> = serde_json::from_str(&index_content_from_url)
-        .map_err(|e| CliError::malformed_registry(&format!("Failed to parse registry index JSON: {e}")))?;
-
-    let all_tree_resolved = dependencies::all_tree_resolved(user_components, &vec_components_from_index)?;
-    dependencies::print_dependency_tree(&all_tree_resolved); // Can be commented out
-    let all_resolved_components = dependencies::get_all_resolved_components(&all_tree_resolved);
-    let all_resolved_parent_dirs = dependencies::get_all_resolved_parent_dirs(&all_tree_resolved);
-    let all_resolved_cargo_dependencies =
-        dependencies::get_all_resolved_cargo_dependencies(&all_tree_resolved);
-
-    // println!("--------------------------------");
-    // println!("All resolved components: {:?}", all_resolved_components);
-    // println!("All resolved parent dirs: {:?}", all_resolved_parent_dirs);
-    // println!("All resolved cargo dependencies: {:?}", all_resolved_cargo_dependencies);
+    // Fetch and parse tree.md
+    let tree_content = Registry::fetch_index_content(url_registry_tree_md).await?;
+    let tree_parser = TreeParser::parse_tree_md(&tree_content)?;
+    
+    // Resolve dependencies using the new tree-based system
+    let resolved_set = tree_parser.resolve_dependencies(&user_components)?;
+    
+    // Convert HashSets to Vecs for compatibility with existing functions
+    let all_resolved_components: Vec<String> = resolved_set.components.into_iter().collect();
+    let all_resolved_parent_dirs: Vec<String> = resolved_set.parent_dirs.into_iter().collect();
+    let all_resolved_cargo_dependencies: Vec<String> = resolved_set.cargo_deps.into_iter().collect();
 
     // Create components/mod.rs if it does not exist
     let components_base_path =
@@ -57,10 +48,10 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
 
     Components::create_components_mod_if_not_exists_with_pub_mods(
         components_base_path.clone(),
-        all_resolved_parent_dirs.clone(),
+        all_resolved_parent_dirs,
     )?;
 
-    //  Register `components` module
+    // Register `components` module
     let components_path = Path::new(&components_base_path);
     let parent_path = components_path
         .parent()
@@ -77,13 +68,13 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     Components::register_components_in_application_entry(entry_file_path.as_str())?;
 
     // Components to add
-    for component_name_json in all_resolved_components {
-        RegistryComponent::fetch_from_registry(component_name_json).await?.then_write_to_file().await?;
+    for component_name in all_resolved_components {
+        RegistryComponent::fetch_from_registry(component_name).await?.then_write_to_file().await?;
     }
 
     // Handle cargo dependencies if any exist
     if !all_resolved_cargo_dependencies.is_empty() {
-        dependencies::add_cargo_dep_to_toml(&all_resolved_cargo_dependencies)?;
+        super::dependencies::add_cargo_dep_to_toml(&all_resolved_cargo_dependencies)?;
     }
 
     Ok(())
