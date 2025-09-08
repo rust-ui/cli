@@ -1,7 +1,7 @@
 use clap::{Arg, Command};
 
 use super::config::{UiConfig, add_init_crates};
-use super::{install::Install, user_input::UserInput};
+use super::{install::{self, InstallType}, user_input::UserInput};
 use crate::constants::file_name::FileName;
 use crate::command_init::template::MyTemplate;
 use crate::shared::cli_error::{CliError, CliResult};
@@ -41,7 +41,7 @@ pub async fn process_init() -> CliResult<()> {
 
     UserInput::handle_index_styles().await?;
 
-    Install::tailwind_dependencies().await?;
+    install::install_dependencies(&[InstallType::Tailwind]).await?;
     Ok(())
 }
 
