@@ -3,8 +3,6 @@ pub enum CliError {
     #[error("🔸 Component '{name}' not found in registry")]
     ComponentNotFound { name: String },
 
-    #[error("🔸 Circular dependency detected involving component '{name}'")]
-    CircularDependency { name: String },
 
     #[error("🔸 Registry request failed")]
     RegistryRequestFailed,
@@ -84,9 +82,6 @@ impl CliError {
         Self::ComponentNotFound { name: name.to_string() }
     }
 
-    pub fn circular_dependency(name: &str) -> Self {
-        Self::CircularDependency { name: name.to_string() }
-    }
 
     pub fn file_operation(message: &str) -> Self {
         Self::FileOperation { message: message.to_string() }
