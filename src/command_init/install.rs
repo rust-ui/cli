@@ -34,10 +34,26 @@ impl PackageManager {
     fn command(&self) -> &str {
         self.as_ref()
     }
+    
+    fn is_pnpm_available() -> bool {
+        Command::new("pnpm")
+            .arg("--version")
+            .output()
+            .map(|output| output.status.success())
+            .unwrap_or(false)
+    }
+    
+    fn detect() -> PackageManager {
+        if Self::is_pnpm_available() {
+            PackageManager::Pnpm
+        } else {
+            PackageManager::Npm
+        }
+    }
 }
 
 pub async fn install_dependencies(install_types: &[InstallType]) -> CliResult<()> {
-    let package_manager = detect_package_manager();
+    let package_manager = PackageManager::detect();
     
     for install_type in install_types {
         install_with_package_manager(install_type.clone(), package_manager.clone())?;
@@ -50,21 +66,6 @@ pub async fn install_dependencies(install_types: &[InstallType]) -> CliResult<()
 /*                     ✨ FUNCTIONS ✨                        */
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-fn is_pnpm_available() -> bool {
-    Command::new("pnpm")
-        .arg("--version")
-        .output()
-        .map(|output| output.status.success())
-        .unwrap_or(false)
-}
-
-fn detect_package_manager() -> PackageManager {
-    if is_pnpm_available() {
-        PackageManager::Pnpm
-    } else {
-        PackageManager::Npm
-    }
-}
 
 fn install_with_package_manager(install_type: InstallType, package_manager: PackageManager) -> CliResult<()> {
     let dependencies = install_type.dependencies();
