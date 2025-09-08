@@ -16,6 +16,7 @@ repository = "https://github.com/rust-ui/cli"
 
 [dependencies]
 anyhow = { version = "1", default-features = false }
+cargo_toml = { version = "0.22", default-features = false }
 clap = { version = "4", features = ["derive", "std"], default-features = false }
 colored = { version = "3", default-features = false }
 dialoguer = { version = "0.12", default-features = false }
