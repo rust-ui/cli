@@ -15,10 +15,8 @@ impl Crate {
     }
 }
 
-///
-/// Crates to initialize the project.
-///
 pub const INIT_CRATES: [Crate; 4] = [
+    // TODO. Handle leptos csr or ssr based on user input.
     Crate::new("leptos", None, Some(&["csr"])),
     Crate::new("tw_merge", None, Some(&["variant"])),
     Crate::new("icons", None, Some(&["leptos"])),
