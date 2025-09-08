@@ -1,17 +1,13 @@
 use crate::shared::cli_error::{CliError, CliResult};
 use crate::shared::task_spinner::TaskSpinner;
 
-pub fn add_cargo_dep_to_toml(cargo_deps: &[String]) -> CliResult<()> {
+pub fn process_cargo_deps(cargo_deps: &[String]) -> CliResult<()> {
+    // TODO. Check if cargo deps are not already in Cargo.toml before adding.
+
     let spinner = TaskSpinner::new("Adding crates to Cargo.toml...");
 
     let mut added_deps = Vec::new();
     for dep in cargo_deps {
-        // Skip "std" as it's a standard library and not a dependency to add
-        if dep == "std" {
-            continue;
-        }
-
-        // Update the spinner message to show the current crate being installed
         spinner.set_message(&format!("📦 Adding crate: {dep}"));
 
         // Execute the CLI command to add the dependency
@@ -38,3 +34,9 @@ pub fn add_cargo_dep_to_toml(cargo_deps: &[String]) -> CliResult<()> {
 
     Ok(())
 }
+
+/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/*                     ✨ FUNCTIONS ✨                        */
+/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+// TODO. Add a function to check if a crate is already in Cargo.toml before adding.
