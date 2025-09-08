@@ -42,6 +42,12 @@ pub enum CliError {
         source: toml::ser::Error,
     },
 
+    #[error("🔸 Failed to parse Cargo.toml: {source}")]
+    CargoTomlParse {
+        #[from]
+        source: cargo_toml::Error,
+    },
+
     #[error("🔸 JSON parsing error: {source}")]
     JsonParse {
         #[from]
