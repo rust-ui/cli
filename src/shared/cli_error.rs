@@ -1,6 +1,5 @@
 #[derive(Debug, thiserror::Error)]
 pub enum CliError {
-
     #[error("🔸 Registry request failed")]
     RegistryRequestFailed,
 
@@ -75,7 +74,6 @@ pub enum CliError {
 }
 
 impl CliError {
-
     pub fn file_operation(message: &str) -> Self {
         Self::FileOperation { message: message.to_string() }
     }
