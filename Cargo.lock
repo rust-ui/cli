@@ -1300,6 +1300,7 @@ dependencies = [
  "clap",
  "colored",
  "dialoguer",
+ "heck",
  "indicatif",
  "reqwest",
  "serde",

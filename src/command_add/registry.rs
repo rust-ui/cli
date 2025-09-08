@@ -1,5 +1,6 @@
 use std::io::Write;
 
+use super::component_type::ComponentType;
 use crate::command_init::config::UiConfig;
 use crate::shared::cli_error::{CliError, CliResult};
 use crate::shared::rust_ui_client::RustUIClient;
@@ -19,7 +20,8 @@ pub struct RegistryComponent {
 impl RegistryComponent {
     pub async fn fetch_from_registry(component_name: String) -> CliResult<RegistryComponent> {
         let registry_md_content = RustUIClient::fetch_styles_default(&component_name).await?;
-        let registry_md_path = format!("ui/{}.rs", component_name);
+        let component_type = ComponentType::from_component_name(&component_name);
+        let registry_md_path = format!("{}/{}.rs", component_type.to_path(), component_name);
 
         Ok(RegistryComponent { registry_md_path, registry_md_content, component_name })
     }
