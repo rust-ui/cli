@@ -9,6 +9,7 @@ const PACKAGE_JSON: &str = "package.json";
 use super::config::{UiConfig, add_init_crates};
 use super::install::InstallType;
 use super::user_input::UserInput;
+use super::workspace_utils::check_leptos_dependency;
 use crate::command_init::install::install_dependencies;
 use crate::command_init::template::MyTemplate;
 use crate::shared::cli_error::{CliError, CliResult};
@@ -30,10 +31,18 @@ pub fn command_init() -> Command {
 /*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
 pub async fn process_init() -> CliResult<()> {
+    // Check if Leptos is installed before proceeding
+    if !check_leptos_dependency()? {
+        return Err(CliError::config(
+            "Leptos dependency not found in Cargo.toml. Please install Leptos first.",
+        ));
+    }
+
     let ui_config = UiConfig::default();
 
     let ui_config_toml = toml::to_string_pretty(&ui_config)
         .map_err(|e| CliError::config(&format!("Failed to serialize UiConfig: {e}")))?;
+
     INIT_TEMPLATE_FILE(UI_CONFIG_TOML, &ui_config_toml).await?;
     INIT_TEMPLATE_FILE(PACKAGE_JSON, MyTemplate::PACKAGE_JSON).await?;
     INIT_TEMPLATE_FILE(&ui_config.tailwind_input_file, MyTemplate::STYLE_TAILWIND_CSS).await?;
