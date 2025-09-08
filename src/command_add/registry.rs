@@ -1,13 +1,10 @@
-// use dotenv::dotenv;
-// use std::env;
 use std::io::Write;
 
-const UI_CONFIG_TOML: &str = "ui_config.toml";
-
-// use crate::constants::env::ENV;
 use crate::command_init::config::UiConfig;
 use crate::shared::cli_error::{CliError, CliResult};
 use crate::shared::rust_ui_client::RustUIClient;
+
+const UI_CONFIG_TOML: &str = "ui_config.toml";
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
 /*                     ✨ FUNCTIONS ✨                        */

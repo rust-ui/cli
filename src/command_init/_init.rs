@@ -1,3 +1,6 @@
+use std::fs::{self, File};
+use std::io::{self, Write};
+
 use clap::{Arg, Command};
 
 const UI_CONFIG_TOML: &str = "ui_config.toml";
@@ -9,7 +12,6 @@ use super::user_input::UserInput;
 use crate::command_init::install::install_dependencies;
 use crate::command_init::template::MyTemplate;
 use crate::shared::cli_error::{CliError, CliResult};
-use crate::shared::shared_write_template_file::shared_write_template_file;
 use crate::shared::task_spinner::TaskSpinner;
 
 /*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
@@ -65,4 +67,26 @@ async fn INIT_TEMPLATE_FILE(file_name: &str, template: &str) -> CliResult<()> {
     let finish_message = format!("Writing {file_name} complete.");
     spinner.finish_success(&finish_message);
     Ok(())
+}
+
+/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/*                     ✨ FUNCTIONS ✨                        */
+/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+
+async fn shared_write_template_file(file_path: &str, template: &str) -> io::Result<()> {
+    // Create the directory if it doesn't exist
+    if let Some(dir) = std::path::Path::new(file_path).parent() {
+        fs::create_dir_all(dir)?;
+    }
+
+    match File::create(file_path) {
+        Ok(mut file) => {
+            file.write_all(template.as_bytes())?;
+            Ok(())
+        }
+        Err(err) => {
+            eprintln!("🔸 Error: {err}");
+            Err(err)
+        }
+    }
 }
