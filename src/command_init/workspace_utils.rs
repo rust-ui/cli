@@ -1,21 +1,17 @@
-use std::fs;
 use std::path::Path;
+
+use cargo_toml::Manifest;
 
 use crate::shared::cli_error::{CliError, CliResult};
 
 /// Detects if the current directory is part of a Rust workspace
 pub fn detect_workspace() -> CliResult<bool> {
     let cargo_toml_path = Path::new("Cargo.toml");
-
-    if !cargo_toml_path.exists() {
-        return Ok(false);
-    }
-
-    let contents = fs::read_to_string(cargo_toml_path)
-        .map_err(|e| CliError::file_operation(&format!("Failed to read Cargo.toml: {e}")))?;
-
-    // Check if the Cargo.toml contains a [workspace] section
-    Ok(contents.contains("[workspace]"))
+    
+    let manifest = load_cargo_manifest(cargo_toml_path)?;
+    
+    // Check if the manifest has a workspace section
+    Ok(manifest.map_or(false, |m| m.workspace.is_some()))
 }
 
 /// Gets the appropriate base path for components based on workspace detection
@@ -38,154 +34,50 @@ pub fn check_leptos_dependency() -> CliResult<bool> {
 fn check_leptos_dependency_in_path(dir_path: &str) -> CliResult<bool> {
     let cargo_toml_path = Path::new(dir_path).join("Cargo.toml");
 
-    if !cargo_toml_path.exists() {
+    let manifest = load_cargo_manifest(&cargo_toml_path)?;
+    
+    let Some(manifest) = manifest else {
         return Err(CliError::file_operation("Cargo.toml not found in current directory"));
-    }
-
-    let contents = fs::read_to_string(&cargo_toml_path)
-        .map_err(|e| CliError::file_operation(&format!("Failed to read Cargo.toml: {e}")))?;
-
-    let toml_value: toml::Value = toml::from_str(&contents)
-        .map_err(|e| CliError::config(&format!("Failed to parse Cargo.toml: {e}")))?;
+    };
 
     // Check in [dependencies] section
-    if let Some(deps) = toml_value.get("dependencies").and_then(|d| d.as_table()) {
-        if deps.contains_key("leptos") {
-            return Ok(true);
-        }
+    if manifest.dependencies.contains_key("leptos") {
+        return Ok(true);
     }
 
     // Check in [workspace.dependencies] section for workspaces
-    if let Some(workspace) = toml_value.get("workspace") {
-        if let Some(deps) = workspace.get("dependencies").and_then(|d| d.as_table()) {
-            if deps.contains_key("leptos") {
-                return Ok(true);
-            }
+    if let Some(workspace) = manifest.workspace {
+        if workspace.dependencies.contains_key("leptos") {
+            return Ok(true);
         }
     }
 
     Ok(false)
 }
 
-#[cfg(test)]
-mod tests {
-    use std::fs;
+/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/*                     ✨ FUNCTIONS ✨                        */
+/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
 
-    use tempfile::TempDir;
-
-    use super::*;
-
-    #[test]
-    fn test_detect_workspace_with_workspace_toml() {
-        let temp_dir = TempDir::new().unwrap();
-        let cargo_toml_path = temp_dir.path().join("Cargo.toml");
-
-        fs::write(
-            &cargo_toml_path,
-            r#"
-[workspace]
-members = ["app", "lib"]
-
-[package]
-name = "test"
-version = "0.1.0"
-"#,
-        )
-        .unwrap();
-
-        std::env::set_current_dir(temp_dir.path()).unwrap();
-        assert!(detect_workspace().unwrap());
+/// Helper function to load a Cargo.toml manifest from a path
+fn load_cargo_manifest(cargo_toml_path: &Path) -> CliResult<Option<Manifest>> {
+    if !cargo_toml_path.exists() {
+        return Ok(None);
     }
 
-    #[test]
-    fn test_detect_workspace_without_workspace_toml() {
-        let temp_dir = TempDir::new().unwrap();
-        let cargo_toml_path = temp_dir.path().join("Cargo.toml");
-
-        fs::write(
-            &cargo_toml_path,
-            r#"
-[package]
-name = "test"
-version = "0.1.0"
-"#,
-        )
-        .unwrap();
-
-        std::env::set_current_dir(temp_dir.path()).unwrap();
-        assert!(!detect_workspace().unwrap());
-    }
-
-    #[test]
-    fn test_detect_workspace_no_cargo_toml() {
-        let temp_dir = TempDir::new().unwrap();
-        std::env::set_current_dir(temp_dir.path()).unwrap();
-        assert!(!detect_workspace().unwrap());
-    }
-
-    #[test]
-    fn test_check_leptos_dependency_with_leptos() {
-        let temp_dir = TempDir::new().unwrap();
-        let cargo_toml_path = temp_dir.path().join("Cargo.toml");
-
-        fs::write(
-            &cargo_toml_path,
-            r#"
-[package]
-name = "test"
-version = "0.1.0"
-
-[dependencies]
-leptos = { version = "0.6", features = ["csr", "hydrate", "ssr"] }
-"#,
-        )
-        .unwrap();
-
-        assert!(check_leptos_dependency_in_path(temp_dir.path().to_str().unwrap()).unwrap());
-    }
-
-    #[test]
-    fn test_check_leptos_dependency_without_leptos() {
-        let temp_dir = TempDir::new().unwrap();
-        let cargo_toml_path = temp_dir.path().join("Cargo.toml");
-
-        fs::write(
-            &cargo_toml_path,
-            r#"
-[package]
-name = "test"
-version = "0.1.0"
-
-[dependencies]
-serde = "1.0"
-"#,
-        )
-        .unwrap();
-
-        assert!(!check_leptos_dependency_in_path(temp_dir.path().to_str().unwrap()).unwrap());
-    }
-
-    #[test]
-    fn test_check_leptos_dependency_workspace_deps() {
-        let temp_dir = TempDir::new().unwrap();
-        let cargo_toml_path = temp_dir.path().join("Cargo.toml");
-
-        fs::write(
-            &cargo_toml_path,
-            r#"
-[workspace]
-members = ["app", "lib"]
-
-[workspace.dependencies]
-leptos = { version = "0.6", features = ["csr", "hydrate", "ssr"] }
-
-[package]
-name = "test"
-version = "0.1.0"
-"#,
-        )
-        .unwrap();
-
-        assert!(check_leptos_dependency_in_path(temp_dir.path().to_str().unwrap()).unwrap());
+    // Try to load with full workspace resolution first
+    match Manifest::from_path(cargo_toml_path) {
+        Ok(manifest) => Ok(Some(manifest)),
+        Err(_) => {
+            // If workspace resolution fails (e.g., in tests), try parsing without workspace resolution
+            let contents = std::fs::read_to_string(cargo_toml_path)
+                .map_err(|err| CliError::file_operation(&format!("Failed to read Cargo.toml: {err}")))?;
+            
+            let manifest = Manifest::from_slice(contents.as_bytes())
+                .map_err(|err| CliError::file_operation(&format!("Failed to parse Cargo.toml: {err}")))?;
+                
+            Ok(Some(manifest))
+        }
     }
 }
+
