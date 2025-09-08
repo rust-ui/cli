@@ -41,7 +41,7 @@ pub async fn process_init() -> CliResult<()> {
 
     UserInput::handle_index_styles().await?;
 
-    Install::tailwind_with_pnpm().await?;
+    Install::tailwind_dependencies().await?;
     Ok(())
 }
 
