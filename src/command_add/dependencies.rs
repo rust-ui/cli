@@ -53,9 +53,9 @@ pub fn process_cargo_deps(cargo_deps: &[String]) -> CliResult<()> {
     Ok(())
 }
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/* ========================================================== */
 /*                     ✨ FUNCTIONS ✨                        */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+/* ========================================================== */
 
 /// Check if a crate is already in Cargo.toml dependencies
 fn get_existing_dependencies() -> CliResult<HashSet<String>> {
