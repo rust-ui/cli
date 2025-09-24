@@ -53,9 +53,9 @@ pub async fn install_dependencies(install_types: &[InstallType]) -> CliResult<()
     Ok(())
 }
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/* ========================================================== */
 /*                     ✨ FUNCTIONS ✨                        */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+/* ========================================================== */
 
 fn install_with_package_manager(install_type: InstallType, package_manager: PackageManager) -> CliResult<()> {
     let dependencies = install_type.dependencies();

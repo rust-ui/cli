@@ -55,9 +55,9 @@ fn check_leptos_dependency_in_path(dir_path: &str) -> CliResult<bool> {
     Ok(false)
 }
 
-/*´:°•.°+.*•´.*:˚.°*.˚•´.°:°•.°•.*•´.*:˚.°*.˚•´.°:°•.°+.*•´.*:*/
+/* ========================================================== */
 /*                     ✨ FUNCTIONS ✨                        */
-/*.•°:°.´+˚.*°.˚:*.´•*.+°.•°:´*.´•*.•°.•°:°.´:•˚°.*°.˚:*.´+°.•*/
+/* ========================================================== */
 
 /// Helper function to load a Cargo.toml manifest from a path
 fn load_cargo_manifest(cargo_toml_path: &Path) -> CliResult<Option<Manifest>> {
