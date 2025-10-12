@@ -10,7 +10,7 @@ Cargo.lock
 # Init & Add
 /node_modules/
 /pnpm-lock.yaml
-style/tailwind.css
+style/
 tailwind.config.js
 ui_config.toml
 package.json
