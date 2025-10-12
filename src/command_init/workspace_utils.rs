@@ -11,7 +11,7 @@ pub fn detect_workspace() -> CliResult<bool> {
     let manifest = load_cargo_manifest(cargo_toml_path)?;
     
     // Check if the manifest has a workspace section
-    Ok(manifest.map_or(false, |m| m.workspace.is_some()))
+    Ok(manifest.is_some_and(|m| m.workspace.is_some()))
 }
 
 /// Gets the appropriate base path for components based on workspace detection
@@ -46,11 +46,10 @@ fn check_leptos_dependency_in_path(dir_path: &str) -> CliResult<bool> {
     }
 
     // Check in [workspace.dependencies] section for workspaces
-    if let Some(workspace) = manifest.workspace {
-        if workspace.dependencies.contains_key("leptos") {
+    if let Some(workspace) = manifest.workspace
+        && workspace.dependencies.contains_key("leptos") {
             return Ok(true);
         }
-    }
 
     Ok(false)
 }
