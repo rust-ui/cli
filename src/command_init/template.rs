@@ -4,8 +4,6 @@ impl MyTemplate {
     pub const STYLE_TAILWIND_CSS: &str = r#"@import "tailwindcss";
 @import "tw-animate-css";
 
-@config "../tailwind.config.js";
-
 
 :root {
   --radius: 0.625rem;
