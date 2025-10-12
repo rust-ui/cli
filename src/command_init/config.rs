@@ -4,7 +4,7 @@ use std::process::Command;
 use serde::{Deserialize, Serialize};
 
 use crate::command_init::crates::INIT_CRATES;
-use crate::command_init::workspace_utils::{detect_workspace, get_component_base_path};
+use crate::command_init::workspace_utils::{check_leptos_dependency, detect_workspace, get_component_base_path};
 use crate::shared::cli_error::{CliError, CliResult};
 use crate::shared::task_spinner::TaskSpinner;
 
@@ -67,6 +67,11 @@ impl Default for UiConfig {
 pub async fn add_init_crates() -> CliResult<()> {
     // `crate` is a reserved keyword.
     for my_crate in INIT_CRATES {
+        // Skip leptos if it's already installed to preserve user's existing configuration
+        if my_crate.name == "leptos" && check_leptos_dependency()? {
+            continue;
+        }
+
         let spinner = TaskSpinner::new(&format!("Adding and installing {} crate...", my_crate.name));
 
         let mut args = vec!["add".to_owned(), my_crate.name.to_owned()];
