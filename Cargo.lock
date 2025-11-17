@@ -144,6 +144,8 @@ checksum = "25f104b501bf2364e78d0d3974cbc774f738f5865306ed128e1e0d7499c0ad96"
 dependencies = [
  "console",
  "shell-words",
+ "tempfile",
+ "zeroize",
 ]
 
 [[package]]
@@ -500,6 +502,7 @@ checksum = "9375e112e4b463ec1b1c6c011953545c65a30164fbab5b581df32b3abf0dcb88"
 dependencies = [
  "console",
  "portable-atomic",
+ "unicode-width",
  "unit-prefix",
  "web-time",
 ]

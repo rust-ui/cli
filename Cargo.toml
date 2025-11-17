@@ -15,20 +15,20 @@ repository = "https://github.com/rust-ui/cli"
 
 
 [dependencies]
-anyhow = { version = "1", default-features = false }
-cargo_toml = { version = "0.22", default-features = false }
+anyhow = "1"
+cargo_toml = "0.22"
 clap = { version = "4", default-features = false, features = ["derive", "std"] }
-colored = { version = "3", default-features = false }
-dialoguer = { version = "0.12", default-features = false }
-indicatif = { version = "0.18", default-features = false }
+colored = "3"
+dialoguer = "0.12"
+indicatif = "0.18"
 reqwest = { version = "0.12", default-features = false, features = ["json", "rustls-tls"] }
-serde = { version = "1", default-features = false, features = ["derive"] }
-serde_json = { version = "1", default-features = false }
-strum = { version = "0.26", default-features = false, features = ["derive"] }
-heck = { version = "0.5", default-features = false }
-thiserror = { version = "2", default-features = false }
-tokio = { version = "1", default-features = false, features = ["macros", "rt-multi-thread"] }
-toml = { version = "0.9", default-features = false, features = ["parse", "display", "serde"] }
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+strum = { version = "0.26", features = ["derive"] }
+heck = "0.5"
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
+toml = { version = "0.9", features = ["parse", "display", "serde"] }
 
 [dev-dependencies]
 tempfile = "3"
