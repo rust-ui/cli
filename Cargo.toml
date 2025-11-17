@@ -15,7 +15,6 @@ repository = "https://github.com/rust-ui/cli"
 
 
 [dependencies]
-anyhow = "1"
 cargo_toml = "0.22"
 clap = { version = "4", default-features = false, features = ["derive", "std"] }
 colored = "3"

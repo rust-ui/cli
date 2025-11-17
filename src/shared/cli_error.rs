@@ -145,9 +145,3 @@ impl CliError {
 }
 
 pub type CliResult<T> = std::result::Result<T, CliError>;
-
-impl From<anyhow::Error> for CliError {
-    fn from(err: anyhow::Error) -> Self {
-        CliError::Validation { message: err.to_string() }
-    }
-}
