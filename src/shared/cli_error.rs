@@ -77,6 +77,9 @@ pub enum CliError {
 
     #[error("🔸 Registry has invalid format")]
     RegistryInvalidFormat,
+
+    #[error("🔸 Project not initialized. Run 'ui init' to initialize the project first.")]
+    ProjectNotInitialized,
 }
 
 impl CliError {
@@ -134,6 +137,10 @@ impl CliError {
 
     pub fn registry_invalid_format() -> Self {
         Self::RegistryInvalidFormat
+    }
+
+    pub fn project_not_initialized() -> Self {
+        Self::ProjectNotInitialized
     }
 }
 

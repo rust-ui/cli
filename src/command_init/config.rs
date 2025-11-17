@@ -1,4 +1,5 @@
 use std::fs;
+use std::path::Path;
 use std::process::Command;
 
 use serde::{Deserialize, Serialize};
@@ -22,6 +23,9 @@ pub struct UiConfig {
 
 impl UiConfig {
     pub fn try_reading_ui_config(toml_path: &str) -> CliResult<UiConfig> {
+        if !Path::new(toml_path).exists() {
+            return Err(CliError::project_not_initialized());
+        }
         let contents = fs::read_to_string(toml_path)?;
         let ui_config: UiConfig = toml::from_str(&contents)?;
         Ok(ui_config)
