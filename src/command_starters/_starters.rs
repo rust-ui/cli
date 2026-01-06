@@ -27,8 +27,8 @@ enum StarterTemplate {
     Trunk,
     LeptosSsr,
     LeptosSsrWorkspace,
-    IosTauri,
-    IosTauriFullstack,
+    Tauri,
+    TauriFullstack,
 }
 
 pub async fn process_starters() -> CliResult<()> {
