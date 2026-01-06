@@ -12,10 +12,12 @@ use super::super::widgets::search_input::draw_search_input;
 
 pub fn draw_tab_components(frame: &mut Frame, app: &mut App, area: Rect) {
     // Horizontal split: sidenav on left, detail on right
-    let horizontal_chunks = Layout::horizontal([Constraint::Percentage(35), Constraint::Percentage(65)]).split(area);
+    let horizontal_chunks =
+        Layout::horizontal([Constraint::Percentage(35), Constraint::Percentage(65)]).split(area);
 
     // Split left panel vertically: search input at top, list below
-    let left_chunks = Layout::vertical([Constraint::Length(3), Constraint::Min(0)]).split(horizontal_chunks[0]);
+    let left_chunks =
+        Layout::vertical([Constraint::Length(3), Constraint::Min(0)]).split(horizontal_chunks[0]);
 
     // Filter components based on search query (prefix matching)
     let components_refs: Vec<&str> = app.components.iter().map(|s| s.as_str()).collect();
@@ -47,13 +49,19 @@ pub fn draw_tab_components(frame: &mut Frame, app: &mut App, area: Rect) {
             format!("Components ({})", app.components.len())
         }
     } else if checked_count > 0 {
-        format!("Components ({}/{}) - {} Selected", filtered_components.len(), app.components.len(), checked_count)
+        format!(
+            "Components ({}/{}) - {} Selected",
+            filtered_components.len(),
+            app.components.len(),
+            checked_count
+        )
     } else {
         format!("Components ({}/{})", filtered_components.len(), app.components.len())
     };
 
-    let list =
-        List::new(items).block(Block::bordered().title(title)).highlight_style(Style::default().bg(Color::DarkGray));
+    let list = List::new(items)
+        .block(Block::bordered().title(title))
+        .highlight_style(Style::default().bg(Color::DarkGray));
 
     // Update list state
     if !filtered_components.is_empty() {
@@ -74,18 +82,34 @@ pub fn draw_tab_components(frame: &mut Frame, app: &mut App, area: Rect) {
     );
 
     // Right side: Detail panel
-    let selected_component = if !filtered_components.is_empty() && app.components_scroll < filtered_components.len() {
-        Some(filtered_components[app.components_scroll])
-    } else {
-        None
-    };
-    draw_detail_panel(frame, selected_component, app.components_checked.len(), "component", horizontal_chunks[1]);
+    let selected_component =
+        if !filtered_components.is_empty() && app.components_scroll < filtered_components.len() {
+            Some(filtered_components[app.components_scroll])
+        } else {
+            None
+        };
+    draw_detail_panel(
+        frame,
+        selected_component,
+        app.components_checked.len(),
+        "component",
+        horizontal_chunks[1],
+    );
 
     // Render popup if show_popup is true and there are checked components
     if app.show_popup && !app.components_checked.is_empty() {
         let mut checked_list: Vec<String> = app.components_checked.iter().cloned().collect();
         checked_list.sort();
-        draw_checked_popup(frame, &checked_list, "Checked Components", "component", Color::Green, area, 70, 60);
+        draw_checked_popup(
+            frame,
+            &checked_list,
+            "Checked Components",
+            "component",
+            Color::Green,
+            area,
+            70,
+            60,
+        );
     }
 }
 
@@ -95,10 +119,12 @@ pub fn draw_tab_components(frame: &mut Frame, app: &mut App, area: Rect) {
 
 pub fn get_selected_component(app: &App) -> Option<String> {
     let components_refs: Vec<&str> = app.components.iter().map(|s| s.as_str()).collect();
-    get_selected_item(&components_refs, app.components_scroll, &app.components_search_query).map(|s| s.to_string())
+    get_selected_item(&components_refs, app.components_scroll, &app.components_search_query)
+        .map(|s| s.to_string())
 }
 
 pub fn get_component_at_visual_index(app: &App, visual_index: usize) -> Option<String> {
     let components_refs: Vec<&str> = app.components.iter().map(|s| s.as_str()).collect();
-    get_item_at_visual_index(&components_refs, visual_index, &app.components_search_query).map(|s| s.to_string())
+    get_item_at_visual_index(&components_refs, visual_index, &app.components_search_query)
+        .map(|s| s.to_string())
 }

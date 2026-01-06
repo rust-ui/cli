@@ -12,5 +12,6 @@ use crate::shared::cli_error::{CliError, CliResult};
 /// Returns the selected components when user confirms
 pub fn run_tui(components: Vec<String>) -> CliResult<Vec<String>> {
     let tick_rate = Duration::from_millis(250);
-    crossterm::run(tick_rate, components).map_err(|err| CliError::Io { source: std::io::Error::other(err.to_string()) })
+    crossterm::run(tick_rate, components)
+        .map_err(|err| CliError::Io { source: std::io::Error::other(err.to_string()) })
 }

@@ -27,7 +27,8 @@ pub fn draw_checked_popup(
     } else if checked_items.len() <= 8 {
         // Use simple vertical list for few items
         let items: Vec<String> = checked_items.iter().map(|name| format!("  ☑ {}", name)).collect();
-        let item_type_display = if checked_items.len() == 1 { item_type.to_string() } else { format!("{}s", item_type) };
+        let item_type_display =
+            if checked_items.len() == 1 { item_type.to_string() } else { format!("{}s", item_type) };
         format!(
             "Checked {} ({})\n\n{}\n\n\nPress ENTER to add  |  Press ESC to close",
             item_type_display,
@@ -37,7 +38,8 @@ pub fn draw_checked_popup(
     } else {
         // Format items in 4 columns for many items
         let items_per_column = (checked_items.len() + 3) / 4;
-        let item_type_display = if checked_items.len() == 1 { item_type.to_string() } else { format!("{}s", item_type) };
+        let item_type_display =
+            if checked_items.len() == 1 { item_type.to_string() } else { format!("{}s", item_type) };
         let mut lines = vec![format!("Checked {} ({})\n", item_type_display, checked_items.len())];
 
         for row in 0..items_per_column {
@@ -72,8 +74,10 @@ pub fn draw_checked_popup(
         lines.join("\n")
     };
 
-    let popup_paragraph =
-        Paragraph::new(checked_text).block(popup_block).wrap(Wrap { trim: true }).style(Style::default().fg(Color::White));
+    let popup_paragraph = Paragraph::new(checked_text)
+        .block(popup_block)
+        .wrap(Wrap { trim: true })
+        .style(Style::default().fg(Color::White));
 
     frame.render_widget(popup_paragraph, popup_rect);
 }

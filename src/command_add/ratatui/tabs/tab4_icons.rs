@@ -26,8 +26,9 @@ pub fn draw_tab_icons(frame: &mut Frame, app: &mut App, area: Rect) {
         })
         .collect();
 
-    let list =
-        List::new(items).block(Block::bordered().title("Icons")).highlight_style(Style::default().fg(Color::White));
+    let list = List::new(items)
+        .block(Block::bordered().title("Icons"))
+        .highlight_style(Style::default().fg(Color::White));
 
     let mut state = ListState::default();
     state.select(Some(app.icons_selected));
@@ -52,8 +53,8 @@ pub fn draw_tab_icons(frame: &mut Frame, app: &mut App, area: Rect) {
                 frame.render_widget(paragraph, inner_area);
             }
             None => {
-                let paragraph =
-                    Paragraph::new(format!("Failed to load {filename}")).style(Style::default().fg(Color::Red));
+                let paragraph = Paragraph::new(format!("Failed to load {filename}"))
+                    .style(Style::default().fg(Color::Red));
                 frame.render_widget(paragraph, inner_area);
             }
         }

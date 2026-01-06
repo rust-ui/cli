@@ -19,8 +19,10 @@ async fn test_fetch_styles_default_alert() {
     let rust_code = result.unwrap();
     assert!(!rust_code.is_empty(), "Extracted Rust code from alert.md should not be empty");
     // Basic sanity check that it contains Rust code
-    assert!(rust_code.contains("fn") || rust_code.contains("use") || rust_code.contains("pub"),
-            "Content should contain Rust code");
+    assert!(
+        rust_code.contains("fn") || rust_code.contains("use") || rust_code.contains("pub"),
+        "Content should contain Rust code"
+    );
 }
 
 #[tokio::test]
@@ -43,12 +45,11 @@ async fn test_fetch_styles_index() {
     assert!(!json_content.is_empty(), "styles/index.json content should not be empty");
 
     // Verify it's valid JSON by parsing it
-    let parsed: serde_json::Value = serde_json::from_str(&json_content)
-        .expect("Response should be valid JSON");
+    let parsed: serde_json::Value =
+        serde_json::from_str(&json_content).expect("Response should be valid JSON");
 
     // Basic structure check - should be an object or array
-    assert!(parsed.is_object() || parsed.is_array(),
-            "JSON should be an object or array");
+    assert!(parsed.is_object() || parsed.is_array(), "JSON should be an object or array");
 }
 
 #[tokio::test]

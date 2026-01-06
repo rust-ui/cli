@@ -29,7 +29,8 @@ pub fn render(frame: &mut Frame, app: &mut App) {
 }
 
 fn draw_help_popup(frame: &mut Frame, area: Rect) {
-    let popup_block = Block::bordered().title("⌨️  Keyboard Shortcuts").style(Style::default().fg(Color::Cyan));
+    let popup_block =
+        Block::bordered().title("⌨️  Keyboard Shortcuts").style(Style::default().fg(Color::Cyan));
     let popup_area = popup_area(area, 75, 85);
 
     // Clear the background
@@ -63,8 +64,10 @@ Search Mode (Components Tab):
 Press ESC to close this help menu
 "#;
 
-    let popup_paragraph =
-        Paragraph::new(help_text).block(popup_block).wrap(Wrap { trim: true }).style(Style::default().fg(Color::White));
+    let popup_paragraph = Paragraph::new(help_text)
+        .block(popup_block)
+        .wrap(Wrap { trim: true })
+        .style(Style::default().fg(Color::White));
 
     frame.render_widget(popup_paragraph, popup_area);
 }

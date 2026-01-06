@@ -161,7 +161,12 @@ impl<'a> App<'a> {
         self.components_checked.clear();
     }
 
-    pub fn get_components_double_click_info(&self, column: u16, row: u16, terminal_width: u16) -> Option<usize> {
+    pub fn get_components_double_click_info(
+        &self,
+        column: u16,
+        row: u16,
+        terminal_width: u16,
+    ) -> Option<usize> {
         // Check if double-click is in Components tab left panel
         if matches!(self.header.tabs.current, Tab::Components) && !self.show_popup {
             // Check if click is in left panel (35% of width)

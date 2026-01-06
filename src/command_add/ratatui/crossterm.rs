@@ -10,8 +10,7 @@ use ratatui::backend::{Backend, CrosstermBackend};
 
 use super::app::App;
 use super::header::Tab;
-use super::tabs::_render;
-use super::tabs::{tab1_components, tab2_hooks};
+use super::tabs::{_render, tab1_components, tab2_hooks};
 
 pub fn run(tick_rate: Duration, components: Vec<String>) -> Result<Vec<String>, Box<dyn Error>> {
     // Setup terminal
@@ -37,7 +36,11 @@ pub fn run(tick_rate: Duration, components: Vec<String>) -> Result<Vec<String>, 
 /*                     ✨ FUNCTIONS ✨                        */
 /* ========================================================== */
 
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App, tick_rate: Duration) -> Result<Vec<String>, Box<dyn Error>> {
+fn run_app<B: Backend>(
+    terminal: &mut Terminal<B>,
+    mut app: App,
+    tick_rate: Duration,
+) -> Result<Vec<String>, Box<dyn Error>> {
     let mut last_tick = Instant::now();
     loop {
         terminal.draw(|frame| _render::render(frame, &mut app))?;
@@ -141,9 +144,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App, tick_rate: Dura
                         {
                             app.toggle_popup();
                         }
-                        KeyCode::Esc
-                            if matches!(app.header.tabs.current, Tab::Hooks) && !app.show_popup =>
-                        {
+                        KeyCode::Esc if matches!(app.header.tabs.current, Tab::Hooks) && !app.show_popup => {
                             // Handle double-tap Escape to deselect all hooks
                             let now = Instant::now();
                             let is_double_tap = if let Some(last_time) = app.last_escape_time {
@@ -159,9 +160,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App, tick_rate: Dura
                                 app.last_escape_time = Some(now);
                             }
                         }
-                        KeyCode::Esc
-                            if matches!(app.header.tabs.current, Tab::Hooks) && app.show_popup =>
-                        {
+                        KeyCode::Esc if matches!(app.header.tabs.current, Tab::Hooks) && app.show_popup => {
                             app.toggle_popup();
                         }
                         KeyCode::Char('h') | KeyCode::Left => {
@@ -197,12 +196,13 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App, tick_rate: Dura
                         let current_pos = (mouse.column, mouse.row);
 
                         // Check for double-click (within 500ms and same position)
-                        let is_double_click =
-                            if let (Some(last_time), Some(last_pos)) = (app.last_click_time, app.last_click_pos) {
-                                now.duration_since(last_time).as_millis() < 500 && last_pos == current_pos
-                            } else {
-                                false
-                            };
+                        let is_double_click = if let (Some(last_time), Some(last_pos)) =
+                            (app.last_click_time, app.last_click_pos)
+                        {
+                            now.duration_since(last_time).as_millis() < 500 && last_pos == current_pos
+                        } else {
+                            false
+                        };
 
                         if is_double_click {
                             // Handle double-click on component list items

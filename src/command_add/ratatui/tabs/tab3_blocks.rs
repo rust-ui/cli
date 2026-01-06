@@ -13,8 +13,9 @@ pub fn draw_tab_blocks(frame: &mut Frame, _app: &mut App, area: Rect) {
 
     let layout = Layout::vertical([Constraint::Percentage(50)]).split(inner_area);
 
-    let coming_soon =
-        Paragraph::new("Coming soon").alignment(Alignment::Center).style(Style::default().fg(Color::DarkGray));
+    let coming_soon = Paragraph::new("Coming soon")
+        .alignment(Alignment::Center)
+        .style(Style::default().fg(Color::DarkGray));
 
     frame.render_widget(coming_soon, layout[0]);
 }
