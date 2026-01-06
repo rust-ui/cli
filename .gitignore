@@ -25,3 +25,7 @@ src/components/demos/*
 **/.DS_Store
 **/.Icon?
 **/.Icon
+
+
+
+start-leptos-ssr-workspace/
