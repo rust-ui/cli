@@ -136,8 +136,8 @@ impl<'a> Header<'a> {
             if index == Tab::ALL.len() - 1 {
                 // Last tab (Settings) - right-aligned with right padding
                 let tab_len = tab_name.len() as u16;
-                let start =
-                    inner_width.saturating_sub(tab_len).saturating_sub(HORIZONTAL_PADDING as u16) + border_offset;
+                let start = inner_width.saturating_sub(tab_len).saturating_sub(HORIZONTAL_PADDING as u16)
+                    + border_offset;
                 let end = inner_width.saturating_sub(HORIZONTAL_PADDING as u16) + border_offset;
                 boundaries.push((start, end));
             } else {

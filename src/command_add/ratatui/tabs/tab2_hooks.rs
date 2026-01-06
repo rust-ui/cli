@@ -12,10 +12,12 @@ use super::super::widgets::search_input::draw_search_input;
 
 pub fn draw_tab_hooks(frame: &mut Frame, app: &mut App, area: Rect) {
     // Horizontal split: sidenav on left, detail on right
-    let horizontal_chunks = Layout::horizontal([Constraint::Percentage(35), Constraint::Percentage(65)]).split(area);
+    let horizontal_chunks =
+        Layout::horizontal([Constraint::Percentage(35), Constraint::Percentage(65)]).split(area);
 
     // Split left panel vertically: search input at top, list below
-    let left_chunks = Layout::vertical([Constraint::Length(3), Constraint::Min(0)]).split(horizontal_chunks[0]);
+    let left_chunks =
+        Layout::vertical([Constraint::Length(3), Constraint::Min(0)]).split(horizontal_chunks[0]);
 
     // Filter hooks based on search query (prefix matching)
     let filtered_hooks = filter_items(HOOKS, &app.hooks_search_query);
@@ -51,8 +53,9 @@ pub fn draw_tab_hooks(frame: &mut Frame, app: &mut App, area: Rect) {
         format!("Hooks ({}/{})", filtered_hooks.len(), HOOKS.len())
     };
 
-    let list =
-        List::new(items).block(Block::bordered().title(title)).highlight_style(Style::default().bg(Color::DarkGray));
+    let list = List::new(items)
+        .block(Block::bordered().title(title))
+        .highlight_style(Style::default().bg(Color::DarkGray));
 
     // Update list state
     if !filtered_hooks.is_empty() {

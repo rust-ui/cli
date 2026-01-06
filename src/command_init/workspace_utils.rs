@@ -78,8 +78,8 @@ pub fn analyze_workspace_from_path(start_path: &Path) -> CliResult<WorkspaceInfo
 
 /// Analyze when running from workspace root
 fn analyze_from_workspace_root(workspace_root: &Path, manifest: &Manifest) -> CliResult<WorkspaceInfo> {
-    let workspace = manifest.workspace.as_ref()
-        .ok_or_else(|| CliError::config("Expected workspace manifest"))?;
+    let workspace =
+        manifest.workspace.as_ref().ok_or_else(|| CliError::config("Expected workspace manifest"))?;
 
     // Find workspace member with Leptos
     let members = expand_workspace_members(workspace_root, &workspace.members)?;
@@ -89,13 +89,13 @@ fn analyze_from_workspace_root(workspace_root: &Path, manifest: &Manifest) -> Cl
         if let Some(member_manifest) = load_cargo_manifest(&member_cargo_toml)? {
             // Check if this member has leptos in its dependencies
             if member_manifest.dependencies.contains_key("leptos") {
-                let crate_name = member_manifest.package
+                let crate_name = member_manifest
+                    .package
                     .as_ref()
                     .map(|p| p.name.clone())
                     .unwrap_or_else(|| member_path.file_name().unwrap().to_string_lossy().to_string());
 
-                let relative_path = member_path.strip_prefix(workspace_root)
-                    .unwrap_or(member_path);
+                let relative_path = member_path.strip_prefix(workspace_root).unwrap_or(member_path);
 
                 return Ok(WorkspaceInfo {
                     is_workspace: true,
@@ -117,13 +117,12 @@ fn analyze_from_workspace_root(workspace_root: &Path, manifest: &Manifest) -> Cl
                 // Check if member references workspace leptos (inherited dependency)
                 if let Some(dep) = member_manifest.dependencies.get("leptos") {
                     if matches!(dep, Dependency::Inherited(_)) {
-                        let crate_name = member_manifest.package
-                            .as_ref()
-                            .map(|p| p.name.clone())
-                            .unwrap_or_else(|| member_path.file_name().unwrap().to_string_lossy().to_string());
+                        let crate_name =
+                            member_manifest.package.as_ref().map(|p| p.name.clone()).unwrap_or_else(|| {
+                                member_path.file_name().unwrap().to_string_lossy().to_string()
+                            });
 
-                        let relative_path = member_path.strip_prefix(workspace_root)
-                            .unwrap_or(member_path);
+                        let relative_path = member_path.strip_prefix(workspace_root).unwrap_or(member_path);
 
                         return Ok(WorkspaceInfo {
                             is_workspace: true,
@@ -139,7 +138,7 @@ fn analyze_from_workspace_root(workspace_root: &Path, manifest: &Manifest) -> Cl
     }
 
     Err(CliError::config(
-        "No workspace member with Leptos dependency found. Please run from a crate directory with Leptos installed."
+        "No workspace member with Leptos dependency found. Please run from a crate directory with Leptos installed.",
     ))
 }
 
@@ -155,9 +154,7 @@ fn analyze_from_workspace_member(member_path: &Path, workspace_root: &Path) -> C
     // Also check workspace.dependencies
     let workspace_cargo_toml = workspace_root.join("Cargo.toml");
     let workspace_has_leptos = if let Some(ws_manifest) = load_cargo_manifest(&workspace_cargo_toml)? {
-        ws_manifest.workspace
-            .as_ref()
-            .is_some_and(|ws| ws.dependencies.contains_key("leptos"))
+        ws_manifest.workspace.as_ref().is_some_and(|ws| ws.dependencies.contains_key("leptos"))
     } else {
         false
     };
@@ -166,7 +163,8 @@ fn analyze_from_workspace_member(member_path: &Path, workspace_root: &Path) -> C
         return Err(CliError::config("Leptos dependency not found in this crate or workspace"));
     }
 
-    let crate_name = member_manifest.package
+    let crate_name = member_manifest
+        .package
         .as_ref()
         .map(|p| p.name.clone())
         .unwrap_or_else(|| member_path.file_name().unwrap().to_string_lossy().to_string());
@@ -241,11 +239,7 @@ pub fn check_leptos_dependency() -> CliResult<bool> {
         Err(e) => {
             // Check if it's specifically a "leptos not found" error
             let err_msg = format!("{e}");
-            if err_msg.contains("Leptos") {
-                Ok(false)
-            } else {
-                Err(e)
-            }
+            if err_msg.contains("Leptos") { Ok(false) } else { Err(e) }
         }
     }
 }
@@ -278,9 +272,11 @@ fn load_cargo_manifest(cargo_toml_path: &Path) -> CliResult<Option<Manifest>> {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
     use std::fs;
+
     use tempfile::TempDir;
+
+    use super::*;
 
     /// Helper to create a Cargo.toml with given content
     fn write_cargo_toml(dir: &Path, content: &str) {
@@ -298,7 +294,9 @@ mod tests {
         let temp = TempDir::new().unwrap();
         let root = temp.path();
 
-        write_cargo_toml(root, r#"
+        write_cargo_toml(
+            root,
+            r#"
 [package]
 name = "my-app"
 version = "0.1.0"
@@ -306,7 +304,8 @@ edition = "2021"
 
 [dependencies]
 leptos = "0.7"
-"#);
+"#,
+        );
         create_src_dir(root);
 
         let info = analyze_workspace_from_path(root).unwrap();
@@ -321,7 +320,9 @@ leptos = "0.7"
         let temp = TempDir::new().unwrap();
         let root = temp.path();
 
-        write_cargo_toml(root, r#"
+        write_cargo_toml(
+            root,
+            r#"
 [package]
 name = "my-app"
 version = "0.1.0"
@@ -329,7 +330,8 @@ edition = "2021"
 
 [dependencies]
 serde = "1"
-"#);
+"#,
+        );
         create_src_dir(root);
 
         let result = analyze_workspace_from_path(root);
@@ -344,15 +346,20 @@ serde = "1"
         let root = temp.path();
 
         // Create workspace root
-        write_cargo_toml(root, r#"
+        write_cargo_toml(
+            root,
+            r#"
 [workspace]
 members = ["app", "server"]
-"#);
+"#,
+        );
 
         // Create app member with leptos
         let app_dir = root.join("app");
         fs::create_dir_all(&app_dir).unwrap();
-        write_cargo_toml(&app_dir, r#"
+        write_cargo_toml(
+            &app_dir,
+            r#"
 [package]
 name = "my-app"
 version = "0.1.0"
@@ -360,13 +367,16 @@ edition = "2021"
 
 [dependencies]
 leptos = "0.7"
-"#);
+"#,
+        );
         create_src_dir(&app_dir);
 
         // Create server member without leptos
         let server_dir = root.join("server");
         fs::create_dir_all(&server_dir).unwrap();
-        write_cargo_toml(&server_dir, r#"
+        write_cargo_toml(
+            &server_dir,
+            r#"
 [package]
 name = "my-server"
 version = "0.1.0"
@@ -374,7 +384,8 @@ edition = "2021"
 
 [dependencies]
 axum = "0.7"
-"#);
+"#,
+        );
         create_src_dir(&server_dir);
 
         // Test from workspace root
@@ -391,15 +402,20 @@ axum = "0.7"
         let root = temp.path();
 
         // Create workspace root
-        write_cargo_toml(root, r#"
+        write_cargo_toml(
+            root,
+            r#"
 [workspace]
 members = ["frontend"]
-"#);
+"#,
+        );
 
         // Create frontend member with leptos
         let frontend_dir = root.join("frontend");
         fs::create_dir_all(&frontend_dir).unwrap();
-        write_cargo_toml(&frontend_dir, r#"
+        write_cargo_toml(
+            &frontend_dir,
+            r#"
 [package]
 name = "frontend"
 version = "0.1.0"
@@ -407,7 +423,8 @@ edition = "2021"
 
 [dependencies]
 leptos = "0.7"
-"#);
+"#,
+        );
         create_src_dir(&frontend_dir);
 
         // Test from member directory
@@ -425,18 +442,23 @@ leptos = "0.7"
         let root = temp.path();
 
         // Create workspace root with workspace.dependencies
-        write_cargo_toml(root, r#"
+        write_cargo_toml(
+            root,
+            r#"
 [workspace]
 members = ["app"]
 
 [workspace.dependencies]
 leptos = "0.7"
-"#);
+"#,
+        );
 
         // Create app member that inherits leptos
         let app_dir = root.join("app");
         fs::create_dir_all(&app_dir).unwrap();
-        write_cargo_toml(&app_dir, r#"
+        write_cargo_toml(
+            &app_dir,
+            r#"
 [package]
 name = "my-app"
 version = "0.1.0"
@@ -444,7 +466,8 @@ edition = "2021"
 
 [dependencies]
 leptos.workspace = true
-"#);
+"#,
+        );
         create_src_dir(&app_dir);
 
         let info = analyze_workspace_from_path(root).unwrap();
@@ -458,14 +481,19 @@ leptos.workspace = true
         let temp = TempDir::new().unwrap();
         let root = temp.path();
 
-        write_cargo_toml(root, r#"
+        write_cargo_toml(
+            root,
+            r#"
 [workspace]
 members = ["server"]
-"#);
+"#,
+        );
 
         let server_dir = root.join("server");
         fs::create_dir_all(&server_dir).unwrap();
-        write_cargo_toml(&server_dir, r#"
+        write_cargo_toml(
+            &server_dir,
+            r#"
 [package]
 name = "server"
 version = "0.1.0"
@@ -473,7 +501,8 @@ edition = "2021"
 
 [dependencies]
 axum = "0.7"
-"#);
+"#,
+        );
         create_src_dir(&server_dir);
 
         let result = analyze_workspace_from_path(root);

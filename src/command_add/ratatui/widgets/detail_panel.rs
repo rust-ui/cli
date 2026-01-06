@@ -17,7 +17,8 @@ pub fn draw_detail_panel(
 
     if let Some(item) = selected_item {
         let instruction = if checked_count > 0 {
-            let item_type_display = if checked_count == 1 { item_type.to_string() } else { format!("{}s", item_type) };
+            let item_type_display =
+                if checked_count == 1 { item_type.to_string() } else { format!("{}s", item_type) };
             format!(
                 "\n\n\n({} {} checked)\nPress ENTER to view checked {}",
                 checked_count, item_type_display, item_type_display
@@ -26,11 +27,13 @@ pub fn draw_detail_panel(
             String::new()
         };
 
-        let text = format!("Selected: {}\n\n{} details will be displayed here...{}", item, item_type, instruction);
+        let text =
+            format!("Selected: {}\n\n{} details will be displayed here...{}", item, item_type, instruction);
         let paragraph = Paragraph::new(text).style(Style::default().fg(Color::White));
         frame.render_widget(paragraph, inner_area);
     } else {
-        let paragraph = Paragraph::new(format!("Select a {}", item_type)).style(Style::default().fg(Color::Gray));
+        let paragraph =
+            Paragraph::new(format!("Select a {}", item_type)).style(Style::default().fg(Color::Gray));
         frame.render_widget(paragraph, inner_area);
     }
 }
