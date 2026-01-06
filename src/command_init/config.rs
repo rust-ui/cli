@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::fs;
 use std::path::Path;
 use std::process::Command;
@@ -5,7 +6,7 @@ use std::process::Command;
 use serde::{Deserialize, Serialize};
 use toml_edit::{DocumentMut, Item, Value};
 
-use crate::command_init::crates::INIT_CRATES;
+use crate::command_init::crates::{Crate, INIT_CRATES};
 use crate::command_init::workspace_utils::{WorkspaceInfo, analyze_workspace, check_leptos_dependency};
 use crate::shared::cli_error::{CliError, CliResult};
 use crate::shared::task_spinner::TaskSpinner;
@@ -53,94 +54,84 @@ impl Default for UiConfig {
 /* ========================================================== */
 
 pub async fn add_init_crates() -> CliResult<()> {
-    // Detect workspace dynamically
     let workspace_info = analyze_workspace().ok();
-
-    // Check if workspace has [workspace.dependencies] section
-    let has_workspace_deps = has_workspace_dependencies_section(&workspace_info);
-
-    // Check what crates already exist in workspace.dependencies
     let workspace_crates = get_workspace_dependencies(&workspace_info);
 
     for my_crate in INIT_CRATES {
-        // Skip leptos if it's already installed to preserve user's existing configuration
         if my_crate.name == "leptos" && check_leptos_dependency()? {
             continue;
         }
 
-        let spinner = TaskSpinner::new(&format!("Adding and installing {} crate...", my_crate.name));
+        let spinner = TaskSpinner::new(&format!("Adding {} crate...", my_crate.name));
 
-        // Check if crate already exists in workspace.dependencies
-        if workspace_crates.contains(&my_crate.name.to_string()) {
-            // Just add workspace reference to member, don't use cargo add
-            if let Some(ref info) = workspace_info {
-                if info.is_workspace {
-                    if let Some(ref member_path) = info.target_crate_path {
-                        let member_cargo_toml = member_path.join("Cargo.toml");
-                        add_workspace_ref_to_member(&member_cargo_toml, my_crate.name)?;
-                        spinner.finish_success(&format!("{} (workspace) added successfully.", my_crate.name));
-                        continue;
-                    }
-                }
-            }
+        if add_crate_to_workspace(&my_crate, &workspace_info, &workspace_crates)? {
+            spinner.finish_success(&format!("{} (workspace) added.", my_crate.name));
+            continue;
         }
 
-        // If workspace has [workspace.dependencies], add crate there with toml_edit
-        if has_workspace_deps {
-            if let Some(ref info) = workspace_info {
-                if let Some(ref workspace_root) = info.workspace_root {
-                    if let Some(ref member_path) = info.target_crate_path {
-                        // Fetch latest version
-                        let version = fetch_latest_version(my_crate.name)?;
+        add_crate_with_cargo(&my_crate, &workspace_info)?;
+        spinner.finish_success(&format!("{} added.", my_crate.name));
+    }
+    Ok(())
+}
 
-                        // Add to [workspace.dependencies] with features
-                        let root_cargo_toml = workspace_root.join("Cargo.toml");
-                        add_to_workspace_dependencies(&root_cargo_toml, my_crate.name, &version, my_crate.features)?;
+fn add_crate_to_workspace(
+    my_crate: &Crate,
+    workspace_info: &Option<WorkspaceInfo>,
+    workspace_crates: &HashSet<String>,
+) -> CliResult<bool> {
+    let Some(info) = workspace_info.as_ref().filter(|i| i.is_workspace) else {
+        return Ok(false);
+    };
+    let Some(workspace_root) = &info.workspace_root else {
+        return Ok(false);
+    };
+    let Some(member_path) = &info.target_crate_path else {
+        return Ok(false);
+    };
 
-                        // Add dep.workspace = true to member
-                        let member_cargo_toml = member_path.join("Cargo.toml");
-                        add_workspace_ref_to_member(&member_cargo_toml, my_crate.name)?;
+    let root_cargo_toml = workspace_root.join("Cargo.toml");
+    let member_cargo_toml = member_path.join("Cargo.toml");
 
-                        spinner.finish_success(&format!("{} (workspace) added successfully.", my_crate.name));
-                        continue;
-                    }
-                }
-            }
+    if workspace_crates.contains(my_crate.name) {
+        add_workspace_ref_to_member(&member_cargo_toml, my_crate.name)?;
+        return Ok(true);
+    }
+
+    if !has_workspace_dependencies_section(workspace_info) {
+        return Ok(false);
+    }
+
+    let version = fetch_latest_version(my_crate.name)?;
+    add_to_workspace_dependencies(&root_cargo_toml, my_crate.name, &version, my_crate.features)?;
+    add_workspace_ref_to_member(&member_cargo_toml, my_crate.name)?;
+    Ok(true)
+}
+
+fn add_crate_with_cargo(my_crate: &Crate, workspace_info: &Option<WorkspaceInfo>) -> CliResult<()> {
+    let mut args = vec!["add".to_owned(), my_crate.name.to_owned()];
+
+    if let Some(info) = workspace_info.as_ref().filter(|i| i.is_workspace) {
+        if let Some(crate_name) = &info.target_crate {
+            args.extend(["--package".to_owned(), crate_name.clone()]);
         }
+    }
 
-        // Fallback: use cargo add for non-workspace projects
-        let mut args = vec!["add".to_owned(), my_crate.name.to_owned()];
+    if let Some(features) = my_crate.features.filter(|f| !f.is_empty()) {
+        args.extend(["--features".to_owned(), features.join(",")]);
+    }
 
-        // Add --package flag if we're in a workspace with a target crate
-        if let Some(ref info) = workspace_info {
-            if info.is_workspace {
-                if let Some(ref crate_name) = info.target_crate {
-                    args.push("--package".to_owned());
-                    args.push(crate_name.clone());
-                }
-            }
-        }
+    let output = Command::new("cargo")
+        .args(&args)
+        .output()
+        .map_err(|e| CliError::cargo_operation(&format!("Failed to execute cargo add {}: {e}", my_crate.name)))?;
 
-        if let Some(features) = my_crate.features
-            && !features.is_empty()
-        {
-            args.push("--features".to_owned());
-            args.push(features.join(","));
-        }
-
-        let output = Command::new("cargo").args(&args).output().map_err(|e| {
-            CliError::cargo_operation(&format!("Failed to execute cargo add {}: {e}", my_crate.name))
-        })?;
-
-        if output.status.success() {
-            spinner.finish_success(&format!("{} added successfully.", my_crate.name));
-        } else {
-            return Err(CliError::cargo_operation(&format!(
-                "Failed to add crate '{}': {}",
-                my_crate.name,
-                String::from_utf8_lossy(&output.stderr)
-            )));
-        }
+    if !output.status.success() {
+        return Err(CliError::cargo_operation(&format!(
+            "Failed to add crate '{}': {}",
+            my_crate.name,
+            String::from_utf8_lossy(&output.stderr)
+        )));
     }
     Ok(())
 }
@@ -149,88 +140,48 @@ pub async fn add_init_crates() -> CliResult<()> {
 /*                     ✨ HELPERS ✨                          */
 /* ========================================================== */
 
-/// Check if workspace has [workspace.dependencies] section
+fn parse_workspace_cargo_toml(workspace_info: &Option<WorkspaceInfo>) -> Option<DocumentMut> {
+    let info = workspace_info.as_ref().filter(|i| i.is_workspace)?;
+    let root = info.workspace_root.as_ref()?;
+    let contents = fs::read_to_string(root.join("Cargo.toml")).ok()?;
+    contents.parse().ok()
+}
+
 fn has_workspace_dependencies_section(workspace_info: &Option<WorkspaceInfo>) -> bool {
-    let Some(info) = workspace_info else {
-        return false;
-    };
-
-    if !info.is_workspace {
-        return false;
-    }
-
-    let Some(workspace_root) = &info.workspace_root else {
-        return false;
-    };
-
-    let root_cargo_toml = workspace_root.join("Cargo.toml");
-    if !root_cargo_toml.exists() {
-        return false;
-    }
-
-    let Ok(contents) = fs::read_to_string(&root_cargo_toml) else {
-        return false;
-    };
-
-    let Ok(doc) = contents.parse::<DocumentMut>() else {
-        return false;
-    };
-
-    doc.get("workspace")
-        .and_then(|w| w.get("dependencies"))
+    parse_workspace_cargo_toml(workspace_info)
+        .and_then(|doc| doc.get("workspace")?.get("dependencies").cloned())
         .is_some()
 }
 
-/// Get list of crates defined in [workspace.dependencies]
-fn get_workspace_dependencies(workspace_info: &Option<WorkspaceInfo>) -> Vec<String> {
-    let Some(info) = workspace_info else {
-        return Vec::new();
-    };
-
-    let Some(workspace_root) = &info.workspace_root else {
-        return Vec::new();
-    };
-
-    let root_cargo_toml = workspace_root.join("Cargo.toml");
-    if !root_cargo_toml.exists() {
-        return Vec::new();
-    }
-
-    let Ok(contents) = fs::read_to_string(&root_cargo_toml) else {
-        return Vec::new();
-    };
-
-    let Ok(doc) = contents.parse::<DocumentMut>() else {
-        return Vec::new();
-    };
-
-    // Get keys from [workspace.dependencies]
-    doc.get("workspace")
-        .and_then(|w| w.get("dependencies"))
-        .and_then(|d| d.as_table())
-        .map(|t| t.iter().map(|(k, _)| k.to_string()).collect())
+fn get_workspace_dependencies(workspace_info: &Option<WorkspaceInfo>) -> HashSet<String> {
+    parse_workspace_cargo_toml(workspace_info)
+        .and_then(|doc| {
+            doc.get("workspace")?
+                .get("dependencies")?
+                .as_table()
+                .map(|t| t.iter().map(|(k, _)| k.to_string()).collect())
+        })
         .unwrap_or_default()
 }
 
-/// Add dep.workspace = true to member's [dependencies]
 fn add_workspace_ref_to_member(cargo_toml_path: &Path, dep: &str) -> CliResult<()> {
     let contents = fs::read_to_string(cargo_toml_path)?;
-    let mut doc: DocumentMut = contents.parse()
+    let mut doc: DocumentMut = contents
+        .parse()
         .map_err(|e| CliError::cargo_operation(&format!("Failed to parse member Cargo.toml: {e}")))?;
 
-    // Get or create [dependencies]
-    let deps = doc.entry("dependencies")
+    let deps = doc
+        .entry("dependencies")
         .or_insert(Item::Table(toml_edit::Table::new()));
 
-    let deps_table = deps.as_table_mut()
+    let deps_table = deps
+        .as_table_mut()
         .ok_or_else(|| CliError::cargo_operation("[dependencies] is not a table"))?;
 
-    // Check if already exists
     if deps_table.contains_key(dep) {
         return Ok(());
     }
 
-    // Add dep.workspace = true using dotted key format
     let mut dep_table = toml_edit::Table::new();
     dep_table.set_dotted(true);
     dep_table.insert("workspace", Item::Value(Value::Boolean(toml_edit::Formatted::new(true))));
