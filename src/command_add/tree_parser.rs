@@ -104,6 +104,12 @@ impl TreeParser {
         Ok(TreeParser { components })
     }
 
+    pub fn get_all_component_names(&self) -> Vec<String> {
+        let mut names: Vec<String> = self.components.keys().cloned().collect();
+        names.sort();
+        names
+    }
+
     pub fn resolve_dependencies(&self, user_components: &[String]) -> CliResult<ResolvedSet> {
         let mut resolved_components = HashSet::new();
         let mut resolved_cargo_deps = HashSet::new();
