@@ -3,7 +3,7 @@ use std::fs;
 use std::path::Path;
 
 use cargo_toml::Manifest;
-use toml_edit::{DocumentMut, InlineTable, Item, Value};
+use toml_edit::{DocumentMut, Item, Value};
 
 use crate::command_init::workspace_utils::{WorkspaceInfo, analyze_workspace};
 use crate::shared::cli_error::{CliError, CliResult};
@@ -174,10 +174,11 @@ fn add_workspace_ref_to_member(cargo_toml_path: &Path, dep: &str) -> CliResult<(
         return Ok(());
     }
 
-    // Add dep.workspace = true as inline table
-    let mut inline = InlineTable::new();
-    inline.insert("workspace", Value::Boolean(toml_edit::Formatted::new(true)));
-    deps_table.insert(dep, Item::Value(Value::InlineTable(inline)));
+    // Add dep.workspace = true using dotted key format
+    let mut dep_table = toml_edit::Table::new();
+    dep_table.set_dotted(true);
+    dep_table.insert("workspace", Item::Value(Value::Boolean(toml_edit::Formatted::new(true))));
+    deps_table.insert(dep, Item::Table(dep_table));
 
     // Write back
     fs::write(cargo_toml_path, doc.to_string())?;
@@ -474,6 +475,37 @@ leptos.workspace = true
         assert!(contents.contains("serde"), "Should contain serde: {contents}");
         assert!(contents.contains("workspace = true") || contents.contains("workspace=true"),
             "Should have workspace = true: {contents}");
+    }
+
+    #[test]
+    fn test_add_workspace_ref_uses_dotted_format() {
+        let temp = TempDir::new().unwrap();
+        let cargo_toml = temp.path().join("Cargo.toml");
+
+        // Create initial member Cargo.toml
+        fs::write(
+            &cargo_toml,
+            r#"[package]
+name = "app"
+version = "0.1.0"
+
+[dependencies]
+"#,
+        ).unwrap();
+
+        // Add validator.workspace = true
+        add_workspace_ref_to_member(&cargo_toml, "validator").unwrap();
+
+        // Verify it uses dotted format (validator.workspace = true) not inline ({ workspace = true })
+        let contents = fs::read_to_string(&cargo_toml).unwrap();
+        assert!(
+            contents.contains("validator.workspace = true"),
+            "Should use dotted format 'validator.workspace = true', got: {contents}"
+        );
+        assert!(
+            !contents.contains("{ workspace = true }"),
+            "Should NOT use inline table format, got: {contents}"
+        );
     }
 
     #[test]
