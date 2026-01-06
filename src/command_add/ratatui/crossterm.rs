@@ -13,7 +13,7 @@ use super::header::Tab;
 use super::tabs::_render;
 use super::tabs::{tab1_components, tab2_hooks};
 
-pub fn run(tick_rate: Duration, components: Vec<String>) -> Result<(), Box<dyn Error>> {
+pub fn run(tick_rate: Duration, components: Vec<String>) -> Result<Vec<String>, Box<dyn Error>> {
     // Setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -30,18 +30,14 @@ pub fn run(tick_rate: Duration, components: Vec<String>) -> Result<(), Box<dyn E
     execute!(terminal.backend_mut(), LeaveAlternateScreen, DisableMouseCapture)?;
     terminal.show_cursor()?;
 
-    if let Err(err) = app_result {
-        println!("{err:?}");
-    }
-
-    Ok(())
+    app_result
 }
 
 /* ========================================================== */
 /*                     ✨ FUNCTIONS ✨                        */
 /* ========================================================== */
 
-fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App, tick_rate: Duration) -> Result<(), Box<dyn Error>> {
+fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App, tick_rate: Duration) -> Result<Vec<String>, Box<dyn Error>> {
     let mut last_tick = Instant::now();
     loop {
         terminal.draw(|frame| _render::render(frame, &mut app))?;
@@ -101,6 +97,16 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App, tick_rate: Dura
                                 && !app.components_checked.is_empty() =>
                         {
                             app.toggle_popup();
+                        }
+                        // Confirm selection when Enter is pressed in popup
+                        KeyCode::Enter
+                            if matches!(app.header.tabs.current, Tab::Components)
+                                && app.show_popup
+                                && !app.components_checked.is_empty() =>
+                        {
+                            // Return selected components
+                            let selected: Vec<String> = app.components_checked.into_iter().collect();
+                            return Ok(selected);
                         }
                         KeyCode::Enter
                             if matches!(app.header.tabs.current, Tab::Hooks)
@@ -243,7 +249,7 @@ fn run_app<B: Backend>(terminal: &mut Terminal<B>, mut app: App, tick_rate: Dura
             _ => {}
         }
         if app.should_quit {
-            return Ok(());
+            return Ok(Vec::new());
         }
     }
 }

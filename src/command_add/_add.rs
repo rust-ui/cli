@@ -32,10 +32,17 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     let tree_parser = TreeParser::parse_tree_md(&tree_content)?;
 
     // If no components provided, launch TUI
-    if user_components.is_empty() {
+    let user_components = if user_components.is_empty() {
         let component_names: Vec<String> = tree_parser.get_all_component_names();
-        return super::ratatui::run_tui(component_names);
-    }
+        let selected = super::ratatui::run_tui(component_names)?;
+        if selected.is_empty() {
+            println!("No components selected.");
+            return Ok(());
+        }
+        selected
+    } else {
+        user_components
+    };
 
     // Resolve dependencies using the new tree-based system
     let resolved_set = tree_parser.resolve_dependencies(&user_components)?;

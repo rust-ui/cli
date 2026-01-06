@@ -29,7 +29,7 @@ pub fn draw_checked_popup(
         let items: Vec<String> = checked_items.iter().map(|name| format!("  ☑ {}", name)).collect();
         let item_type_display = if checked_items.len() == 1 { item_type.to_string() } else { format!("{}s", item_type) };
         format!(
-            "Checked {} ({})\n\n{}\n\n\nPress ESC to close",
+            "Checked {} ({})\n\n{}\n\n\nPress ENTER to add  |  Press ESC to close",
             item_type_display,
             checked_items.len(),
             items.join("\n")
@@ -68,7 +68,7 @@ pub fn draw_checked_popup(
 
         lines.push(String::new());
         lines.push(String::new());
-        lines.push("Press ESC to close".to_string());
+        lines.push("Press ENTER to add  |  Press ESC to close".to_string());
         lines.join("\n")
     };
 
