@@ -538,7 +538,7 @@ leptos.workspace = true
 "#,
         ).unwrap();
 
-        let info = WorkspaceInfo {
+        let _info = WorkspaceInfo {
             is_workspace: true,
             workspace_root: Some(root.to_path_buf()),
             target_crate: Some("app".to_string()),
@@ -546,7 +546,7 @@ leptos.workspace = true
             components_base_path: "app/src/components".to_string(),
         };
 
-        // Mock: we'll test the individual functions since fetch_latest_version requires network
+        // Test the individual functions since fetch_latest_version requires network
         add_to_workspace_dependencies(&root.join("Cargo.toml"), "serde", "1.0").unwrap();
         add_workspace_ref_to_member(&app_dir.join("Cargo.toml"), "serde").unwrap();
 
