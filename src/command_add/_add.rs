@@ -43,7 +43,8 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     // If no components provided, launch TUI
     let user_components = if user_components.is_empty() {
         let component_names: Vec<String> = tree_parser.get_all_component_names();
-        let selected = super::ratatui::run_tui(component_names, installed)?;
+        let dependencies = tree_parser.get_dependencies_map();
+        let selected = super::ratatui::run_tui(component_names, installed, dependencies)?;
         if selected.is_empty() {
             println!("No components selected.");
             return Ok(());

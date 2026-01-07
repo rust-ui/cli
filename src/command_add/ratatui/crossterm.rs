@@ -9,6 +9,7 @@ use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_ra
 use ratatui::Terminal;
 use ratatui::backend::{Backend, CrosstermBackend};
 
+use super::DependencyMap;
 use super::app::App;
 use super::header::Tab;
 use super::tabs::{_render, tab1_components, tab2_hooks, tab5_demos};
@@ -17,6 +18,7 @@ pub fn run(
     tick_rate: Duration,
     components: Vec<String>,
     installed: HashSet<String>,
+    dependencies: DependencyMap,
 ) -> Result<Vec<String>, Box<dyn Error>> {
     // Setup terminal
     enable_raw_mode()?;
@@ -26,7 +28,7 @@ pub fn run(
     let mut terminal = Terminal::new(backend)?;
 
     // Create app and run it
-    let app = App::new("Rust/UI CLI", components, installed);
+    let app = App::new("Rust/UI CLI", components, installed, dependencies);
     let app_result = run_app(&mut terminal, app, tick_rate);
 
     // Restore terminal

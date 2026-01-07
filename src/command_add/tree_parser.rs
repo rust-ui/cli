@@ -110,6 +110,13 @@ impl TreeParser {
         names
     }
 
+    pub fn get_dependencies_map(&self) -> HashMap<String, Vec<String>> {
+        self.components
+            .iter()
+            .map(|(name, entry)| (name.clone(), entry.dependencies.clone()))
+            .collect()
+    }
+
     pub fn resolve_dependencies(&self, user_components: &[String]) -> CliResult<ResolvedSet> {
         let mut resolved_components = HashSet::new();
         let mut resolved_cargo_deps = HashSet::new();

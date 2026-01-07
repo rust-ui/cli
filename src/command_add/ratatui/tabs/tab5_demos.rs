@@ -103,7 +103,8 @@ pub fn draw_tab_demos(frame: &mut Frame, app: &mut App, area: Rect) {
 
     // Right side: Detail panel
     let selected_demo = filtered_demos.get(app.demos_scroll).copied();
-    draw_detail_panel(frame, selected_demo, app.demos_checked.len(), "demo", right_panel);
+    let dependencies = selected_demo.and_then(|d| app.get_dependencies(d));
+    draw_detail_panel(frame, selected_demo, app.demos_checked.len(), "demo", dependencies, right_panel);
 
     // Render confirmation dialog if show_popup is true and there are checked demos
     if app.show_popup && !app.demos_checked.is_empty() {

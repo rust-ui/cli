@@ -3,6 +3,7 @@ use std::time::Instant;
 
 use ratatui::widgets::{ListState, ScrollbarState};
 
+use super::DependencyMap;
 use super::header::{Header, Tab};
 
 pub struct App<'a> {
@@ -10,6 +11,8 @@ pub struct App<'a> {
     pub header: Header<'a>,
     // Installed components (already in project)
     pub installed: HashSet<String>,
+    // Dependencies map (component -> its dependencies)
+    pub dependencies: DependencyMap,
     // Components (non-demo items)
     pub components: Vec<String>,
     pub components_scroll: usize,
@@ -45,7 +48,12 @@ pub struct App<'a> {
 }
 
 impl<'a> App<'a> {
-    pub fn new(title: &'a str, all_items: Vec<String>, installed: HashSet<String>) -> Self {
+    pub fn new(
+        title: &'a str,
+        all_items: Vec<String>,
+        installed: HashSet<String>,
+        dependencies: DependencyMap,
+    ) -> Self {
         // Separate demos from components
         let (demos, components): (Vec<_>, Vec<_>) =
             all_items.into_iter().partition(|s| s.starts_with("demo_"));
@@ -55,6 +63,8 @@ impl<'a> App<'a> {
             header: Header::new(title),
             // Installed
             installed,
+            // Dependencies
+            dependencies,
             // Components
             components,
             components_scroll: 0,
@@ -359,5 +369,9 @@ impl<'a> App<'a> {
             }
         }
         None
+    }
+
+    pub fn get_dependencies(&self, component: &str) -> Option<&Vec<String>> {
+        self.dependencies.get(component)
     }
 }
