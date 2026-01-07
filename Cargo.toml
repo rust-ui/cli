@@ -31,7 +31,7 @@ tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 toml = { version = "0.9", features = ["parse", "display", "serde"] }
 toml_edit = "0.23"
 crossterm = "0.29"
-ratatui = { version = "0.29", features = ["crossterm"] }
+ratatui = { version = "0.30", features = ["crossterm"] }
 resvg = "0.45"
 
 [dev-dependencies]
