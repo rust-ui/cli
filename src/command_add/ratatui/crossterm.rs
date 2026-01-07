@@ -47,7 +47,10 @@ fn run_app<B: Backend>(
     terminal: &mut Terminal<B>,
     mut app: App,
     tick_rate: Duration,
-) -> Result<Vec<String>, Box<dyn Error>> {
+) -> Result<Vec<String>, Box<dyn Error>>
+where
+    <B as Backend>::Error: 'static,
+{
     let mut last_tick = Instant::now();
     loop {
         terminal.draw(|frame| _render::render(frame, &mut app))?;
