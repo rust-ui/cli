@@ -111,7 +111,7 @@ pub fn get_hook_at_visual_index(app: &App, visual_index: usize) -> Option<&'stat
 /*                       ✨ CONST ✨                         */
 /* ========================================================== */
 
-pub const HOOKS: &[&str] = &[
+const HOOKS: &[&str] = &[
     "Use Lock Body Scroll",
     "Use Horizontal Scroll",
     "Use Media Query",

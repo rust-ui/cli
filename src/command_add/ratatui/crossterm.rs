@@ -119,15 +119,6 @@ fn run_app<B: Backend>(
                                 app.toggle_hook_checkbox(hook);
                             }
                         }
-                        KeyCode::Char('a') if matches!(app.header.tabs.current, Tab::Components) => {
-                            app.select_all_components();
-                        }
-                        KeyCode::Char('a') if matches!(app.header.tabs.current, Tab::Demos) => {
-                            app.select_all_demos();
-                        }
-                        KeyCode::Char('a') if matches!(app.header.tabs.current, Tab::Hooks) => {
-                            app.select_all_hooks();
-                        }
                         KeyCode::Enter
                             if matches!(app.header.tabs.current, Tab::Components)
                                 && !app.show_popup
