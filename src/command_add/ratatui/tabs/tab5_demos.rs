@@ -43,9 +43,19 @@ pub fn draw_tab_demos(frame: &mut Frame, app: &mut App, area: Rect) {
     let items: Vec<ListItem> = filtered_demos
         .iter()
         .map(|demo| {
+            let is_installed = app.installed.contains(*demo);
             let is_checked = app.demos_checked.contains(*demo);
-            let (checkbox, color) = if is_checked { ("☑", Color::Green) } else { ("☐", Color::DarkGray) };
-            ListItem::new(Span::styled(format!("  {} {}", checkbox, demo), Style::default().fg(color)))
+
+            let (icon, color) = if is_checked {
+                ("☑", Color::Green) // Selected
+            } else if is_installed {
+                ("✓", Color::Cyan) // Already installed (not selected)
+            } else {
+                ("☐", Color::DarkGray) // Not selected
+            };
+
+            let suffix = if is_installed { " (installed)" } else { "" };
+            ListItem::new(Span::styled(format!("  {icon} {demo}{suffix}"), Style::default().fg(color)))
         })
         .collect();
 

@@ -8,6 +8,8 @@ use super::header::{Header, Tab};
 pub struct App<'a> {
     pub should_quit: bool,
     pub header: Header<'a>,
+    // Installed components (already in project)
+    pub installed: HashSet<String>,
     // Components (non-demo items)
     pub components: Vec<String>,
     pub components_scroll: usize,
@@ -43,7 +45,7 @@ pub struct App<'a> {
 }
 
 impl<'a> App<'a> {
-    pub fn new(title: &'a str, all_items: Vec<String>) -> Self {
+    pub fn new(title: &'a str, all_items: Vec<String>, installed: HashSet<String>) -> Self {
         // Separate demos from components
         let (demos, components): (Vec<_>, Vec<_>) =
             all_items.into_iter().partition(|s| s.starts_with("demo_"));
@@ -51,6 +53,8 @@ impl<'a> App<'a> {
         App {
             should_quit: false,
             header: Header::new(title),
+            // Installed
+            installed,
             // Components
             components,
             components_scroll: 0,
