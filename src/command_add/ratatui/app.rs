@@ -218,15 +218,6 @@ impl<'a> App<'a> {
         self.components_checked.clear();
     }
 
-    pub fn select_all_components(&mut self) {
-        use super::widgets::helpers::filter_items;
-        let components_refs: Vec<&str> = self.components.iter().map(|s| s.as_str()).collect();
-        let filtered = filter_items(&components_refs, &self.components_search_query);
-        for item in filtered {
-            self.components_checked.insert(item.to_string());
-        }
-    }
-
     // Demos methods
     pub fn toggle_demos_search(&mut self) {
         self.demos_search_active = !self.demos_search_active;
@@ -260,15 +251,6 @@ impl<'a> App<'a> {
 
     pub fn deselect_all_demos(&mut self) {
         self.demos_checked.clear();
-    }
-
-    pub fn select_all_demos(&mut self) {
-        use super::widgets::helpers::filter_items;
-        let demos_refs: Vec<&str> = self.demos.iter().map(|s| s.as_str()).collect();
-        let filtered = filter_items(&demos_refs, &self.demos_search_query);
-        for item in filtered {
-            self.demos_checked.insert(item.to_string());
-        }
     }
 
     pub fn get_demos_double_click_info(&self, column: u16, row: u16, terminal_width: u16) -> Option<usize> {
@@ -341,15 +323,6 @@ impl<'a> App<'a> {
 
     pub fn deselect_all_hooks(&mut self) {
         self.hooks_checked.clear();
-    }
-
-    pub fn select_all_hooks(&mut self) {
-        use super::tabs::tab2_hooks::HOOKS;
-        use super::widgets::helpers::filter_items;
-        let filtered = filter_items(HOOKS, &self.hooks_search_query);
-        for item in filtered {
-            self.hooks_checked.insert((*item).to_string());
-        }
     }
 
     pub fn get_hooks_double_click_info(&self, column: u16, row: u16, terminal_width: u16) -> Option<usize> {
