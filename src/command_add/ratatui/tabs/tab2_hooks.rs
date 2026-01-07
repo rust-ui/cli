@@ -83,9 +83,9 @@ pub fn draw_tab_hooks(frame: &mut Frame, app: &mut App, area: Rect) {
         &mut app.hooks_scroll_state,
     );
 
-    // Right side: Detail panel
+    // Right side: Detail panel (hooks don't have registry dependencies)
     let selected_hook = filtered_hooks.get(app.hooks_scroll).copied();
-    draw_detail_panel(frame, selected_hook, app.hooks_checked.len(), "hook", right_panel);
+    draw_detail_panel(frame, selected_hook, app.hooks_checked.len(), "hook", None, right_panel);
 
     // Render confirmation dialog if show_popup is true and there are checked hooks
     if app.show_popup && !app.hooks_checked.is_empty() {

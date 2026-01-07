@@ -103,7 +103,8 @@ pub fn draw_tab_components(frame: &mut Frame, app: &mut App, area: Rect) {
 
     // Right side: Detail panel
     let selected_component = filtered_components.get(app.components_scroll).copied();
-    draw_detail_panel(frame, selected_component, app.components_checked.len(), "component", right_panel);
+    let dependencies = selected_component.and_then(|c| app.get_dependencies(c));
+    draw_detail_panel(frame, selected_component, app.components_checked.len(), "component", dependencies, right_panel);
 
     // Render confirmation dialog if show_popup is true and there are checked components
     if app.show_popup && !app.components_checked.is_empty() {
