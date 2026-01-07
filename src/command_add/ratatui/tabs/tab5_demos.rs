@@ -5,7 +5,7 @@ use ratatui::text::Span;
 use ratatui::widgets::{Block, List, ListItem, Scrollbar, ScrollbarOrientation};
 
 use super::super::app::App;
-use super::super::widgets::checked_popup::draw_checked_popup;
+use super::super::widgets::checked_popup::draw_confirm_dialog;
 use super::super::widgets::detail_panel::draw_detail_panel;
 use super::super::widgets::helpers::{filter_items, get_item_at_visual_index, get_selected_item};
 use super::super::widgets::search_input::draw_search_input;
@@ -88,11 +88,11 @@ pub fn draw_tab_demos(frame: &mut Frame, app: &mut App, area: Rect) {
     let selected_demo = filtered_demos.get(app.demos_scroll).copied();
     draw_detail_panel(frame, selected_demo, app.demos_checked.len(), "demo", right_panel);
 
-    // Render popup if show_popup is true and there are checked demos
+    // Render confirmation dialog if show_popup is true and there are checked demos
     if app.show_popup && !app.demos_checked.is_empty() {
         let mut checked_list: Vec<String> = app.demos_checked.iter().cloned().collect();
         checked_list.sort();
-        draw_checked_popup(frame, &checked_list, "Checked Demos", "demo", Color::Green, area, 70, 60);
+        draw_confirm_dialog(frame, &checked_list, " Add Demos ", "demo", app.popup_confirm_focused, area);
     }
 }
 

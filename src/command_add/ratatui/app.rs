@@ -35,6 +35,7 @@ pub struct App<'a> {
     pub terminal_width: u16,
     pub icons_selected: usize,
     pub show_popup: bool,
+    pub popup_confirm_focused: bool, // true = Confirm button, false = Cancel button
     pub show_help_popup: bool,
     pub last_click_time: Option<Instant>,
     pub last_click_pos: Option<(u16, u16)>,
@@ -77,6 +78,7 @@ impl<'a> App<'a> {
             terminal_width: 0,
             icons_selected: 0,
             show_popup: false,
+            popup_confirm_focused: true, // Default to Confirm button
             show_help_popup: false,
             last_click_time: None,
             last_click_pos: None,
@@ -185,6 +187,13 @@ impl<'a> App<'a> {
 
     pub fn toggle_popup(&mut self) {
         self.show_popup = !self.show_popup;
+        if self.show_popup {
+            self.popup_confirm_focused = true; // Reset to Confirm when opening
+        }
+    }
+
+    pub fn toggle_popup_button_focus(&mut self) {
+        self.popup_confirm_focused = !self.popup_confirm_focused;
     }
 
     pub fn toggle_help_popup(&mut self) {

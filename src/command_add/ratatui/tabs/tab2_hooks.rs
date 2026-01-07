@@ -5,7 +5,7 @@ use ratatui::text::Span;
 use ratatui::widgets::{Block, List, ListItem, Scrollbar, ScrollbarOrientation};
 
 use super::super::app::App;
-use super::super::widgets::checked_popup::draw_checked_popup;
+use super::super::widgets::checked_popup::draw_confirm_dialog;
 use super::super::widgets::detail_panel::draw_detail_panel;
 use super::super::widgets::helpers::{filter_items, get_item_at_visual_index, get_selected_item};
 use super::super::widgets::search_input::draw_search_input;
@@ -87,11 +87,11 @@ pub fn draw_tab_hooks(frame: &mut Frame, app: &mut App, area: Rect) {
     let selected_hook = filtered_hooks.get(app.hooks_scroll).copied();
     draw_detail_panel(frame, selected_hook, app.hooks_checked.len(), "hook", right_panel);
 
-    // Render popup if show_popup is true and there are checked hooks
+    // Render confirmation dialog if show_popup is true and there are checked hooks
     if app.show_popup && !app.hooks_checked.is_empty() {
         let mut checked_list: Vec<String> = app.hooks_checked.iter().cloned().collect();
         checked_list.sort();
-        draw_checked_popup(frame, &checked_list, "Checked Hooks", "hook", Color::Green, area, 70, 60);
+        draw_confirm_dialog(frame, &checked_list, " Add Hooks ", "hook", app.popup_confirm_focused, area);
     }
 }
 

@@ -5,7 +5,7 @@ use ratatui::text::Span;
 use ratatui::widgets::{Block, List, ListItem, Scrollbar, ScrollbarOrientation};
 
 use super::super::app::App;
-use super::super::widgets::checked_popup::draw_checked_popup;
+use super::super::widgets::checked_popup::draw_confirm_dialog;
 use super::super::widgets::detail_panel::draw_detail_panel;
 use super::super::widgets::helpers::{filter_items, get_item_at_visual_index, get_selected_item};
 use super::super::widgets::search_input::draw_search_input;
@@ -93,19 +93,17 @@ pub fn draw_tab_components(frame: &mut Frame, app: &mut App, area: Rect) {
     let selected_component = filtered_components.get(app.components_scroll).copied();
     draw_detail_panel(frame, selected_component, app.components_checked.len(), "component", right_panel);
 
-    // Render popup if show_popup is true and there are checked components
+    // Render confirmation dialog if show_popup is true and there are checked components
     if app.show_popup && !app.components_checked.is_empty() {
         let mut checked_list: Vec<String> = app.components_checked.iter().cloned().collect();
         checked_list.sort();
-        draw_checked_popup(
+        draw_confirm_dialog(
             frame,
             &checked_list,
-            "Checked Components",
+            " Add Components ",
             "component",
-            Color::Green,
+            app.popup_confirm_focused,
             area,
-            70,
-            60,
         );
     }
 }
