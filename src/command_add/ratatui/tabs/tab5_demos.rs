@@ -60,16 +60,23 @@ pub fn draw_tab_demos(frame: &mut Frame, app: &mut App, area: Rect) {
         .collect();
 
     let checked_count = app.demos_checked.len();
-    let title = if app.demos_search_query.is_empty() {
-        if checked_count > 0 {
-            format!("Demos ({}) - {} Selected", app.demos.len(), checked_count)
-        } else {
+    let installed_count = app.demos.iter().filter(|d| app.installed.contains(*d)).count();
+
+    let title = {
+        let base = if app.demos_search_query.is_empty() {
             format!("Demos ({})", app.demos.len())
+        } else {
+            format!("Demos ({}/{})", filtered_demos.len(), app.demos.len())
+        };
+
+        let mut parts = vec![base];
+        if installed_count > 0 {
+            parts.push(format!("{installed_count} installed"));
         }
-    } else if checked_count > 0 {
-        format!("Demos ({}/{}) - {} Selected", filtered_demos.len(), app.demos.len(), checked_count)
-    } else {
-        format!("Demos ({}/{})", filtered_demos.len(), app.demos.len())
+        if checked_count > 0 {
+            parts.push(format!("{checked_count} selected"));
+        }
+        parts.join(" · ")
     };
 
     let list = List::new(items)

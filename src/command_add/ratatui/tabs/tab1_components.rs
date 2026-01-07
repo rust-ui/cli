@@ -60,21 +60,23 @@ pub fn draw_tab_components(frame: &mut Frame, app: &mut App, area: Rect) {
         .collect();
 
     let checked_count = app.components_checked.len();
-    let title = if app.components_search_query.is_empty() {
-        if checked_count > 0 {
-            format!("Components ({}) - {} Selected", app.components.len(), checked_count)
-        } else {
+    let installed_count = app.components.iter().filter(|c| app.installed.contains(*c)).count();
+
+    let title = {
+        let base = if app.components_search_query.is_empty() {
             format!("Components ({})", app.components.len())
+        } else {
+            format!("Components ({}/{})", filtered_components.len(), app.components.len())
+        };
+
+        let mut parts = vec![base];
+        if installed_count > 0 {
+            parts.push(format!("{installed_count} installed"));
         }
-    } else if checked_count > 0 {
-        format!(
-            "Components ({}/{}) - {} Selected",
-            filtered_components.len(),
-            app.components.len(),
-            checked_count
-        )
-    } else {
-        format!("Components ({}/{})", filtered_components.len(), app.components.len())
+        if checked_count > 0 {
+            parts.push(format!("{checked_count} selected"));
+        }
+        parts.join(" · ")
     };
 
     let list = List::new(items)
