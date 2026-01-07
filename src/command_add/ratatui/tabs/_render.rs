@@ -1,6 +1,7 @@
 use ratatui::Frame;
 use ratatui::layout::{Constraint, Layout, Rect};
-use ratatui::style::{Color, Style};
+use ratatui::style::{Color, Modifier, Style};
+use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Clear, Paragraph, Wrap};
 
 use super::super::app::App;
@@ -9,9 +10,12 @@ use super::super::widgets::popup::popup_area;
 use super::{tab1_components, tab2_hooks, tab3_blocks, tab4_icons, tab5_demos, tab9_settings};
 
 pub fn render(frame: &mut Frame, app: &mut App) {
-    let chunks = Layout::vertical([Constraint::Length(3), Constraint::Min(0)]).split(frame.area());
+    let chunks =
+        Layout::vertical([Constraint::Length(3), Constraint::Min(0), Constraint::Length(1)]).split(frame.area());
 
-    let (Some(header_area), Some(content_area)) = (chunks.first(), chunks.get(1)) else {
+    let (Some(header_area), Some(content_area), Some(footer_area)) =
+        (chunks.first(), chunks.get(1), chunks.get(2))
+    else {
         return;
     };
 
@@ -27,10 +31,71 @@ pub fn render(frame: &mut Frame, app: &mut App) {
         Tab::Settings => tab9_settings::draw_tab_settings(frame, app, *content_area),
     };
 
+    // Render footer with shortcuts
+    draw_footer(frame, app, *footer_area);
+
     // Render help popup on top of everything
     if app.show_help_popup {
         draw_help_popup(frame, frame.area());
     }
+}
+
+fn draw_footer(frame: &mut Frame, app: &App, area: Rect) {
+    let key_style = Style::default().fg(Color::Yellow).add_modifier(Modifier::BOLD);
+    let sep_style = Style::default().fg(Color::DarkGray);
+    let text_style = Style::default().fg(Color::Gray);
+
+    let shortcuts = match app.header.tabs.current {
+        Tab::Components | Tab::Demos | Tab::Hooks => {
+            if app.show_popup {
+                vec![
+                    Span::styled("←/→", key_style),
+                    Span::styled(" Switch ", text_style),
+                    Span::styled("│", sep_style),
+                    Span::styled(" Enter", key_style),
+                    Span::styled(" Confirm ", text_style),
+                    Span::styled("│", sep_style),
+                    Span::styled(" Esc", key_style),
+                    Span::styled(" Cancel", text_style),
+                ]
+            } else {
+                vec![
+                    Span::styled("Space", key_style),
+                    Span::styled(" Select ", text_style),
+                    Span::styled("│", sep_style),
+                    Span::styled(" /", key_style),
+                    Span::styled(" Search ", text_style),
+                    Span::styled("│", sep_style),
+                    Span::styled(" Ctrl+a-z", key_style),
+                    Span::styled(" Jump ", text_style),
+                    Span::styled("│", sep_style),
+                    Span::styled(" ?", key_style),
+                    Span::styled(" Help ", text_style),
+                    Span::styled("│", sep_style),
+                    Span::styled(" Enter", key_style),
+                    Span::styled(" Confirm ", text_style),
+                    Span::styled("│", sep_style),
+                    Span::styled(" q", key_style),
+                    Span::styled(" Quit", text_style),
+                ]
+            }
+        }
+        _ => {
+            vec![
+                Span::styled("←/→", key_style),
+                Span::styled(" Tabs ", text_style),
+                Span::styled("│", sep_style),
+                Span::styled(" ?", key_style),
+                Span::styled(" Help ", text_style),
+                Span::styled("│", sep_style),
+                Span::styled(" q", key_style),
+                Span::styled(" Quit", text_style),
+            ]
+        }
+    };
+
+    let footer = Paragraph::new(Line::from(shortcuts)).style(Style::default().bg(Color::DarkGray));
+    frame.render_widget(footer, area);
 }
 
 fn draw_help_popup(frame: &mut Frame, area: Rect) {

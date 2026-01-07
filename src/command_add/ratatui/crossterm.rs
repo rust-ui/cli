@@ -3,7 +3,7 @@ use std::error::Error;
 use std::io;
 use std::time::{Duration, Instant};
 
-use crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, KeyCode, MouseEventKind};
+use crossterm::event::{self, DisableMouseCapture, EnableMouseCapture, KeyCode, KeyModifiers, MouseEventKind};
 use crossterm::execute;
 use crossterm::terminal::{EnterAlternateScreen, LeaveAlternateScreen, disable_raw_mode, enable_raw_mode};
 use ratatui::Terminal;
@@ -117,6 +117,18 @@ fn run_app<B: Backend>(
                         KeyCode::Char(' ') if matches!(app.header.tabs.current, Tab::Hooks) => {
                             if let Some(hook) = tab2_hooks::get_selected_hook(&app) {
                                 app.toggle_hook_checkbox(hook);
+                            }
+                        }
+                        // Ctrl+letter to jump to first item starting with that letter
+                        KeyCode::Char(c)
+                            if key.modifiers.contains(KeyModifiers::CONTROL)
+                                && c.is_ascii_alphabetic() =>
+                        {
+                            match app.header.tabs.current {
+                                Tab::Components => app.jump_to_letter_components(c),
+                                Tab::Demos => app.jump_to_letter_demos(c),
+                                Tab::Hooks => app.jump_to_letter_hooks(c),
+                                _ => {}
                             }
                         }
                         KeyCode::Enter

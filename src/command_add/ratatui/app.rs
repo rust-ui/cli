@@ -347,4 +347,49 @@ impl<'a> App<'a> {
     pub fn get_dependencies(&self, component: &str) -> Option<&Vec<String>> {
         self.dependencies.get(component)
     }
+
+    pub fn jump_to_letter_components(&mut self, letter: char) {
+        use super::widgets::helpers::filter_items;
+        let components_refs: Vec<&str> = self.components.iter().map(|s| s.as_str()).collect();
+        let filtered = filter_items(&components_refs, &self.components_search_query);
+        let lower = letter.to_ascii_lowercase();
+        if let Some(idx) = filtered.iter().position(|c| c.to_lowercase().starts_with(lower)) {
+            self.components_scroll = idx;
+            self.components_scroll_state = self.components_scroll_state.position(idx);
+        }
+    }
+
+    pub fn jump_to_letter_demos(&mut self, letter: char) {
+        use super::widgets::helpers::filter_items;
+        let demos_refs: Vec<&str> = self.demos.iter().map(|s| s.as_str()).collect();
+        let filtered = filter_items(&demos_refs, &self.demos_search_query);
+        let lower = letter.to_ascii_lowercase();
+        // For demos, skip "demo_" prefix when matching
+        if let Some(idx) = filtered.iter().position(|d| {
+            d.strip_prefix("demo_")
+                .unwrap_or(d)
+                .to_lowercase()
+                .starts_with(lower)
+        }) {
+            self.demos_scroll = idx;
+            self.demos_scroll_state = self.demos_scroll_state.position(idx);
+        }
+    }
+
+    pub fn jump_to_letter_hooks(&mut self, letter: char) {
+        use super::tabs::tab2_hooks::HOOKS;
+        use super::widgets::helpers::filter_items;
+        let filtered = filter_items(HOOKS, &self.hooks_search_query);
+        let lower = letter.to_ascii_lowercase();
+        // For hooks, skip "Use " prefix when matching
+        if let Some(idx) = filtered.iter().position(|h| {
+            h.strip_prefix("Use ")
+                .unwrap_or(h)
+                .to_lowercase()
+                .starts_with(lower)
+        }) {
+            self.hooks_scroll = idx;
+            self.hooks_scroll_state = self.hooks_scroll_state.position(idx);
+        }
+    }
 }
