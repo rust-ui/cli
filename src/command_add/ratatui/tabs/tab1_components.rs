@@ -43,9 +43,19 @@ pub fn draw_tab_components(frame: &mut Frame, app: &mut App, area: Rect) {
     let items: Vec<ListItem> = filtered_components
         .iter()
         .map(|component| {
+            let is_installed = app.installed.contains(*component);
             let is_checked = app.components_checked.contains(*component);
-            let (checkbox, color) = if is_checked { ("☑", Color::Green) } else { ("☐", Color::DarkGray) };
-            ListItem::new(Span::styled(format!("  {} {}", checkbox, component), Style::default().fg(color)))
+
+            let (icon, color) = if is_checked {
+                ("☑", Color::Green) // Selected
+            } else if is_installed {
+                ("✓", Color::Cyan) // Already installed (not selected)
+            } else {
+                ("☐", Color::DarkGray) // Not selected
+            };
+
+            let suffix = if is_installed { " (installed)" } else { "" };
+            ListItem::new(Span::styled(format!("  {icon} {component}{suffix}"), Style::default().fg(color)))
         })
         .collect();
 

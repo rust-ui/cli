@@ -6,6 +6,7 @@ const UI_CONFIG_TOML: &str = "ui_config.toml";
 use clap::{Arg, ArgMatches, Command};
 
 use super::components::Components;
+use super::installed::get_installed_components;
 use super::registry::RegistryComponent;
 use super::tree_parser::TreeParser;
 use crate::command_init::config::UiConfig;
@@ -31,10 +32,18 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     let tree_content = RustUIClient::fetch_tree_md().await?;
     let tree_parser = TreeParser::parse_tree_md(&tree_content)?;
 
+    // Get base path for components (try reading config, fallback to default)
+    let base_path = UiConfig::try_reading_ui_config(UI_CONFIG_TOML)
+        .map(|c| c.base_path_components)
+        .unwrap_or_else(|_| "src/components".to_string());
+
+    // Detect already installed components
+    let installed = get_installed_components(&base_path);
+
     // If no components provided, launch TUI
     let user_components = if user_components.is_empty() {
         let component_names: Vec<String> = tree_parser.get_all_component_names();
-        let selected = super::ratatui::run_tui(component_names)?;
+        let selected = super::ratatui::run_tui(component_names, installed)?;
         if selected.is_empty() {
             println!("No components selected.");
             return Ok(());

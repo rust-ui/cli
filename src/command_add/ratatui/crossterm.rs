@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::error::Error;
 use std::io;
 use std::time::{Duration, Instant};
@@ -12,7 +13,11 @@ use super::app::App;
 use super::header::Tab;
 use super::tabs::{_render, tab1_components, tab2_hooks, tab5_demos};
 
-pub fn run(tick_rate: Duration, components: Vec<String>) -> Result<Vec<String>, Box<dyn Error>> {
+pub fn run(
+    tick_rate: Duration,
+    components: Vec<String>,
+    installed: HashSet<String>,
+) -> Result<Vec<String>, Box<dyn Error>> {
     // Setup terminal
     enable_raw_mode()?;
     let mut stdout = io::stdout();
@@ -21,7 +26,7 @@ pub fn run(tick_rate: Duration, components: Vec<String>) -> Result<Vec<String>, 
     let mut terminal = Terminal::new(backend)?;
 
     // Create app and run it
-    let app = App::new("Rust/UI CLI", components);
+    let app = App::new("Rust/UI CLI", components, installed);
     let app_result = run_app(&mut terminal, app, tick_rate);
 
     // Restore terminal
