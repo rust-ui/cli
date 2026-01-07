@@ -119,15 +119,18 @@ fn run_app<B: Backend>(
                         {
                             app.toggle_popup();
                         }
-                        // Confirm selection when Enter is pressed in popup
+                        // Handle Enter in popup - confirm or cancel based on button focus
                         KeyCode::Enter
                             if matches!(app.header.tabs.current, Tab::Components)
                                 && app.show_popup
                                 && !app.components_checked.is_empty() =>
                         {
-                            // Return selected components
-                            let selected: Vec<String> = app.components_checked.into_iter().collect();
-                            return Ok(selected);
+                            if app.popup_confirm_focused {
+                                let selected: Vec<String> = app.components_checked.into_iter().collect();
+                                return Ok(selected);
+                            } else {
+                                app.toggle_popup(); // Cancel - close popup
+                            }
                         }
                         KeyCode::Enter
                             if matches!(app.header.tabs.current, Tab::Demos)
@@ -136,15 +139,17 @@ fn run_app<B: Backend>(
                         {
                             app.toggle_popup();
                         }
-                        // Confirm selection when Enter is pressed in popup for Demos
                         KeyCode::Enter
                             if matches!(app.header.tabs.current, Tab::Demos)
                                 && app.show_popup
                                 && !app.demos_checked.is_empty() =>
                         {
-                            // Return selected demos
-                            let selected: Vec<String> = app.demos_checked.into_iter().collect();
-                            return Ok(selected);
+                            if app.popup_confirm_focused {
+                                let selected: Vec<String> = app.demos_checked.into_iter().collect();
+                                return Ok(selected);
+                            } else {
+                                app.toggle_popup(); // Cancel - close popup
+                            }
                         }
                         KeyCode::Enter
                             if matches!(app.header.tabs.current, Tab::Hooks)
@@ -152,6 +157,18 @@ fn run_app<B: Backend>(
                                 && !app.hooks_checked.is_empty() =>
                         {
                             app.toggle_popup();
+                        }
+                        KeyCode::Enter
+                            if matches!(app.header.tabs.current, Tab::Hooks)
+                                && app.show_popup
+                                && !app.hooks_checked.is_empty() =>
+                        {
+                            if app.popup_confirm_focused {
+                                let selected: Vec<String> = app.hooks_checked.into_iter().collect();
+                                return Ok(selected);
+                            } else {
+                                app.toggle_popup(); // Cancel - close popup
+                            }
                         }
                         KeyCode::Esc if app.show_help_popup => {
                             app.toggle_help_popup();
@@ -218,7 +235,9 @@ fn run_app<B: Backend>(
                             app.toggle_popup();
                         }
                         KeyCode::Char('h') | KeyCode::Left => {
-                            if !app.show_popup && !app.show_help_popup {
+                            if app.show_popup {
+                                app.toggle_popup_button_focus();
+                            } else if !app.show_help_popup {
                                 app.on_left();
                             }
                         }
@@ -233,9 +252,14 @@ fn run_app<B: Backend>(
                             }
                         }
                         KeyCode::Char('l') | KeyCode::Right => {
-                            if !app.show_popup && !app.show_help_popup {
+                            if app.show_popup {
+                                app.toggle_popup_button_focus();
+                            } else if !app.show_help_popup {
                                 app.on_right();
                             }
+                        }
+                        KeyCode::Tab if app.show_popup => {
+                            app.toggle_popup_button_focus();
                         }
                         KeyCode::Char(c) => app.on_key(c),
                         _ => {}

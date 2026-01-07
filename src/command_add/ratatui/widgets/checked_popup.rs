@@ -1,83 +1,88 @@
 use ratatui::Frame;
-use ratatui::layout::Rect;
-use ratatui::style::{Color, Style};
+use ratatui::layout::{Constraint, Layout, Rect};
+use ratatui::style::{Color, Modifier, Style};
+use ratatui::text::{Line, Span};
 use ratatui::widgets::{Block, Clear, Paragraph, Wrap};
 
 use super::popup::popup_area;
 
-/// Renders a popup showing checked items in a formatted layout
-pub fn draw_checked_popup(
+/// Renders a confirmation dialog with Cancel and Confirm buttons
+pub fn draw_confirm_dialog(
     frame: &mut Frame,
-    checked_items: &[String],
+    items: &[String],
     title: &str,
     item_type: &str,
-    popup_color: Color,
+    confirm_focused: bool,
     area: Rect,
-    percent_x: u16,
-    percent_y: u16,
 ) {
-    let popup_block = Block::bordered().title(title).style(Style::default().fg(popup_color));
-    let popup_rect = popup_area(area, percent_x, percent_y);
+    let popup_rect = popup_area(area, 50, 60);
 
     // Clear the background
     frame.render_widget(Clear, popup_rect);
 
-    let checked_text = if checked_items.is_empty() {
-        format!("No {} checked", item_type)
-    } else if checked_items.len() <= 8 {
-        // Use simple vertical list for few items
-        let items: Vec<String> = checked_items.iter().map(|name| format!("  ☑ {}", name)).collect();
-        let item_type_display =
-            if checked_items.len() == 1 { item_type.to_string() } else { format!("{}s", item_type) };
-        format!(
-            "Checked {} ({})\n\n{}\n\n\nPress ENTER to add  |  Press ESC to close",
-            item_type_display,
-            checked_items.len(),
-            items.join("\n")
-        )
-    } else {
-        // Format items in 4 columns for many items
-        let items_per_column = checked_items.len().div_ceil(4);
-        let item_type_display =
-            if checked_items.len() == 1 { item_type.to_string() } else { format!("{}s", item_type) };
-        let mut lines = vec![format!("Checked {} ({})\n", item_type_display, checked_items.len())];
+    // Main block with title
+    let block = Block::bordered().title(title).style(Style::default().fg(Color::White));
+    let inner = block.inner(popup_rect);
+    frame.render_widget(block, popup_rect);
 
-        for row in 0..items_per_column {
-            let mut line_parts = Vec::new();
+    // Split inner area: content on top, buttons at bottom
+    let chunks = Layout::vertical([Constraint::Min(3), Constraint::Length(3)]).split(inner);
 
-            // Column 1
-            if let Some(item) = checked_items.get(row) {
-                line_parts.push(format!("  ☑ {:<18}", item));
-            }
-
-            // Column 2
-            if let Some(item) = checked_items.get(row + items_per_column) {
-                line_parts.push(format!("☑ {:<18}", item));
-            }
-
-            // Column 3
-            if let Some(item) = checked_items.get(row + items_per_column * 2) {
-                line_parts.push(format!("☑ {:<18}", item));
-            }
-
-            // Column 4
-            if let Some(item) = checked_items.get(row + items_per_column * 3) {
-                line_parts.push(format!("☑ {}", item));
-            }
-
-            lines.push(line_parts.join("  "));
-        }
-
-        lines.push(String::new());
-        lines.push(String::new());
-        lines.push("Press ENTER to add  |  Press ESC to close".to_string());
-        lines.join("\n")
+    let (Some(&content_area), Some(&button_area)) = (chunks.first(), chunks.get(1)) else {
+        return;
     };
 
-    let popup_paragraph = Paragraph::new(checked_text)
-        .block(popup_block)
-        .wrap(Wrap { trim: true })
-        .style(Style::default().fg(Color::White));
+    // Content: list of items
+    let item_count = items.len();
+    let item_type_plural = if item_count == 1 { item_type } else { &format!("{item_type}s") };
 
-    frame.render_widget(popup_paragraph, popup_rect);
+    let mut lines: Vec<Line> = vec![
+        Line::from(Span::styled(
+            format!("Add {item_count} {item_type_plural}?"),
+            Style::default().fg(Color::Yellow),
+        )),
+        Line::from(""),
+    ];
+
+    // Add items (limit display if too many)
+    let max_display = 12;
+    for (i, item) in items.iter().enumerate() {
+        if i >= max_display {
+            lines.push(Line::from(Span::styled(
+                format!("  ... and {} more", item_count - max_display),
+                Style::default().fg(Color::DarkGray),
+            )));
+            break;
+        }
+        lines.push(Line::from(Span::styled(format!("  • {item}"), Style::default().fg(Color::White))));
+    }
+
+    let content = Paragraph::new(lines).wrap(Wrap { trim: true });
+    frame.render_widget(content, content_area);
+
+    // Buttons - styled as bordered buttons
+    let cancel_style = if !confirm_focused {
+        Style::default().fg(Color::Black).bg(Color::White).add_modifier(Modifier::BOLD)
+    } else {
+        Style::default().fg(Color::Gray)
+    };
+
+    let confirm_style = if confirm_focused {
+        Style::default().fg(Color::Black).bg(Color::Green).add_modifier(Modifier::BOLD)
+    } else {
+        Style::default().fg(Color::Gray)
+    };
+
+    let button_line = Line::from(vec![
+        Span::styled(if !confirm_focused { "│" } else { " " }, cancel_style),
+        Span::styled(" Cancel ", cancel_style),
+        Span::styled(if !confirm_focused { "│" } else { " " }, cancel_style),
+        Span::raw("   "),
+        Span::styled(if confirm_focused { "│" } else { " " }, confirm_style),
+        Span::styled(" Confirm ", confirm_style),
+        Span::styled(if confirm_focused { "│" } else { " " }, confirm_style),
+    ]);
+
+    let buttons = Paragraph::new(button_line).centered();
+    frame.render_widget(buttons, button_area);
 }
