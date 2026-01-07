@@ -5,6 +5,7 @@ pub struct RustUIClient;
 
 impl RustUIClient {
     const BASE_URL: &str = "https://www.rust-ui.com/registry";
+    const SITE_URL: &str = "https://www.rust-ui.com";
 
     // URL builders - centralized URL construction
     fn tree_url() -> String {
@@ -17,6 +18,10 @@ impl RustUIClient {
 
     pub fn styles_index_url() -> String {
         format!("{}/styles/index.json", Self::BASE_URL)
+    }
+
+    fn js_file_url(path: &str) -> String {
+        format!("{}{path}", Self::SITE_URL)
     }
 
     // Consolidated HTTP fetch method
@@ -56,5 +61,17 @@ impl RustUIClient {
 
         serde_json::to_string_pretty(&json)
             .map_err(|err| CliError::malformed_registry(&format!("Failed to convert to pretty JSON: {err}")))
+    }
+
+    /// Fetch a JS file from the site (e.g., /hooks/lock_scroll.js)
+    pub async fn fetch_js_file(path: &str) -> CliResult<String> {
+        let response = Self::fetch_response(&Self::js_file_url(path)).await?;
+        let content = response.text().await.map_err(|_| CliError::registry_request_failed())?;
+
+        if content.is_empty() {
+            return Err(CliError::registry_request_failed());
+        }
+
+        Ok(content)
     }
 }

@@ -1,3 +1,4 @@
+use std::collections::HashSet;
 use std::path::Path;
 use std::vec::Vec;
 
@@ -61,6 +62,7 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     let all_resolved_components: Vec<String> = resolved_set.components.into_iter().collect();
     let all_resolved_parent_dirs: Vec<String> = resolved_set.parent_dirs.into_iter().collect();
     let all_resolved_cargo_dependencies: Vec<String> = resolved_set.cargo_deps.into_iter().collect();
+    let all_resolved_js_files: HashSet<String> = resolved_set.js_files;
 
     // Create components/mod.rs if it does not exist
     let components_base_path = UiConfig::try_reading_ui_config(UI_CONFIG_TOML)?.base_path_components;
@@ -95,6 +97,47 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     if !all_resolved_cargo_dependencies.is_empty() {
         super::dependencies::process_cargo_deps(&all_resolved_cargo_dependencies)?;
     }
+
+    // Handle JS file dependencies if any exist
+    if !all_resolved_js_files.is_empty() {
+        process_js_files(&all_resolved_js_files).await?;
+    }
+
+    Ok(())
+}
+
+/// Download and install JS files to the user's public directory
+async fn process_js_files(js_files: &HashSet<String>) -> CliResult<()> {
+    use crate::shared::task_spinner::TaskSpinner;
+
+    let spinner = TaskSpinner::new("Installing JS files...");
+
+    for js_path in js_files {
+        spinner.set_message(&format!("📜 Downloading {js_path}"));
+
+        // Fetch the JS file content
+        let content = RustUIClient::fetch_js_file(js_path).await?;
+
+        // Determine the output path (public/ + js_path)
+        let output_path = Path::new("public").join(js_path.trim_start_matches('/'));
+
+        // Create parent directories if they don't exist
+        if let Some(parent) = output_path.parent() {
+            std::fs::create_dir_all(parent).map_err(|_| CliError::directory_create_failed())?;
+        }
+
+        // Check if file already exists
+        if output_path.exists() {
+            spinner.set_message(&format!("⏭️  Skipping {js_path} (already exists)"));
+            continue;
+        }
+
+        // Write the file
+        std::fs::write(&output_path, content).map_err(|_| CliError::file_write_failed())?;
+    }
+
+    let files_str = js_files.iter().cloned().collect::<Vec<_>>().join(", ");
+    spinner.finish_success(&format!("JS files installed: [{files_str}]"));
 
     Ok(())
 }
