@@ -11,6 +11,7 @@ const HORIZONTAL_PADDING: usize = 1; // Padding on left and right
 pub enum Tab {
     #[default]
     Components,
+    Demos,
     Hooks,
     Blocks,
     Icons,
@@ -18,7 +19,8 @@ pub enum Tab {
 }
 
 impl Tab {
-    pub const ALL: [Tab; 5] = [Tab::Components, Tab::Hooks, Tab::Blocks, Tab::Icons, Tab::Settings];
+    pub const ALL: [Tab; 6] =
+        [Tab::Components, Tab::Demos, Tab::Hooks, Tab::Blocks, Tab::Icons, Tab::Settings];
 
     fn from_index(index: usize) -> Self {
         Self::ALL.get(index).copied().unwrap_or(Tab::Components)

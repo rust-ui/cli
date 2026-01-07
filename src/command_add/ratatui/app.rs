@@ -8,21 +8,32 @@ use super::header::{Header, Tab};
 pub struct App<'a> {
     pub should_quit: bool,
     pub header: Header<'a>,
+    // Components (non-demo items)
     pub components: Vec<String>,
     pub components_scroll: usize,
-    pub hooks_scroll: usize,
     pub components_scroll_state: ScrollbarState,
-    pub hooks_scroll_state: ScrollbarState,
     pub components_list_state: ListState,
-    pub hooks_list_state: ListState,
-    pub terminal_width: u16,
-    pub icons_selected: usize,
     pub components_search_query: String,
     pub components_search_active: bool,
     pub components_checked: HashSet<String>,
+    // Demos (demo_* items)
+    pub demos: Vec<String>,
+    pub demos_scroll: usize,
+    pub demos_scroll_state: ScrollbarState,
+    pub demos_list_state: ListState,
+    pub demos_search_query: String,
+    pub demos_search_active: bool,
+    pub demos_checked: HashSet<String>,
+    // Hooks
+    pub hooks_scroll: usize,
+    pub hooks_scroll_state: ScrollbarState,
+    pub hooks_list_state: ListState,
     pub hooks_search_query: String,
     pub hooks_search_active: bool,
     pub hooks_checked: HashSet<String>,
+    // Other
+    pub terminal_width: u16,
+    pub icons_selected: usize,
     pub show_popup: bool,
     pub show_help_popup: bool,
     pub last_click_time: Option<Instant>,
@@ -31,25 +42,40 @@ pub struct App<'a> {
 }
 
 impl<'a> App<'a> {
-    pub fn new(title: &'a str, components: Vec<String>) -> Self {
+    pub fn new(title: &'a str, all_items: Vec<String>) -> Self {
+        // Separate demos from components
+        let (demos, components): (Vec<_>, Vec<_>) =
+            all_items.into_iter().partition(|s| s.starts_with("demo_"));
+
         App {
             should_quit: false,
             header: Header::new(title),
+            // Components
             components,
             components_scroll: 0,
-            hooks_scroll: 0,
             components_scroll_state: ScrollbarState::default(),
-            hooks_scroll_state: ScrollbarState::default(),
             components_list_state: ListState::default(),
-            hooks_list_state: ListState::default(),
-            terminal_width: 0,
-            icons_selected: 0,
             components_search_query: String::new(),
             components_search_active: false,
             components_checked: HashSet::new(),
+            // Demos
+            demos,
+            demos_scroll: 0,
+            demos_scroll_state: ScrollbarState::default(),
+            demos_list_state: ListState::default(),
+            demos_search_query: String::new(),
+            demos_search_active: false,
+            demos_checked: HashSet::new(),
+            // Hooks
+            hooks_scroll: 0,
+            hooks_scroll_state: ScrollbarState::default(),
+            hooks_list_state: ListState::default(),
             hooks_search_query: String::new(),
             hooks_search_active: false,
             hooks_checked: HashSet::new(),
+            // Other
+            terminal_width: 0,
+            icons_selected: 0,
             show_popup: false,
             show_help_popup: false,
             last_click_time: None,
@@ -63,6 +89,10 @@ impl<'a> App<'a> {
             Tab::Components => {
                 self.components_scroll = self.components_scroll.saturating_sub(1);
                 self.components_scroll_state = self.components_scroll_state.position(self.components_scroll);
+            }
+            Tab::Demos => {
+                self.demos_scroll = self.demos_scroll.saturating_sub(1);
+                self.demos_scroll_state = self.demos_scroll_state.position(self.demos_scroll);
             }
             Tab::Hooks => {
                 self.hooks_scroll = self.hooks_scroll.saturating_sub(1);
@@ -80,6 +110,10 @@ impl<'a> App<'a> {
             Tab::Components => {
                 self.components_scroll = self.components_scroll.saturating_add(1);
                 self.components_scroll_state = self.components_scroll_state.position(self.components_scroll);
+            }
+            Tab::Demos => {
+                self.demos_scroll = self.demos_scroll.saturating_add(1);
+                self.demos_scroll_state = self.demos_scroll_state.position(self.demos_scroll);
             }
             Tab::Hooks => {
                 self.hooks_scroll = self.hooks_scroll.saturating_add(1);
@@ -159,6 +193,55 @@ impl<'a> App<'a> {
 
     pub fn deselect_all_components(&mut self) {
         self.components_checked.clear();
+    }
+
+    // Demos methods
+    pub fn toggle_demos_search(&mut self) {
+        self.demos_search_active = !self.demos_search_active;
+        if !self.demos_search_active {
+            self.demos_search_query.clear();
+            self.demos_scroll = 0;
+        }
+    }
+
+    pub fn demos_search_input(&mut self, c: char) {
+        if self.demos_search_active {
+            self.demos_search_query.push(c);
+            self.demos_scroll = 0;
+        }
+    }
+
+    pub fn demos_search_backspace(&mut self) {
+        if self.demos_search_active {
+            self.demos_search_query.pop();
+            self.demos_scroll = 0;
+        }
+    }
+
+    pub fn toggle_demo_checkbox(&mut self, demo: &str) {
+        if self.demos_checked.contains(demo) {
+            self.demos_checked.remove(demo);
+        } else {
+            self.demos_checked.insert(demo.to_string());
+        }
+    }
+
+    pub fn deselect_all_demos(&mut self) {
+        self.demos_checked.clear();
+    }
+
+    pub fn get_demos_double_click_info(&self, column: u16, row: u16, terminal_width: u16) -> Option<usize> {
+        if matches!(self.header.tabs.current, Tab::Demos) && !self.show_popup {
+            let left_panel_width = (terminal_width as f32 * 0.35) as u16;
+
+            if column <= left_panel_width && row > 6 {
+                let visual_row = (row - 7) as usize;
+                let viewport_offset = self.demos_list_state.offset();
+                let item_index = visual_row + viewport_offset;
+                return Some(item_index);
+            }
+        }
+        None
     }
 
     pub fn get_components_double_click_info(

@@ -98,19 +98,19 @@ fn should_use_workspace_deps(workspace_info: &Option<WorkspaceInfo>) -> bool {
     };
 
     // Check if [workspace.dependencies] exists
-    doc.get("workspace")
-        .and_then(|w| w.get("dependencies"))
-        .is_some()
+    doc.get("workspace").and_then(|w| w.get("dependencies")).is_some()
 }
 
 /// Add dependency using workspace pattern:
 /// 1. Add to [workspace.dependencies] in root Cargo.toml
 /// 2. Add dep.workspace = true to member Cargo.toml
 fn add_workspace_dependency(dep: &str, info: &WorkspaceInfo) -> CliResult<()> {
-    let workspace_root = info.workspace_root.as_ref()
-        .ok_or_else(|| CliError::cargo_operation("Workspace root not found"))?;
+    let workspace_root =
+        info.workspace_root.as_ref().ok_or_else(|| CliError::cargo_operation("Workspace root not found"))?;
 
-    let member_path = info.target_crate_path.as_ref()
+    let member_path = info
+        .target_crate_path
+        .as_ref()
         .ok_or_else(|| CliError::cargo_operation("Target crate path not found"))?;
 
     // First, get the latest version from crates.io
@@ -130,20 +130,20 @@ fn add_workspace_dependency(dep: &str, info: &WorkspaceInfo) -> CliResult<()> {
 /// Add dependency to [workspace.dependencies] in root Cargo.toml
 fn add_to_workspace_dependencies(cargo_toml_path: &Path, dep: &str, version: &str) -> CliResult<()> {
     let contents = fs::read_to_string(cargo_toml_path)?;
-    let mut doc: DocumentMut = contents.parse()
+    let mut doc: DocumentMut = contents
+        .parse()
         .map_err(|e| CliError::cargo_operation(&format!("Failed to parse Cargo.toml: {e}")))?;
 
     // Get or create [workspace.dependencies]
-    let workspace = doc.entry("workspace")
-        .or_insert(Item::Table(toml_edit::Table::new()));
+    let workspace = doc.entry("workspace").or_insert(Item::Table(toml_edit::Table::new()));
 
-    let workspace_table = workspace.as_table_mut()
-        .ok_or_else(|| CliError::cargo_operation("[workspace] is not a table"))?;
+    let workspace_table =
+        workspace.as_table_mut().ok_or_else(|| CliError::cargo_operation("[workspace] is not a table"))?;
 
-    let deps = workspace_table.entry("dependencies")
-        .or_insert(Item::Table(toml_edit::Table::new()));
+    let deps = workspace_table.entry("dependencies").or_insert(Item::Table(toml_edit::Table::new()));
 
-    let deps_table = deps.as_table_mut()
+    let deps_table = deps
+        .as_table_mut()
         .ok_or_else(|| CliError::cargo_operation("[workspace.dependencies] is not a table"))?;
 
     // Check if already exists
@@ -163,15 +163,15 @@ fn add_to_workspace_dependencies(cargo_toml_path: &Path, dep: &str, version: &st
 /// Add dep.workspace = true to member's [dependencies]
 fn add_workspace_ref_to_member(cargo_toml_path: &Path, dep: &str) -> CliResult<()> {
     let contents = fs::read_to_string(cargo_toml_path)?;
-    let mut doc: DocumentMut = contents.parse()
+    let mut doc: DocumentMut = contents
+        .parse()
         .map_err(|e| CliError::cargo_operation(&format!("Failed to parse member Cargo.toml: {e}")))?;
 
     // Get or create [dependencies]
-    let deps = doc.entry("dependencies")
-        .or_insert(Item::Table(toml_edit::Table::new()));
+    let deps = doc.entry("dependencies").or_insert(Item::Table(toml_edit::Table::new()));
 
-    let deps_table = deps.as_table_mut()
-        .ok_or_else(|| CliError::cargo_operation("[dependencies] is not a table"))?;
+    let deps_table =
+        deps.as_table_mut().ok_or_else(|| CliError::cargo_operation("[dependencies] is not a table"))?;
 
     // Check if already exists
     if deps_table.contains_key(dep) {
@@ -199,9 +199,7 @@ fn fetch_latest_version(crate_name: &str) -> CliResult<String> {
         .map_err(|_| CliError::cargo_operation("Failed to execute cargo search"))?;
 
     if !output.status.success() {
-        return Err(CliError::cargo_operation(&format!(
-            "Failed to search for crate '{crate_name}'"
-        )));
+        return Err(CliError::cargo_operation(&format!("Failed to search for crate '{crate_name}'")));
     }
 
     let stdout = String::from_utf8_lossy(&output.stdout);
@@ -389,7 +387,8 @@ members = ["app"]
 [workspace.dependencies]
 leptos = "0.7"
 "#,
-        ).unwrap();
+        )
+        .unwrap();
 
         let info = WorkspaceInfo {
             is_workspace: true,
@@ -414,7 +413,8 @@ leptos = "0.7"
 [workspace]
 members = ["app"]
 "#,
-        ).unwrap();
+        )
+        .unwrap();
 
         let info = WorkspaceInfo {
             is_workspace: true,
@@ -441,7 +441,8 @@ members = ["app"]
 [workspace.dependencies]
 leptos = "0.7"
 "#,
-        ).unwrap();
+        )
+        .unwrap();
 
         // Add serde
         add_to_workspace_dependencies(&cargo_toml, "serde", "1.0").unwrap();
@@ -467,7 +468,8 @@ version = "0.1.0"
 [dependencies]
 leptos.workspace = true
 "#,
-        ).unwrap();
+        )
+        .unwrap();
 
         // Add serde.workspace = true
         add_workspace_ref_to_member(&cargo_toml, "serde").unwrap();
@@ -475,8 +477,10 @@ leptos.workspace = true
         // Verify
         let contents = fs::read_to_string(&cargo_toml).unwrap();
         assert!(contents.contains("serde"), "Should contain serde: {contents}");
-        assert!(contents.contains("workspace = true") || contents.contains("workspace=true"),
-            "Should have workspace = true: {contents}");
+        assert!(
+            contents.contains("workspace = true") || contents.contains("workspace=true"),
+            "Should have workspace = true: {contents}"
+        );
     }
 
     #[test]
@@ -493,7 +497,8 @@ version = "0.1.0"
 
 [dependencies]
 "#,
-        ).unwrap();
+        )
+        .unwrap();
 
         // Add validator.workspace = true
         add_workspace_ref_to_member(&cargo_toml, "validator").unwrap();
@@ -524,7 +529,8 @@ members = ["app"]
 [workspace.dependencies]
 leptos = "0.7"
 "#,
-        ).unwrap();
+        )
+        .unwrap();
 
         // Create app directory and Cargo.toml
         let app_dir = root.join("app");
@@ -538,7 +544,8 @@ version = "0.1.0"
 [dependencies]
 leptos.workspace = true
 "#,
-        ).unwrap();
+        )
+        .unwrap();
 
         let _info = WorkspaceInfo {
             is_workspace: true,
