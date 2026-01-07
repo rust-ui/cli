@@ -13,6 +13,7 @@ pub struct ComponentEntry {
     pub category: String,
     pub dependencies: Vec<String>,
     pub cargo_deps: Vec<String>,
+    pub js_files: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -20,6 +21,7 @@ pub struct ResolvedSet {
     pub components: HashSet<String>,
     pub cargo_deps: HashSet<String>,
     pub parent_dirs: HashSet<String>,
+    pub js_files: HashSet<String>,
 }
 
 impl TreeParser {
@@ -52,6 +54,7 @@ impl TreeParser {
                         category,
                         dependencies: Vec::new(),
                         cargo_deps: Vec::new(),
+                        js_files: Vec::new(),
                     });
 
                     dependency_stack.clear();
@@ -65,6 +68,12 @@ impl TreeParser {
                     let cargo_dep = cargo_dep_name.trim().to_string();
                     if let Some(ref mut component) = current_component {
                         component.cargo_deps.push(cargo_dep);
+                    }
+                } else if let Some(js_path) = dep_content.strip_prefix("js: ") {
+                    // JS file dependency
+                    let js_file = js_path.trim().to_string();
+                    if let Some(ref mut component) = current_component {
+                        component.js_files.push(js_file);
                     }
                 } else if let Some((dep_name, _)) = dep_content.rsplit_once(" (") {
                     // Registry dependency
@@ -85,6 +94,12 @@ impl TreeParser {
                     let cargo_dep = cargo_dep_name.trim().to_string();
                     if let Some(ref mut component) = current_component {
                         component.cargo_deps.push(cargo_dep);
+                    }
+                } else if let Some(js_path) = dep_content.strip_prefix("js: ") {
+                    // Nested JS file dependency - add to root component
+                    let js_file = js_path.trim().to_string();
+                    if let Some(ref mut component) = current_component {
+                        component.js_files.push(js_file);
                     }
                 } else if let Some((dep_name, _)) = dep_content.rsplit_once(" (") {
                     // Nested registry dependency - add to root component
@@ -121,6 +136,7 @@ impl TreeParser {
         let mut resolved_components = HashSet::new();
         let mut resolved_cargo_deps = HashSet::new();
         let mut resolved_parent_dirs = HashSet::new();
+        let mut resolved_js_files = HashSet::new();
 
         // Process each user component
         for component_name in user_components {
@@ -143,18 +159,27 @@ impl TreeParser {
                 for cargo_dep in &component_entry.cargo_deps {
                     resolved_cargo_deps.insert(cargo_dep.clone());
                 }
+
+                // Add JS file dependencies
+                for js_file in &component_entry.js_files {
+                    resolved_js_files.insert(js_file.clone());
+                }
             } else {
-                println!("⚠️  Component '{}' not found in registry. Skipping...", component_name);
+                println!("⚠️  Component '{component_name}' not found in registry. Skipping...");
             }
         }
 
-        println!("📦 Final set of resolved components: {:?}", resolved_components);
-        println!("📦 Final set of cargo dependencies: {:?}", resolved_cargo_deps);
+        println!("📦 Final set of resolved components: {resolved_components:?}");
+        println!("📦 Final set of cargo dependencies: {resolved_cargo_deps:?}");
+        if !resolved_js_files.is_empty() {
+            println!("📦 Final set of JS files: {resolved_js_files:?}");
+        }
 
         Ok(ResolvedSet {
             components: resolved_components,
             cargo_deps: resolved_cargo_deps,
             parent_dirs: resolved_parent_dirs,
+            js_files: resolved_js_files,
         })
     }
 }
@@ -175,6 +200,14 @@ mod tests {
 *** badge (ui)
 
 * demo_button (demos)
+** button (ui)
+
+* select (ui)
+** cargo: strum
+** js: /hooks/lock_scroll.js
+
+* sheet (ui)
+** js: /hooks/lock_scroll.js
 ** button (ui)
 "#;
 
@@ -245,5 +278,36 @@ mod tests {
         let parser = TreeParser::parse_tree_md(SAMPLE_TREE).unwrap();
         let resolved = parser.resolve_dependencies(&["nonexistent".to_string()]).unwrap();
         assert!(resolved.components.is_empty());
+    }
+
+    #[test]
+    fn parse_tree_md_extracts_js_files() {
+        let parser = TreeParser::parse_tree_md(SAMPLE_TREE).unwrap();
+        let select = parser.components.get("select").unwrap();
+        assert!(select.js_files.contains(&"/hooks/lock_scroll.js".to_string()));
+    }
+
+    #[test]
+    fn resolve_dependencies_collects_js_files() {
+        let parser = TreeParser::parse_tree_md(SAMPLE_TREE).unwrap();
+        let resolved = parser.resolve_dependencies(&["select".to_string()]).unwrap();
+        assert!(resolved.js_files.contains("/hooks/lock_scroll.js"));
+    }
+
+    #[test]
+    fn resolve_dependencies_js_files_deduped() {
+        let parser = TreeParser::parse_tree_md(SAMPLE_TREE).unwrap();
+        // Both select and sheet use the same JS file
+        let resolved = parser.resolve_dependencies(&["select".to_string(), "sheet".to_string()]).unwrap();
+        // Should only contain one instance
+        assert_eq!(resolved.js_files.len(), 1);
+        assert!(resolved.js_files.contains("/hooks/lock_scroll.js"));
+    }
+
+    #[test]
+    fn component_without_js_has_empty_js_files() {
+        let parser = TreeParser::parse_tree_md(SAMPLE_TREE).unwrap();
+        let button = parser.components.get("button").unwrap();
+        assert!(button.js_files.is_empty());
     }
 }
