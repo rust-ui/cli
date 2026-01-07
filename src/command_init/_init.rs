@@ -144,7 +144,9 @@ fn merge_json_objects(existing: &str, template: &str) -> CliResult<String> {
     let template_json: serde_json::Value = serde_json::from_str(template)
         .map_err(|err| CliError::file_operation(&format!("Failed to parse template JSON: {err}")))?;
 
-    if let (Some(existing_obj), Some(template_obj)) = (existing_json.as_object_mut(), template_json.as_object()) {
+    if let (Some(existing_obj), Some(template_obj)) =
+        (existing_json.as_object_mut(), template_json.as_object())
+    {
         for (key, value) in template_obj {
             existing_obj.insert(key.clone(), value.clone());
         }

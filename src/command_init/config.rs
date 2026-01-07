@@ -121,10 +121,9 @@ fn add_crate_with_cargo(my_crate: &Crate, workspace_info: &Option<WorkspaceInfo>
         args.extend(["--features".to_owned(), features.join(",")]);
     }
 
-    let output = Command::new("cargo")
-        .args(&args)
-        .output()
-        .map_err(|e| CliError::cargo_operation(&format!("Failed to execute cargo add {}: {e}", my_crate.name)))?;
+    let output = Command::new("cargo").args(&args).output().map_err(|e| {
+        CliError::cargo_operation(&format!("Failed to execute cargo add {}: {e}", my_crate.name))
+    })?;
 
     if !output.status.success() {
         return Err(CliError::cargo_operation(&format!(
@@ -170,13 +169,10 @@ fn add_workspace_ref_to_member(cargo_toml_path: &Path, dep: &str) -> CliResult<(
         .parse()
         .map_err(|e| CliError::cargo_operation(&format!("Failed to parse member Cargo.toml: {e}")))?;
 
-    let deps = doc
-        .entry("dependencies")
-        .or_insert(Item::Table(toml_edit::Table::new()));
+    let deps = doc.entry("dependencies").or_insert(Item::Table(toml_edit::Table::new()));
 
-    let deps_table = deps
-        .as_table_mut()
-        .ok_or_else(|| CliError::cargo_operation("[dependencies] is not a table"))?;
+    let deps_table =
+        deps.as_table_mut().ok_or_else(|| CliError::cargo_operation("[dependencies] is not a table"))?;
 
     if deps_table.contains_key(dep) {
         return Ok(());
@@ -202,17 +198,12 @@ fn add_to_workspace_dependencies(
         .parse()
         .map_err(|e| CliError::cargo_operation(&format!("Failed to parse Cargo.toml: {e}")))?;
 
-    let workspace = doc
-        .entry("workspace")
-        .or_insert(Item::Table(toml_edit::Table::new()));
+    let workspace = doc.entry("workspace").or_insert(Item::Table(toml_edit::Table::new()));
 
-    let workspace_table = workspace
-        .as_table_mut()
-        .ok_or_else(|| CliError::cargo_operation("[workspace] is not a table"))?;
+    let workspace_table =
+        workspace.as_table_mut().ok_or_else(|| CliError::cargo_operation("[workspace] is not a table"))?;
 
-    let deps = workspace_table
-        .entry("dependencies")
-        .or_insert(Item::Table(toml_edit::Table::new()));
+    let deps = workspace_table.entry("dependencies").or_insert(Item::Table(toml_edit::Table::new()));
 
     let deps_table = deps
         .as_table_mut()
@@ -295,7 +286,8 @@ leptos = "0.7"
 tw_merge = { version = "0.1", features = ["variant"] }
 serde = "1.0"
 "#,
-        ).unwrap();
+        )
+        .unwrap();
 
         let info = WorkspaceInfo {
             is_workspace: true,
@@ -344,7 +336,8 @@ serde = "1.0"
             r#"[workspace]
 members = ["app"]
 "#,
-        ).unwrap();
+        )
+        .unwrap();
 
         let info = WorkspaceInfo {
             is_workspace: true,
@@ -372,15 +365,13 @@ version = "0.1.0"
 [dependencies]
 leptos.workspace = true
 "#,
-        ).unwrap();
+        )
+        .unwrap();
 
         add_workspace_ref_to_member(&cargo_toml, "tw_merge").unwrap();
 
         let contents = fs::read_to_string(&cargo_toml).unwrap();
-        assert!(
-            contents.contains("tw_merge.workspace = true"),
-            "Should use dotted format, got: {contents}"
-        );
+        assert!(contents.contains("tw_merge.workspace = true"), "Should use dotted format, got: {contents}");
     }
 
     #[test]
@@ -402,11 +393,7 @@ tw_merge.workspace = true
 
         let contents = fs::read_to_string(&cargo_toml).unwrap();
         // Count occurrences - should still be just one
-        assert_eq!(
-            contents.matches("tw_merge").count(),
-            1,
-            "Should not duplicate: {contents}"
-        );
+        assert_eq!(contents.matches("tw_merge").count(), 1, "Should not duplicate: {contents}");
     }
 
     #[test]
@@ -424,7 +411,8 @@ members = ["app"]
 tw_merge = { version = "0.1", features = ["variant"] }
 leptos_ui = "0.3"
 "#,
-        ).unwrap();
+        )
+        .unwrap();
 
         let info = WorkspaceInfo {
             is_workspace: true,
@@ -476,9 +464,13 @@ leptos = "0.7"
         let temp = TempDir::new().unwrap();
         let root = temp.path();
 
-        fs::write(root.join("Cargo.toml"), r#"[workspace]
+        fs::write(
+            root.join("Cargo.toml"),
+            r#"[workspace]
 members = ["app"]
-"#).unwrap();
+"#,
+        )
+        .unwrap();
 
         let info = WorkspaceInfo {
             is_workspace: true,
@@ -496,12 +488,16 @@ members = ["app"]
         let temp = TempDir::new().unwrap();
         let cargo_toml = temp.path().join("Cargo.toml");
 
-        fs::write(&cargo_toml, r#"[workspace]
+        fs::write(
+            &cargo_toml,
+            r#"[workspace]
 members = ["app"]
 
 [workspace.dependencies]
 leptos = "0.7"
-"#).unwrap();
+"#,
+        )
+        .unwrap();
 
         add_to_workspace_dependencies(&cargo_toml, "serde", "1.0", None).unwrap();
 
@@ -515,11 +511,15 @@ leptos = "0.7"
         let temp = TempDir::new().unwrap();
         let cargo_toml = temp.path().join("Cargo.toml");
 
-        fs::write(&cargo_toml, r#"[workspace]
+        fs::write(
+            &cargo_toml,
+            r#"[workspace]
 members = ["app"]
 
 [workspace.dependencies]
-"#).unwrap();
+"#,
+        )
+        .unwrap();
 
         add_to_workspace_dependencies(&cargo_toml, "icons", "0.3", Some(&["leptos"])).unwrap();
 
@@ -533,12 +533,16 @@ members = ["app"]
         let temp = TempDir::new().unwrap();
         let cargo_toml = temp.path().join("Cargo.toml");
 
-        fs::write(&cargo_toml, r#"[workspace]
+        fs::write(
+            &cargo_toml,
+            r#"[workspace]
 members = ["app"]
 
 [workspace.dependencies]
 icons = { version = "0.2", features = ["leptos"] }
-"#).unwrap();
+"#,
+        )
+        .unwrap();
 
         add_to_workspace_dependencies(&cargo_toml, "icons", "0.3", Some(&["leptos"])).unwrap();
 

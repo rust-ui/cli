@@ -6,7 +6,7 @@ use ratatui::widgets::{Block, Clear, Paragraph, Wrap};
 use super::super::app::App;
 use super::super::header::Tab;
 use super::super::widgets::popup::popup_area;
-use super::{tab1_components, tab2_hooks, tab3_blocks, tab4_icons, tab9_settings};
+use super::{tab1_components, tab2_hooks, tab3_blocks, tab4_icons, tab5_demos, tab9_settings};
 
 pub fn render(frame: &mut Frame, app: &mut App) {
     let chunks = Layout::vertical([Constraint::Length(3), Constraint::Min(0)]).split(frame.area());
@@ -20,6 +20,7 @@ pub fn render(frame: &mut Frame, app: &mut App) {
 
     match app.header.tabs.current {
         Tab::Components => tab1_components::draw_tab_components(frame, app, *content_area),
+        Tab::Demos => tab5_demos::draw_tab_demos(frame, app, *content_area),
         Tab::Hooks => tab2_hooks::draw_tab_hooks(frame, app, *content_area),
         Tab::Blocks => tab3_blocks::draw_tab_blocks(frame, app, *content_area),
         Tab::Icons => tab4_icons::draw_tab_icons(frame, app, *content_area),

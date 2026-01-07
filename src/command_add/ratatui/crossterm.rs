@@ -10,7 +10,7 @@ use ratatui::backend::{Backend, CrosstermBackend};
 
 use super::app::App;
 use super::header::Tab;
-use super::tabs::{_render, tab1_components, tab2_hooks};
+use super::tabs::{_render, tab1_components, tab2_hooks, tab5_demos};
 
 pub fn run(tick_rate: Duration, components: Vec<String>) -> Result<Vec<String>, Box<dyn Error>> {
     // Setup terminal
@@ -63,6 +63,16 @@ fn run_app<B: Backend>(
                         KeyCode::Esc => app.toggle_components_search(),
                         _ => {}
                     }
+                // Handle search mode in Demos tab
+                } else if app.demos_search_active && matches!(app.header.tabs.current, Tab::Demos) {
+                    match key.code {
+                        KeyCode::Char('j') | KeyCode::Down => app.on_down(),
+                        KeyCode::Char('k') | KeyCode::Up => app.on_up(),
+                        KeyCode::Char(c) => app.demos_search_input(c),
+                        KeyCode::Backspace => app.demos_search_backspace(),
+                        KeyCode::Esc => app.toggle_demos_search(),
+                        _ => {}
+                    }
                 // Handle search mode in Hooks tab
                 } else if app.hooks_search_active && matches!(app.header.tabs.current, Tab::Hooks) {
                     match key.code {
@@ -81,12 +91,20 @@ fn run_app<B: Backend>(
                         KeyCode::Char('/') if matches!(app.header.tabs.current, Tab::Components) => {
                             app.toggle_components_search();
                         }
+                        KeyCode::Char('/') if matches!(app.header.tabs.current, Tab::Demos) => {
+                            app.toggle_demos_search();
+                        }
                         KeyCode::Char('/') if matches!(app.header.tabs.current, Tab::Hooks) => {
                             app.toggle_hooks_search();
                         }
                         KeyCode::Char(' ') if matches!(app.header.tabs.current, Tab::Components) => {
                             if let Some(component) = tab1_components::get_selected_component(&app) {
                                 app.toggle_component_checkbox(&component);
+                            }
+                        }
+                        KeyCode::Char(' ') if matches!(app.header.tabs.current, Tab::Demos) => {
+                            if let Some(demo) = tab5_demos::get_selected_demo(&app) {
+                                app.toggle_demo_checkbox(&demo);
                             }
                         }
                         KeyCode::Char(' ') if matches!(app.header.tabs.current, Tab::Hooks) => {
@@ -109,6 +127,23 @@ fn run_app<B: Backend>(
                         {
                             // Return selected components
                             let selected: Vec<String> = app.components_checked.into_iter().collect();
+                            return Ok(selected);
+                        }
+                        KeyCode::Enter
+                            if matches!(app.header.tabs.current, Tab::Demos)
+                                && !app.show_popup
+                                && !app.demos_checked.is_empty() =>
+                        {
+                            app.toggle_popup();
+                        }
+                        // Confirm selection when Enter is pressed in popup for Demos
+                        KeyCode::Enter
+                            if matches!(app.header.tabs.current, Tab::Demos)
+                                && app.show_popup
+                                && !app.demos_checked.is_empty() =>
+                        {
+                            // Return selected demos
+                            let selected: Vec<String> = app.demos_checked.into_iter().collect();
                             return Ok(selected);
                         }
                         KeyCode::Enter
@@ -142,6 +177,25 @@ fn run_app<B: Backend>(
                         KeyCode::Esc
                             if matches!(app.header.tabs.current, Tab::Components) && app.show_popup =>
                         {
+                            app.toggle_popup();
+                        }
+                        KeyCode::Esc if matches!(app.header.tabs.current, Tab::Demos) && !app.show_popup => {
+                            // Handle double-tap Escape to deselect all demos
+                            let now = Instant::now();
+                            let is_double_tap = if let Some(last_time) = app.last_escape_time {
+                                now.duration_since(last_time).as_millis() < 500
+                            } else {
+                                false
+                            };
+
+                            if is_double_tap && !app.demos_checked.is_empty() {
+                                app.deselect_all_demos();
+                                app.last_escape_time = None;
+                            } else {
+                                app.last_escape_time = Some(now);
+                            }
+                        }
+                        KeyCode::Esc if matches!(app.header.tabs.current, Tab::Demos) && app.show_popup => {
                             app.toggle_popup();
                         }
                         KeyCode::Esc if matches!(app.header.tabs.current, Tab::Hooks) && !app.show_popup => {
@@ -212,6 +266,13 @@ fn run_app<B: Backend>(
                                     tab1_components::get_component_at_visual_index(&app, visual_index)
                             {
                                 app.toggle_component_checkbox(&component);
+                            }
+                            // Handle double-click on demo list items
+                            if let Some(visual_index) =
+                                app.get_demos_double_click_info(mouse.column, mouse.row, terminal_width)
+                                && let Some(demo) = tab5_demos::get_demo_at_visual_index(&app, visual_index)
+                            {
+                                app.toggle_demo_checkbox(&demo);
                             }
                             // Handle double-click on hook list items
                             if let Some(visual_index) =

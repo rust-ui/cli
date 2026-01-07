@@ -15,7 +15,8 @@ pub fn draw_tab_components(frame: &mut Frame, app: &mut App, area: Rect) {
     let horizontal_chunks =
         Layout::horizontal([Constraint::Percentage(35), Constraint::Percentage(65)]).split(area);
 
-    let (Some(&left_panel), Some(&right_panel)) = (horizontal_chunks.first(), horizontal_chunks.get(1)) else {
+    let (Some(&left_panel), Some(&right_panel)) = (horizontal_chunks.first(), horizontal_chunks.get(1))
+    else {
         return;
     };
 
