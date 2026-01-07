@@ -158,3 +158,92 @@ impl TreeParser {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const SAMPLE_TREE: &str = r#"
+* button (ui)
+** badge (ui)
+** cargo: some-crate
+
+* badge (ui)
+
+* card (ui)
+** button (ui)
+*** badge (ui)
+
+* demo_button (demos)
+** button (ui)
+"#;
+
+    #[test]
+    fn parse_tree_md_extracts_components() {
+        let parser = TreeParser::parse_tree_md(SAMPLE_TREE).unwrap();
+        let names = parser.get_all_component_names();
+        assert!(names.contains(&"button".to_string()));
+        assert!(names.contains(&"badge".to_string()));
+        assert!(names.contains(&"card".to_string()));
+        assert!(names.contains(&"demo_button".to_string()));
+    }
+
+    #[test]
+    fn parse_tree_md_extracts_dependencies() {
+        let parser = TreeParser::parse_tree_md(SAMPLE_TREE).unwrap();
+        let deps_map = parser.get_dependencies_map();
+
+        assert_eq!(deps_map.get("button").unwrap(), &vec!["badge".to_string()]);
+        assert!(deps_map.get("badge").unwrap().is_empty());
+        assert_eq!(deps_map.get("card").unwrap(), &vec!["button".to_string(), "badge".to_string()]);
+    }
+
+    #[test]
+    fn parse_tree_md_extracts_cargo_deps() {
+        let parser = TreeParser::parse_tree_md(SAMPLE_TREE).unwrap();
+        let entry = parser.components.get("button").unwrap();
+        assert!(entry.cargo_deps.contains(&"some-crate".to_string()));
+    }
+
+    #[test]
+    fn parse_tree_md_extracts_category() {
+        let parser = TreeParser::parse_tree_md(SAMPLE_TREE).unwrap();
+        assert_eq!(parser.components.get("button").unwrap().category, "ui");
+        assert_eq!(parser.components.get("demo_button").unwrap().category, "demos");
+    }
+
+    #[test]
+    fn get_all_component_names_sorted() {
+        let parser = TreeParser::parse_tree_md(SAMPLE_TREE).unwrap();
+        let names = parser.get_all_component_names();
+        let mut sorted = names.clone();
+        sorted.sort();
+        assert_eq!(names, sorted);
+    }
+
+    #[test]
+    fn resolve_dependencies_includes_transitive() {
+        let parser = TreeParser::parse_tree_md(SAMPLE_TREE).unwrap();
+        let resolved = parser.resolve_dependencies(&["card".to_string()]).unwrap();
+
+        assert!(resolved.components.contains("card"));
+        assert!(resolved.components.contains("button"));
+        assert!(resolved.components.contains("badge"));
+    }
+
+    #[test]
+    fn resolve_dependencies_collects_parent_dirs() {
+        let parser = TreeParser::parse_tree_md(SAMPLE_TREE).unwrap();
+        let resolved = parser.resolve_dependencies(&["demo_button".to_string()]).unwrap();
+
+        assert!(resolved.parent_dirs.contains("demos"));
+        assert!(resolved.parent_dirs.contains("ui"));
+    }
+
+    #[test]
+    fn resolve_dependencies_missing_component_skipped() {
+        let parser = TreeParser::parse_tree_md(SAMPLE_TREE).unwrap();
+        let resolved = parser.resolve_dependencies(&["nonexistent".to_string()]).unwrap();
+        assert!(resolved.components.is_empty());
+    }
+}
