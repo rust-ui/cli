@@ -15,9 +15,16 @@ pub fn draw_tab_hooks(frame: &mut Frame, app: &mut App, area: Rect) {
     let horizontal_chunks =
         Layout::horizontal([Constraint::Percentage(35), Constraint::Percentage(65)]).split(area);
 
+    let (Some(&left_panel), Some(&right_panel)) = (horizontal_chunks.first(), horizontal_chunks.get(1)) else {
+        return;
+    };
+
     // Split left panel vertically: search input at top, list below
-    let left_chunks =
-        Layout::vertical([Constraint::Length(3), Constraint::Min(0)]).split(horizontal_chunks[0]);
+    let left_chunks = Layout::vertical([Constraint::Length(3), Constraint::Min(0)]).split(left_panel);
+
+    let (Some(&search_area), Some(&list_area)) = (left_chunks.first(), left_chunks.get(1)) else {
+        return;
+    };
 
     // Filter hooks based on search query (prefix matching)
     let filtered_hooks = filter_items(HOOKS, &app.hooks_search_query);
@@ -63,25 +70,21 @@ pub fn draw_tab_hooks(frame: &mut Frame, app: &mut App, area: Rect) {
     }
 
     // Draw search input in left panel
-    draw_search_input(frame, &app.hooks_search_query, app.hooks_search_active, left_chunks[0]);
+    draw_search_input(frame, &app.hooks_search_query, app.hooks_search_active, search_area);
 
     // Render list in left panel
-    frame.render_stateful_widget(list, left_chunks[1], &mut app.hooks_list_state);
+    frame.render_stateful_widget(list, list_area, &mut app.hooks_list_state);
 
     // Render scrollbar in left panel
     frame.render_stateful_widget(
         Scrollbar::new(ScrollbarOrientation::VerticalRight).begin_symbol(Some("↑")).end_symbol(Some("↓")),
-        left_chunks[1],
+        list_area,
         &mut app.hooks_scroll_state,
     );
 
     // Right side: Detail panel
-    let selected_hook = if !filtered_hooks.is_empty() && app.hooks_scroll < filtered_hooks.len() {
-        Some(filtered_hooks[app.hooks_scroll])
-    } else {
-        None
-    };
-    draw_detail_panel(frame, selected_hook, app.hooks_checked.len(), "hook", horizontal_chunks[1]);
+    let selected_hook = filtered_hooks.get(app.hooks_scroll).copied();
+    draw_detail_panel(frame, selected_hook, app.hooks_checked.len(), "hook", right_panel);
 
     // Render popup if show_popup is true and there are checked hooks
     if app.show_popup && !app.hooks_checked.is_empty() {

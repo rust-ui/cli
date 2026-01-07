@@ -208,20 +208,17 @@ fn run_app<B: Backend>(
                             // Handle double-click on component list items
                             if let Some(visual_index) =
                                 app.get_components_double_click_info(mouse.column, mouse.row, terminal_width)
-                            {
-                                if let Some(component) =
+                                && let Some(component) =
                                     tab1_components::get_component_at_visual_index(&app, visual_index)
-                                {
-                                    app.toggle_component_checkbox(&component);
-                                }
+                            {
+                                app.toggle_component_checkbox(&component);
                             }
                             // Handle double-click on hook list items
                             if let Some(visual_index) =
                                 app.get_hooks_double_click_info(mouse.column, mouse.row, terminal_width)
+                                && let Some(hook) = tab2_hooks::get_hook_at_visual_index(&app, visual_index)
                             {
-                                if let Some(hook) = tab2_hooks::get_hook_at_visual_index(&app, visual_index) {
-                                    app.toggle_hook_checkbox(hook);
-                                }
+                                app.toggle_hook_checkbox(hook);
                             }
                             // Reset click tracking after double-click
                             app.last_click_time = None;

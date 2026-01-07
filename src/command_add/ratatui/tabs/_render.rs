@@ -11,15 +11,19 @@ use super::{tab1_components, tab2_hooks, tab3_blocks, tab4_icons, tab9_settings}
 pub fn render(frame: &mut Frame, app: &mut App) {
     let chunks = Layout::vertical([Constraint::Length(3), Constraint::Min(0)]).split(frame.area());
 
+    let (Some(header_area), Some(content_area)) = (chunks.first(), chunks.get(1)) else {
+        return;
+    };
+
     // Render header with tabs
-    app.header.render(frame, chunks[0]);
+    app.header.render(frame, *header_area);
 
     match app.header.tabs.current {
-        Tab::Components => tab1_components::draw_tab_components(frame, app, chunks[1]),
-        Tab::Hooks => tab2_hooks::draw_tab_hooks(frame, app, chunks[1]),
-        Tab::Blocks => tab3_blocks::draw_tab_blocks(frame, app, chunks[1]),
-        Tab::Icons => tab4_icons::draw_tab_icons(frame, app, chunks[1]),
-        Tab::Settings => tab9_settings::draw_tab_settings(frame, app, chunks[1]),
+        Tab::Components => tab1_components::draw_tab_components(frame, app, *content_area),
+        Tab::Hooks => tab2_hooks::draw_tab_hooks(frame, app, *content_area),
+        Tab::Blocks => tab3_blocks::draw_tab_blocks(frame, app, *content_area),
+        Tab::Icons => tab4_icons::draw_tab_icons(frame, app, *content_area),
+        Tab::Settings => tab9_settings::draw_tab_settings(frame, app, *content_area),
     };
 
     // Render help popup on top of everything

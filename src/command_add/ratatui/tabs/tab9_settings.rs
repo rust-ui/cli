@@ -13,9 +13,13 @@ pub fn draw_tab_settings(frame: &mut Frame, _app: &mut App, area: Rect) {
 
     let layout = Layout::vertical([Constraint::Percentage(50)]).split(inner_area);
 
+    let Some(&content_area) = layout.first() else {
+        return;
+    };
+
     let coming_soon = Paragraph::new("Coming soon")
         .alignment(Alignment::Center)
         .style(Style::default().fg(Color::DarkGray));
 
-    frame.render_widget(coming_soon, layout[0]);
+    frame.render_widget(coming_soon, content_area);
 }

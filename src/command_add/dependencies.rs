@@ -43,7 +43,11 @@ pub fn process_cargo_deps(cargo_deps: &[String]) -> CliResult<()> {
         spinner.set_message(&format!("📦 Adding crate: {dep}"));
 
         let result = if use_workspace_deps {
-            add_workspace_dependency(dep, workspace_info.as_ref().unwrap())
+            // Safe: use_workspace_deps is only true when workspace_info is Some with valid data
+            let Some(info) = workspace_info.as_ref() else {
+                return Err(CliError::cargo_operation("Workspace info unavailable"));
+            };
+            add_workspace_dependency(dep, info)
         } else {
             add_dependency_with_cargo(dep, &workspace_info)
         };
@@ -247,13 +251,11 @@ fn add_dependency_with_cargo(dep: &str, workspace_info: &Option<WorkspaceInfo>) 
 fn build_cargo_add_args(dep: &str, workspace_info: &Option<WorkspaceInfo>) -> Vec<String> {
     let mut args = vec!["add".to_string(), dep.to_string()];
 
-    if let Some(info) = workspace_info {
-        if info.is_workspace {
-            if let Some(crate_name) = &info.target_crate {
-                args.push("--package".to_string());
-                args.push(crate_name.clone());
-            }
-        }
+    if let Some(info) = workspace_info.as_ref().filter(|i| i.is_workspace)
+        && let Some(crate_name) = &info.target_crate
+    {
+        args.push("--package".to_string());
+        args.push(crate_name.clone());
     }
 
     args
