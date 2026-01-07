@@ -15,9 +15,16 @@ pub fn draw_tab_components(frame: &mut Frame, app: &mut App, area: Rect) {
     let horizontal_chunks =
         Layout::horizontal([Constraint::Percentage(35), Constraint::Percentage(65)]).split(area);
 
+    let (Some(&left_panel), Some(&right_panel)) = (horizontal_chunks.first(), horizontal_chunks.get(1)) else {
+        return;
+    };
+
     // Split left panel vertically: search input at top, list below
-    let left_chunks =
-        Layout::vertical([Constraint::Length(3), Constraint::Min(0)]).split(horizontal_chunks[0]);
+    let left_chunks = Layout::vertical([Constraint::Length(3), Constraint::Min(0)]).split(left_panel);
+
+    let (Some(&search_area), Some(&list_area)) = (left_chunks.first(), left_chunks.get(1)) else {
+        return;
+    };
 
     // Filter components based on search query (prefix matching)
     let components_refs: Vec<&str> = app.components.iter().map(|s| s.as_str()).collect();
@@ -69,32 +76,21 @@ pub fn draw_tab_components(frame: &mut Frame, app: &mut App, area: Rect) {
     }
 
     // Draw search input in left panel
-    draw_search_input(frame, &app.components_search_query, app.components_search_active, left_chunks[0]);
+    draw_search_input(frame, &app.components_search_query, app.components_search_active, search_area);
 
     // Render list in left panel
-    frame.render_stateful_widget(list, left_chunks[1], &mut app.components_list_state);
+    frame.render_stateful_widget(list, list_area, &mut app.components_list_state);
 
     // Render scrollbar in left panel
     frame.render_stateful_widget(
         Scrollbar::new(ScrollbarOrientation::VerticalRight).begin_symbol(Some("↑")).end_symbol(Some("↓")),
-        left_chunks[1],
+        list_area,
         &mut app.components_scroll_state,
     );
 
     // Right side: Detail panel
-    let selected_component =
-        if !filtered_components.is_empty() && app.components_scroll < filtered_components.len() {
-            Some(filtered_components[app.components_scroll])
-        } else {
-            None
-        };
-    draw_detail_panel(
-        frame,
-        selected_component,
-        app.components_checked.len(),
-        "component",
-        horizontal_chunks[1],
-    );
+    let selected_component = filtered_components.get(app.components_scroll).copied();
+    draw_detail_panel(frame, selected_component, app.components_checked.len(), "component", right_panel);
 
     // Render popup if show_popup is true and there are checked components
     if app.show_popup && !app.components_checked.is_empty() {

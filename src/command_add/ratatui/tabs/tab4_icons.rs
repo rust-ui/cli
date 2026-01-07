@@ -12,6 +12,10 @@ pub fn draw_tab_icons(frame: &mut Frame, app: &mut App, area: Rect) {
     // Horizontal flex layout: list on left, content on right
     let chunks = Layout::horizontal([Constraint::Percentage(30), Constraint::Percentage(70)]).split(area);
 
+    let (Some(&left_panel), Some(&right_panel)) = (chunks.first(), chunks.get(1)) else {
+        return;
+    };
+
     // Left panel: list of icons
     let items: Vec<ListItem> = ICON_ITEMS
         .iter()
@@ -33,12 +37,12 @@ pub fn draw_tab_icons(frame: &mut Frame, app: &mut App, area: Rect) {
     let mut state = ListState::default();
     state.select(Some(app.icons_selected));
 
-    frame.render_stateful_widget(list, chunks[0], &mut state);
+    frame.render_stateful_widget(list, left_panel, &mut state);
 
     // Right panel: icon preview
     let content_block = Block::bordered().title("Preview");
-    let inner_area = content_block.inner(chunks[1]);
-    frame.render_widget(content_block, chunks[1]);
+    let inner_area = content_block.inner(right_panel);
+    frame.render_widget(content_block, right_panel);
 
     let filename = match app.icons_selected {
         0 => "a_arrow_up.svg",

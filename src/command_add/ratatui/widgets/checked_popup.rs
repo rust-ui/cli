@@ -37,7 +37,7 @@ pub fn draw_checked_popup(
         )
     } else {
         // Format items in 4 columns for many items
-        let items_per_column = (checked_items.len() + 3) / 4;
+        let items_per_column = checked_items.len().div_ceil(4);
         let item_type_display =
             if checked_items.len() == 1 { item_type.to_string() } else { format!("{}s", item_type) };
         let mut lines = vec![format!("Checked {} ({})\n", item_type_display, checked_items.len())];

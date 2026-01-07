@@ -86,14 +86,43 @@ fn analyze_from_workspace_root(workspace_root: &Path, manifest: &Manifest) -> Cl
 
     for member_path in &members {
         let member_cargo_toml = member_path.join("Cargo.toml");
-        if let Some(member_manifest) = load_cargo_manifest(&member_cargo_toml)? {
-            // Check if this member has leptos in its dependencies
-            if member_manifest.dependencies.contains_key("leptos") {
+        if let Some(member_manifest) = load_cargo_manifest(&member_cargo_toml)?
+            && member_manifest.dependencies.contains_key("leptos")
+        {
+            let crate_name = member_manifest
+                .package
+                .as_ref()
+                .map(|p| p.name.clone())
+                .or_else(|| member_path.file_name().map(|n| n.to_string_lossy().to_string()))
+                .unwrap_or_default();
+
+            let relative_path = member_path.strip_prefix(workspace_root).unwrap_or(member_path);
+
+            return Ok(WorkspaceInfo {
+                is_workspace: true,
+                workspace_root: Some(workspace_root.to_path_buf()),
+                target_crate: Some(crate_name),
+                target_crate_path: Some(member_path.clone()),
+                components_base_path: format!("{}/src/components", relative_path.display()),
+            });
+        }
+    }
+
+    // Check workspace.dependencies for leptos
+    if workspace.dependencies.contains_key("leptos") {
+        // Leptos is in workspace deps, but we need to find which member uses it
+        for member_path in &members {
+            let member_cargo_toml = member_path.join("Cargo.toml");
+            if let Some(member_manifest) = load_cargo_manifest(&member_cargo_toml)?
+                && let Some(dep) = member_manifest.dependencies.get("leptos")
+                && matches!(dep, Dependency::Inherited(_))
+            {
                 let crate_name = member_manifest
                     .package
                     .as_ref()
                     .map(|p| p.name.clone())
-                    .unwrap_or_else(|| member_path.file_name().unwrap().to_string_lossy().to_string());
+                    .or_else(|| member_path.file_name().map(|n| n.to_string_lossy().to_string()))
+                    .unwrap_or_default();
 
                 let relative_path = member_path.strip_prefix(workspace_root).unwrap_or(member_path);
 
@@ -104,35 +133,6 @@ fn analyze_from_workspace_root(workspace_root: &Path, manifest: &Manifest) -> Cl
                     target_crate_path: Some(member_path.clone()),
                     components_base_path: format!("{}/src/components", relative_path.display()),
                 });
-            }
-        }
-    }
-
-    // Check workspace.dependencies for leptos
-    if workspace.dependencies.contains_key("leptos") {
-        // Leptos is in workspace deps, but we need to find which member uses it
-        for member_path in &members {
-            let member_cargo_toml = member_path.join("Cargo.toml");
-            if let Some(member_manifest) = load_cargo_manifest(&member_cargo_toml)? {
-                // Check if member references workspace leptos (inherited dependency)
-                if let Some(dep) = member_manifest.dependencies.get("leptos") {
-                    if matches!(dep, Dependency::Inherited(_)) {
-                        let crate_name =
-                            member_manifest.package.as_ref().map(|p| p.name.clone()).unwrap_or_else(|| {
-                                member_path.file_name().unwrap().to_string_lossy().to_string()
-                            });
-
-                        let relative_path = member_path.strip_prefix(workspace_root).unwrap_or(member_path);
-
-                        return Ok(WorkspaceInfo {
-                            is_workspace: true,
-                            workspace_root: Some(workspace_root.to_path_buf()),
-                            target_crate: Some(crate_name),
-                            target_crate_path: Some(member_path.clone()),
-                            components_base_path: format!("{}/src/components", relative_path.display()),
-                        });
-                    }
-                }
             }
         }
     }
@@ -167,7 +167,8 @@ fn analyze_from_workspace_member(member_path: &Path, workspace_root: &Path) -> C
         .package
         .as_ref()
         .map(|p| p.name.clone())
-        .unwrap_or_else(|| member_path.file_name().unwrap().to_string_lossy().to_string());
+        .or_else(|| member_path.file_name().map(|n| n.to_string_lossy().to_string()))
+        .unwrap_or_default();
 
     Ok(WorkspaceInfo {
         is_workspace: true,
@@ -185,12 +186,11 @@ fn find_workspace_root(start_path: &Path) -> CliResult<Option<PathBuf>> {
 
     while let Some(dir) = current {
         let cargo_toml = dir.join("Cargo.toml");
-        if cargo_toml.exists() {
-            if let Some(manifest) = load_cargo_manifest(&cargo_toml)? {
-                if manifest.workspace.is_some() {
-                    return Ok(Some(dir.to_path_buf()));
-                }
-            }
+        if cargo_toml.exists()
+            && let Some(manifest) = load_cargo_manifest(&cargo_toml)?
+            && manifest.workspace.is_some()
+        {
+            return Ok(Some(dir.to_path_buf()));
         }
         current = dir.parent();
     }

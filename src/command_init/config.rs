@@ -111,10 +111,10 @@ fn add_crate_to_workspace(
 fn add_crate_with_cargo(my_crate: &Crate, workspace_info: &Option<WorkspaceInfo>) -> CliResult<()> {
     let mut args = vec!["add".to_owned(), my_crate.name.to_owned()];
 
-    if let Some(info) = workspace_info.as_ref().filter(|i| i.is_workspace) {
-        if let Some(crate_name) = &info.target_crate {
-            args.extend(["--package".to_owned(), crate_name.clone()]);
-        }
+    if let Some(info) = workspace_info.as_ref().filter(|i| i.is_workspace)
+        && let Some(crate_name) = &info.target_crate
+    {
+        args.extend(["--package".to_owned(), crate_name.clone()]);
     }
 
     if let Some(features) = my_crate.features.filter(|f| !f.is_empty()) {
@@ -250,18 +250,18 @@ fn fetch_latest_version(crate_name: &str) -> CliResult<String> {
 
     let stdout = String::from_utf8_lossy(&output.stdout);
     for line in stdout.lines() {
-        if line.starts_with(crate_name) {
-            if let Some(version_part) = line.split('=').nth(1) {
-                let version = version_part
-                    .trim()
-                    .trim_matches('"')
-                    .split_whitespace()
-                    .next()
-                    .unwrap_or("")
-                    .trim_matches('"');
-                if !version.is_empty() {
-                    return Ok(version.to_string());
-                }
+        if line.starts_with(crate_name)
+            && let Some(version_part) = line.split('=').nth(1)
+        {
+            let version = version_part
+                .trim()
+                .trim_matches('"')
+                .split_whitespace()
+                .next()
+                .unwrap_or("")
+                .trim_matches('"');
+            if !version.is_empty() {
+                return Ok(version.to_string());
             }
         }
     }
