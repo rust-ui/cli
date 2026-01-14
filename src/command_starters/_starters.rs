@@ -24,9 +24,6 @@ pub fn command_starters() -> Command {
 #[derive(Display, EnumString, EnumIter)]
 #[strum(serialize_all = "kebab-case")]
 enum StarterTemplate {
-    Trunk,
-    LeptosSsr,
-    LeptosSsrWorkspace,
     Tauri,
     TauriFullstack,
 }
