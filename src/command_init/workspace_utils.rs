@@ -244,6 +244,81 @@ pub fn check_leptos_dependency() -> CliResult<bool> {
     }
 }
 
+/// Gets the tailwind input file path from Cargo.toml metadata.
+/// Reads from `[[workspace.metadata.leptos]]` or `[package.metadata.leptos]`.
+/// Returns an error if not found - user must add Leptos metadata to Cargo.toml.
+pub fn get_tailwind_input_file() -> CliResult<String> {
+    let current_dir = std::env::current_dir()?;
+    get_tailwind_input_file_from_path(&current_dir)
+}
+
+/// Gets the tailwind input file from a specific path (useful for testing)
+pub fn get_tailwind_input_file_from_path(start_path: &Path) -> CliResult<String> {
+    // First try the local Cargo.toml
+    let local_cargo_toml = start_path.join("Cargo.toml");
+    if let Some(manifest) = load_cargo_manifest(&local_cargo_toml)?
+        && let Some(tailwind_file) = extract_tailwind_from_manifest(&manifest)
+    {
+        return Ok(tailwind_file);
+    }
+
+    // If not found, try to find workspace root and read from there
+    if let Some(workspace_root) = find_workspace_root(start_path)?
+        && let Some(manifest) = load_cargo_manifest(&workspace_root.join("Cargo.toml"))?
+        && let Some(tailwind_file) = extract_tailwind_from_manifest(&manifest)
+    {
+        return Ok(tailwind_file);
+    }
+
+    Err(CliError::config(
+        "Missing `tailwind-input-file` in Cargo.toml. \
+        Please add Leptos metadata to your Cargo.toml:\n\n\
+        [package.metadata.leptos]\n\
+        tailwind-input-file = \"style/tailwind.css\"\n\n\
+        Or for workspaces:\n\n\
+        [[workspace.metadata.leptos]]\n\
+        tailwind-input-file = \"style/tailwind.css\"",
+    ))
+}
+
+/// Extracts tailwind-input-file from a parsed Manifest
+fn extract_tailwind_from_manifest(manifest: &Manifest) -> Option<String> {
+    // Try workspace.metadata.leptos (array of tables stored as Value)
+    if let Some(workspace) = &manifest.workspace
+        && let Some(metadata) = &workspace.metadata
+        && let Some(leptos_value) = metadata.get("leptos")
+    {
+        // [[workspace.metadata.leptos]] is an array
+        if let Some(array) = leptos_value.as_array() {
+            if let Some(first) = array.first() {
+                if let Some(tailwind) = first.get("tailwind-input-file") {
+                    if let Some(value) = tailwind.as_str() {
+                        return Some(value.to_string());
+                    }
+                }
+            }
+        }
+        // [workspace.metadata.leptos] could also be a table
+        if let Some(tailwind) = leptos_value.get("tailwind-input-file") {
+            if let Some(value) = tailwind.as_str() {
+                return Some(value.to_string());
+            }
+        }
+    }
+
+    // Try package.metadata.leptos (single table)
+    if let Some(package) = &manifest.package
+        && let Some(metadata) = &package.metadata
+        && let Some(leptos) = metadata.get("leptos")
+        && let Some(tailwind) = leptos.get("tailwind-input-file")
+        && let Some(value) = tailwind.as_str()
+    {
+        return Some(value.to_string());
+    }
+
+    None
+}
+
 /* ========================================================== */
 /*                     ✨ HELPERS ✨                          */
 /* ========================================================== */
@@ -528,5 +603,158 @@ axum = "0.7"
         assert!(info.workspace_root.is_none());
         assert!(info.target_crate.is_none());
         assert_eq!(info.components_base_path, "src/components");
+    }
+
+    // ========== Tailwind Input File Tests ==========
+
+    #[test]
+    fn test_get_tailwind_from_workspace_metadata() {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path();
+
+        write_cargo_toml(
+            root,
+            r#"
+[workspace]
+members = ["app"]
+
+[[workspace.metadata.leptos]]
+name = "my-app"
+tailwind-input-file = "style/main.css"
+"#,
+        );
+
+        let result = get_tailwind_input_file_from_path(root).unwrap();
+        assert_eq!(result, "style/main.css");
+    }
+
+    #[test]
+    fn test_get_tailwind_from_package_metadata() {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path();
+
+        write_cargo_toml(
+            root,
+            r#"
+[package]
+name = "my-app"
+version = "0.1.0"
+
+[package.metadata.leptos]
+tailwind-input-file = "assets/tailwind.css"
+"#,
+        );
+
+        let result = get_tailwind_input_file_from_path(root).unwrap();
+        assert_eq!(result, "assets/tailwind.css");
+    }
+
+    #[test]
+    fn test_get_tailwind_from_workspace_root_when_in_member() {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path();
+
+        // Create workspace root with tailwind config
+        write_cargo_toml(
+            root,
+            r#"
+[workspace]
+members = ["app"]
+
+[[workspace.metadata.leptos]]
+name = "my-app"
+tailwind-input-file = "style/global.css"
+"#,
+        );
+
+        // Create member without tailwind config
+        let app_dir = root.join("app");
+        fs::create_dir_all(&app_dir).unwrap();
+        write_cargo_toml(
+            &app_dir,
+            r#"
+[package]
+name = "app"
+version = "0.1.0"
+
+[dependencies]
+leptos = "0.7"
+"#,
+        );
+
+        // Should find tailwind from workspace root
+        let result = get_tailwind_input_file_from_path(&app_dir).unwrap();
+        assert_eq!(result, "style/global.css");
+    }
+
+    #[test]
+    fn test_get_tailwind_missing_returns_error() {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path();
+
+        write_cargo_toml(
+            root,
+            r#"
+[package]
+name = "my-app"
+version = "0.1.0"
+
+[dependencies]
+leptos = "0.7"
+"#,
+        );
+
+        let result = get_tailwind_input_file_from_path(root);
+        assert!(result.is_err());
+
+        let err_msg = result.unwrap_err().to_string();
+        assert!(err_msg.contains("tailwind-input-file"));
+        assert!(err_msg.contains("Cargo.toml"));
+    }
+
+    #[test]
+    fn test_get_tailwind_no_cargo_toml_returns_error() {
+        let temp = TempDir::new().unwrap();
+
+        let result = get_tailwind_input_file_from_path(temp.path());
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_get_tailwind_prefers_local_over_workspace() {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path();
+
+        // Create workspace root with one tailwind config
+        write_cargo_toml(
+            root,
+            r#"
+[workspace]
+members = ["app"]
+
+[[workspace.metadata.leptos]]
+name = "workspace-app"
+tailwind-input-file = "style/workspace.css"
+"#,
+        );
+
+        // Create member with its own tailwind config
+        let app_dir = root.join("app");
+        fs::create_dir_all(&app_dir).unwrap();
+        write_cargo_toml(
+            &app_dir,
+            r#"
+[package]
+name = "app"
+version = "0.1.0"
+
+[package.metadata.leptos]
+tailwind-input-file = "style/local.css"
+"#,
+        );
+
+        // Should prefer local config
+        let result = get_tailwind_input_file_from_path(&app_dir).unwrap();
+        assert_eq!(result, "style/local.css");
     }
 }

@@ -12,7 +12,7 @@ const PACKAGE_JSON: &str = "package.json";
 use super::config::{UiConfig, add_init_crates};
 use super::install::InstallType;
 use super::user_input::UserInput;
-use super::workspace_utils::check_leptos_dependency;
+use super::workspace_utils::{check_leptos_dependency, get_tailwind_input_file};
 use crate::command_init::install::install_dependencies;
 use crate::command_init::template::MyTemplate;
 use crate::shared::cli_error::{CliError, CliResult};
@@ -41,8 +41,10 @@ pub async fn process_init() -> CliResult<()> {
         ));
     }
 
-    let ui_config = UiConfig::default();
+    // Get tailwind input file from Cargo.toml metadata
+    let tailwind_input_file = get_tailwind_input_file()?;
 
+    let ui_config = UiConfig::default();
     let ui_config_toml = toml::to_string_pretty(&ui_config)?;
 
     // ui_config.toml - always write (config file)
@@ -52,7 +54,7 @@ pub async fn process_init() -> CliResult<()> {
     merge_package_json(PACKAGE_JSON, MyTemplate::PACKAGE_JSON).await?;
 
     // tailwind.css - ask before overwriting if exists
-    write_template_with_confirmation(&ui_config.tailwind_input_file, MyTemplate::STYLE_TAILWIND_CSS).await?;
+    write_template_with_confirmation(&tailwind_input_file, MyTemplate::STYLE_TAILWIND_CSS).await?;
 
     add_init_crates().await?;
 
