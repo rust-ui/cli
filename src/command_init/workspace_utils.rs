@@ -324,7 +324,9 @@ fn extract_tailwind_from_manifest(manifest: &Manifest) -> Option<String> {
 /* ========================================================== */
 
 /// Helper function to load a Cargo.toml manifest from a path
-fn load_cargo_manifest(cargo_toml_path: &Path) -> CliResult<Option<Manifest>> {
+/// Loads and parses a Cargo.toml file into a Manifest struct.
+/// Returns None if the file doesn't exist, Ok(Manifest) if parsed successfully.
+pub fn load_cargo_manifest(cargo_toml_path: &Path) -> CliResult<Option<Manifest>> {
     if !cargo_toml_path.exists() {
         return Ok(None);
     }
