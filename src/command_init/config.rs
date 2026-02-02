@@ -15,11 +15,13 @@ use crate::shared::task_spinner::TaskSpinner;
 /// UiConfig - Minimal configuration stored in ui_config.toml
 /// Workspace detection is done dynamically via analyze_workspace()
 ///
+/// Note: `tailwind_input_file` is read from Cargo.toml metadata (not stored here)
+/// to avoid duplication with Leptos configuration.
+///
 #[derive(Debug, Deserialize, Serialize, PartialEq, PartialOrd)]
 pub struct UiConfig {
     pub base_color: String,
     pub base_path_components: String,
-    pub tailwind_input_file: String,
 }
 
 impl UiConfig {
@@ -44,7 +46,6 @@ impl Default for UiConfig {
         UiConfig {
             base_color: "neutral".to_string(),
             base_path_components,
-            tailwind_input_file: "style/tailwind.css".to_string(),
         }
     }
 }
