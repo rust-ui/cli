@@ -759,4 +759,116 @@ tailwind-input-file = "style/local.css"
         let result = get_tailwind_input_file_from_path(&app_dir).unwrap();
         assert_eq!(result, "style/local.css");
     }
+
+    #[test]
+    fn test_get_tailwind_multiple_leptos_entries_uses_first() {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path();
+
+        // Multiple [[workspace.metadata.leptos]] entries - should use first
+        write_cargo_toml(
+            root,
+            r#"
+[workspace]
+members = ["app"]
+
+[[workspace.metadata.leptos]]
+name = "first-app"
+tailwind-input-file = "style/first.css"
+
+[[workspace.metadata.leptos]]
+name = "second-app"
+tailwind-input-file = "style/second.css"
+"#,
+        );
+
+        let result = get_tailwind_input_file_from_path(root).unwrap();
+        assert_eq!(result, "style/first.css");
+    }
+
+    #[test]
+    fn test_get_tailwind_workspace_single_table_format() {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path();
+
+        // [workspace.metadata.leptos] as single table (not array)
+        write_cargo_toml(
+            root,
+            r#"
+[workspace]
+members = ["app"]
+
+[workspace.metadata.leptos]
+tailwind-input-file = "style/single.css"
+"#,
+        );
+
+        let result = get_tailwind_input_file_from_path(root).unwrap();
+        assert_eq!(result, "style/single.css");
+    }
+
+    #[test]
+    fn test_get_tailwind_metadata_exists_but_no_leptos_key() {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path();
+
+        write_cargo_toml(
+            root,
+            r#"
+[package]
+name = "my-app"
+version = "0.1.0"
+
+[package.metadata]
+some-other-tool = { key = "value" }
+"#,
+        );
+
+        let result = get_tailwind_input_file_from_path(root);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_get_tailwind_leptos_exists_but_no_tailwind_key() {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path();
+
+        write_cargo_toml(
+            root,
+            r#"
+[package]
+name = "my-app"
+version = "0.1.0"
+
+[package.metadata.leptos]
+name = "my-app"
+site-root = "target/site"
+"#,
+        );
+
+        let result = get_tailwind_input_file_from_path(root);
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn test_get_tailwind_empty_value() {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path();
+
+        write_cargo_toml(
+            root,
+            r#"
+[package]
+name = "my-app"
+version = "0.1.0"
+
+[package.metadata.leptos]
+tailwind-input-file = ""
+"#,
+        );
+
+        // Empty string is technically valid - returns empty
+        let result = get_tailwind_input_file_from_path(root).unwrap();
+        assert_eq!(result, "");
+    }
 }
