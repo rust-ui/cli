@@ -562,4 +562,81 @@ icons = { version = "0.2", features = ["leptos"] }
         assert!(contents.contains(r#"version = "0.2""#), "should keep original version: {contents}");
         assert_eq!(contents.matches("icons").count(), 1, "should not duplicate: {contents}");
     }
+
+    #[test]
+    fn test_has_workspace_dependencies_section_empty_deps() {
+        let temp = TempDir::new().unwrap();
+        let root = temp.path();
+
+        // Empty [workspace.dependencies] section (no deps defined)
+        fs::write(
+            root.join("Cargo.toml"),
+            r#"[workspace]
+members = ["app"]
+
+[workspace.dependencies]
+"#,
+        )
+        .unwrap();
+
+        let info = WorkspaceInfo {
+            is_workspace: true,
+            workspace_root: Some(root.to_path_buf()),
+            target_crate: Some("app".to_string()),
+            target_crate_path: Some(root.join("app")),
+            components_base_path: "app/src/components".to_string(),
+        };
+
+        // Empty section should return false (no deps to use)
+        assert!(!has_workspace_dependencies_section(&Some(info)));
+    }
+
+    #[test]
+    fn test_get_workspace_dependencies_nonexistent_workspace_root() {
+        let temp = TempDir::new().unwrap();
+        let nonexistent_path = temp.path().join("does-not-exist");
+
+        let info = WorkspaceInfo {
+            is_workspace: true,
+            workspace_root: Some(nonexistent_path),
+            target_crate: Some("app".to_string()),
+            target_crate_path: None,
+            components_base_path: "app/src/components".to_string(),
+        };
+
+        // Should return empty set, not panic
+        let deps = get_workspace_dependencies(&Some(info));
+        assert!(deps.is_empty());
+    }
+
+    #[test]
+    fn test_has_workspace_dependencies_nonexistent_workspace_root() {
+        let temp = TempDir::new().unwrap();
+        let nonexistent_path = temp.path().join("does-not-exist");
+
+        let info = WorkspaceInfo {
+            is_workspace: true,
+            workspace_root: Some(nonexistent_path),
+            target_crate: Some("app".to_string()),
+            target_crate_path: None,
+            components_base_path: "app/src/components".to_string(),
+        };
+
+        // Should return false, not panic
+        assert!(!has_workspace_dependencies_section(&Some(info)));
+    }
+
+    #[test]
+    fn test_get_workspace_dependencies_with_workspace_root_none() {
+        let info = WorkspaceInfo {
+            is_workspace: true,
+            workspace_root: None, // workspace but no root path
+            target_crate: Some("app".to_string()),
+            target_crate_path: None,
+            components_base_path: "app/src/components".to_string(),
+        };
+
+        let deps = get_workspace_dependencies(&Some(info));
+        assert!(deps.is_empty());
+    }
 }
