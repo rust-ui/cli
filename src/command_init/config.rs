@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 use toml_edit::{DocumentMut, Item, Value};
 
 use crate::command_init::crates::{Crate, INIT_CRATES};
-use crate::command_init::workspace_utils::{WorkspaceInfo, analyze_workspace, check_leptos_dependency};
+use crate::command_init::workspace_utils::{WorkspaceInfo, analyze_workspace, check_leptos_dependency, load_cargo_manifest};
 use crate::shared::cli_error::{CliError, CliResult};
 use crate::shared::task_spinner::TaskSpinner;
 
@@ -140,27 +140,38 @@ fn add_crate_with_cargo(my_crate: &Crate, workspace_info: &Option<WorkspaceInfo>
 /*                     ✨ HELPERS ✨                          */
 /* ========================================================== */
 
-fn parse_workspace_cargo_toml(workspace_info: &Option<WorkspaceInfo>) -> Option<DocumentMut> {
-    let info = workspace_info.as_ref().filter(|i| i.is_workspace)?;
-    let root = info.workspace_root.as_ref()?;
-    let contents = fs::read_to_string(root.join("Cargo.toml")).ok()?;
-    contents.parse().ok()
-}
-
+/// Checks if the workspace has a [workspace.dependencies] section.
+/// Uses cargo_toml::Manifest for consistent parsing with the rest of the codebase.
 fn has_workspace_dependencies_section(workspace_info: &Option<WorkspaceInfo>) -> bool {
-    parse_workspace_cargo_toml(workspace_info)
-        .and_then(|doc| doc.get("workspace")?.get("dependencies").cloned())
-        .is_some()
+    let Some(info) = workspace_info.as_ref().filter(|i| i.is_workspace) else {
+        return false;
+    };
+    let Some(root) = &info.workspace_root else {
+        return false;
+    };
+
+    load_cargo_manifest(&root.join("Cargo.toml"))
+        .ok()
+        .flatten()
+        .and_then(|manifest| manifest.workspace)
+        .is_some_and(|ws| !ws.dependencies.is_empty())
 }
 
+/// Gets the list of dependencies defined in [workspace.dependencies].
+/// Uses cargo_toml::Manifest for consistent parsing with the rest of the codebase.
 fn get_workspace_dependencies(workspace_info: &Option<WorkspaceInfo>) -> HashSet<String> {
-    parse_workspace_cargo_toml(workspace_info)
-        .and_then(|doc| {
-            doc.get("workspace")?
-                .get("dependencies")?
-                .as_table()
-                .map(|t| t.iter().map(|(k, _)| k.to_string()).collect())
-        })
+    let Some(info) = workspace_info.as_ref().filter(|i| i.is_workspace) else {
+        return HashSet::new();
+    };
+    let Some(root) = &info.workspace_root else {
+        return HashSet::new();
+    };
+
+    load_cargo_manifest(&root.join("Cargo.toml"))
+        .ok()
+        .flatten()
+        .and_then(|manifest| manifest.workspace)
+        .map(|ws| ws.dependencies.keys().cloned().collect())
         .unwrap_or_default()
 }
 
