@@ -14,6 +14,7 @@ mod command_docs;
 mod command_info;
 mod command_init;
 mod command_list;
+mod command_mcp;
 mod command_search;
 mod command_starters;
 mod command_update;
@@ -43,7 +44,8 @@ async fn main() {
         .subcommand(command_diff::_diff::command_diff())
         .subcommand(command_docs::_docs::command_docs())
         .subcommand(command_starters::_starters::command_starters())
-        .subcommand(command_view::_view::command_view());
+        .subcommand(command_view::_view::command_view())
+        .subcommand(command_mcp::_mcp::command_mcp());
 
     let matches = mut_program.clone().get_matches();
 
@@ -109,6 +111,20 @@ async fn main() {
                 process::exit(1);
             }
         }
+        Some(("mcp", sub_matches)) => match sub_matches.subcommand() {
+            Some(("init", init_matches)) => {
+                if let Err(e) = command_mcp::_mcp::process_mcp_init(init_matches) {
+                    eprintln!("{e}");
+                    process::exit(1);
+                }
+            }
+            _ => {
+                if let Err(e) = command_mcp::_mcp::process_mcp_server().await {
+                    eprintln!("{e}");
+                    process::exit(1);
+                }
+            }
+        },
         _ => {
             if let Err(err) = mut_program.print_help() {
                 eprintln!("Error printing help: {err}");
