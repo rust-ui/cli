@@ -21,9 +21,17 @@ cargo run --bin ui starters
 crates/ui-cli/
 ├── src/
 │   ├── command_add/          # Component installation logic
+│   ├── command_docs/         # ui docs command
+│   ├── command_info/         # ui info command
 │   ├── command_init/         # Project initialization
+│   ├── command_list/         # ui list command
 │   ├── command_starters/     # Starter template cloning
 │   └── shared/               # Shared utilities
 └── Cargo.toml               # Binary configuration
 ```
+
+## Workflow Rules
+
+- **CHANGELOG.md**: Update `CHANGELOG.md` every time a new feature, fix, or change is added. New work goes under `## Unreleased`. Keep entries concise and user-facing.
+- **Version**: When bumping the crate version in `Cargo.toml`, move `## Unreleased` entries to the new version section in `CHANGELOG.md` at the same time.
 

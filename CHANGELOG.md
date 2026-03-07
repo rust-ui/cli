@@ -4,6 +4,8 @@
 
 ### Added
 
+- `ui list` — lists all available components from the registry grouped by category (grep-friendly, one component per line)
+- `ui info --json` — machine-readable JSON output for `ui info`, useful for scripting and AI tooling
 - `ui docs` — opens `https://rust-ui.com` in the system default browser (cross-platform: `open` / `xdg-open` / `start`)
 - `ui add --dry-run` / `-n` — resolves all dependencies and previews which files would be written, overwritten, or skipped without touching the filesystem; output is sorted for determinism
 

@@ -12,6 +12,7 @@ mod command_add;
 mod command_docs;
 mod command_info;
 mod command_init;
+mod command_list;
 mod command_starters;
 mod shared;
 
@@ -32,6 +33,7 @@ async fn main() {
         .subcommand(command_init::_init::command_init())
         .subcommand(command_add::_add::command_add())
         .subcommand(command_info::_info::command_info())
+        .subcommand(command_list::_list::command_list())
         .subcommand(command_docs::_docs::command_docs())
         .subcommand(command_starters::_starters::command_starters());
 
@@ -51,8 +53,14 @@ async fn main() {
                 process::exit(1);
             }
         }
-        Some(("info", _)) => {
-            if let Err(e) = command_info::_info::process_info() {
+        Some(("info", sub_matches)) => {
+            if let Err(e) = command_info::_info::process_info(sub_matches) {
+                eprintln!("{e}");
+                process::exit(1);
+            }
+        }
+        Some(("list", _)) => {
+            if let Err(e) = command_list::_list::process_list().await {
                 eprintln!("{e}");
                 process::exit(1);
             }
