@@ -493,6 +493,22 @@ mod tests {
         assert!(out.contains("Would add cargo deps"));
         assert!(out.contains("Would install JS files"));
     }
+
+    // --- command_add flag wiring ---
+
+    #[test]
+    fn command_add_diff_flag_is_registered() {
+        let m = command_add().try_get_matches_from(["add", "button", "--diff"]).unwrap();
+        assert!(m.get_flag("diff"));
+        assert!(!m.get_flag("view"));
+    }
+
+    #[test]
+    fn command_add_view_flag_is_registered() {
+        let m = command_add().try_get_matches_from(["add", "button", "--view"]).unwrap();
+        assert!(m.get_flag("view"));
+        assert!(!m.get_flag("diff"));
+    }
 }
 
 /// Download and install JS files to the user's public directory
