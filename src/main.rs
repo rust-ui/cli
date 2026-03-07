@@ -53,9 +53,24 @@ async fn main() {
     match matches.subcommand() {
         Some(("init", sub_matches)) => {
             let force = sub_matches.get_flag("yes") || sub_matches.get_flag("force");
-            if let Err(e) = command_init::_init::process_init(force).await {
-                eprintln!("{e}");
-                process::exit(1);
+            let reinstall = if sub_matches.get_flag("reinstall") { Some(true) } else { None };
+            match command_init::_init::process_init(force, reinstall).await {
+                Err(e) => {
+                    eprintln!("{e}");
+                    process::exit(1);
+                }
+                Ok(outcome) if !outcome.to_reinstall.is_empty() => {
+                    if let Err(e) = command_add::_add::process_add_components(
+                        outcome.to_reinstall,
+                        &outcome.base_path,
+                    )
+                    .await
+                    {
+                        eprintln!("{e}");
+                        process::exit(1);
+                    }
+                }
+                Ok(_) => {}
             }
         }
         Some(("add", sub_matches)) => {
