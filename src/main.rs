@@ -9,6 +9,7 @@ use std::process;
 use clap::Command;
 
 mod command_add;
+mod command_diff;
 mod command_docs;
 mod command_info;
 mod command_init;
@@ -38,6 +39,7 @@ async fn main() {
         .subcommand(command_list::_list::command_list())
         .subcommand(command_search::_search::command_search())
         .subcommand(command_update::_update::command_update())
+        .subcommand(command_diff::_diff::command_diff())
         .subcommand(command_docs::_docs::command_docs())
         .subcommand(command_starters::_starters::command_starters());
 
@@ -77,6 +79,12 @@ async fn main() {
         }
         Some(("update", sub_matches)) => {
             if let Err(e) = command_update::_update::process_update(sub_matches).await {
+                eprintln!("{e}");
+                process::exit(1);
+            }
+        }
+        Some(("diff", sub_matches)) => {
+            if let Err(e) = command_diff::_diff::process_diff(sub_matches).await {
                 eprintln!("{e}");
                 process::exit(1);
             }

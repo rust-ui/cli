@@ -1,5 +1,13 @@
 # rust-ui CLI — Changelog
 
+## Unreleased
+
+### Added
+
+- `ui diff` — shows a line-by-line diff of installed components vs the registry; supports a single component (`ui diff button`) or all installed components at once; supports `--json` for machine-readable output
+
+---
+
 ## 0.3.8
 
 ### Added
