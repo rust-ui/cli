@@ -4,6 +4,8 @@
 
 ### Added
 
+- `ui search <query>` — filters the registry by name (case-insensitive); supports `--json` for scripted output
+- `ui list --json` — machine-readable JSON output for `ui list` (`{ total, categories: { ... } }`)
 - `ui list` — lists all available components from the registry grouped by category (grep-friendly, one component per line)
 - `ui info --json` — machine-readable JSON output for `ui info`, useful for scripting and AI tooling
 - `ui docs` — opens `https://rust-ui.com` in the system default browser (cross-platform: `open` / `xdg-open` / `start`)
