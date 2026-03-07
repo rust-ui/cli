@@ -6,6 +6,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Building and Testing
 ```bash
+# For manual end-to-end testing, use the _TMP/ directory (gitignored) as a throwaway project.
+
 # Run with specific commands (examples from main.rs)
 cargo run --bin ui init
 cargo run --bin ui add button demo_button demo_button_variants demo_button_sizes
