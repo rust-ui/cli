@@ -14,15 +14,17 @@ Features that shadcn CLI has that our `ui-cli` currently lacks.
   │  init               │  ✅ Full              │  ✅ Basic                      │
   │  add                │  ✅ Full              │  ✅ Full + TUI                 │
   │  starters           │  ❌                   │  ✅ (tauri, tauri-fullstack)   │
-  │  diff               │  ✅ (deprecated)      │  ❌                            │
-  │  search             │  ✅                   │  ❌                            │
-  │  migrate            │  ✅                   │  ❌                            │
-  │  info               │  ✅                   │  ❌                            │
-  │  build              │  ✅                   │  ❌                            │
+  │  diff               │  ✅ (deprecated)      │  ✅                            │
+  │  search             │  ✅                   │  ✅                            │
+  │  list               │  ❌                   │  ✅ (rust-ui exclusive)        │
+  │  update             │  ❌                   │  ✅ (rust-ui exclusive)        │
+  │  info               │  ✅                   │  ✅                            │
+  │  docs               │  ✅                   │  ✅                            │
+  │  view               │  ✅                   │  ✅                            │
+  │  migrate            │  ✅                   │  ❌ (not needed)               │
+  │  build              │  ✅                   │  ❌ (not needed)               │
   │  mcp                │  ✅                   │  ❌                            │
-  │  registry           │  ✅ (registry:add)    │  ❌                            │
-  │  docs               │  ✅                   │  ❌                            │
-  │  view               │  ✅                   │  ❌                            │
+  │  registry           │  ✅ (registry:add)    │  ❌ (not needed)               │
   └─────────────────────┴───────────────────────┴───────────────────────────────┘
 
   ---
@@ -72,11 +74,11 @@ Features that shadcn CLI has that our `ui-cli` currently lacks.
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
   │ --all flag                        │ ✅                             │ ❌                                                                       │
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
-  │ --dry-run                         │ ✅                             │ ❌                                                                       │
+  │ --dry-run                         │ ✅                             │ ✅                                                                       │
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
   │ --diff / --view                   │ ✅                             │ ❌                                                                       │
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
-  │ --path override                   │ ✅                             │ ❌                                                                       │
+  │ --path override                   │ ✅                             │ ✅                                                                       │
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
   │ JS file dependency download       │ ❌                             │ ✅                                                                       │
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
@@ -88,28 +90,18 @@ Features that shadcn CLI has that our `ui-cli` currently lacks.
   └───────────────────────────────────┴────────────────────────────────┴──────────────────────────────────────────────────────────────────────────┘
 
   ---
-  Commands only in shadcn (missing in rust-ui)
+  Commands only in shadcn (not needed / not planned for rust-ui)
 
   ┌──────────────┬───────────────────────────────────────────────────────────────────────────────────────────────────┐
   │   Command    │                                           What it does                                            │
   ├──────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────┤
-  │ diff         │ Show line-by-line diff of local component vs registry (now add --diff)                            │
+  │ migrate      │ Run migrations: icons, radix, rtl — auto-refactors source files (not needed)                      │
   ├──────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────┤
-  │ search       │ Search items from any registry by query, with pagination                                          │
-  ├──────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────┤
-  │ migrate      │ Run migrations: icons, radix, rtl — auto-refactors source files                                   │
-  ├──────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────┤
-  │ info         │ Print project config, framework detected, installed components, resolved paths                    │
-  ├──────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────┤
-  │ build        │ Build registry items from local source (for publishing custom registries)                         │
+  │ build        │ Build registry items from local source (for publishing custom registries) (not needed)            │
   ├──────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────┤
   │ mcp          │ Start an MCP server so AI tools (Claude, Cursor, VS Code, Codex) can call shadcn programmatically │
   ├──────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────┤
-  │ registry add │ Add a registry source to the project config                                                       │
-  ├──────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────┤
-  │ docs         │ Open docs in browser                                                                              │
-  ├──────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────┤
-  │ view         │ View file contents from registry without installing                                               │
+  │ registry add │ Add a registry source to the project config (not needed)                                          │
   └──────────────┴───────────────────────────────────────────────────────────────────────────────────────────────────┘
 
 
