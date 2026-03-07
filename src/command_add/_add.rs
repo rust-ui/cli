@@ -15,9 +15,16 @@ use crate::shared::cli_error::{CliError, CliResult};
 use crate::shared::rust_ui_client::RustUIClient;
 
 pub fn command_add() -> Command {
-    Command::new("add").about("Add components and dependencies to your project").arg(
-        Arg::new("components").help("The components to add (space-separated)").required(false).num_args(1..),
-    )
+    Command::new("add")
+        .about("Add components and dependencies to your project")
+        .arg(Arg::new("components").help("The components to add (space-separated)").required(false).num_args(1..))
+        .arg(
+            Arg::new("yes")
+                .short('y')
+                .long("yes")
+                .help("Overwrite existing files without prompting")
+                .action(clap::ArgAction::SetTrue),
+        )
 }
 
 /* ========================================================== */
@@ -28,6 +35,7 @@ pub fn command_add() -> Command {
 pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     let user_components: Vec<String> =
         matches.get_many::<String>("components").unwrap_or_default().cloned().collect();
+    let force = matches.get_flag("yes");
 
     // Fetch and parse tree.md
     let tree_content = RustUIClient::fetch_tree_md().await?;
@@ -105,7 +113,7 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
         }
 
         let outcome =
-            RegistryComponent::fetch_from_registry(component_name.clone()).await?.then_write_to_file(false).await?;
+            RegistryComponent::fetch_from_registry(component_name.clone()).await?.then_write_to_file(force).await?;
 
         match outcome {
             super::registry::WriteOutcome::Written => written.push(component_name),
