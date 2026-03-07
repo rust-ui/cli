@@ -89,9 +89,20 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     Components::register_components_in_application_entry(entry_file_path.as_str())?;
 
     // Components to add
+    let mut written: Vec<String> = Vec::new();
+    let mut skipped: Vec<String> = Vec::new();
+
     for component_name in all_resolved_components {
-        RegistryComponent::fetch_from_registry(component_name).await?.then_write_to_file().await?;
+        let outcome =
+            RegistryComponent::fetch_from_registry(component_name.clone()).await?.then_write_to_file(false).await?;
+
+        match outcome {
+            super::registry::WriteOutcome::Written => written.push(component_name),
+            super::registry::WriteOutcome::Skipped => skipped.push(component_name),
+        }
     }
+
+    print_add_summary(&written, &skipped);
 
     // Handle cargo dependencies if any exist
     if !all_resolved_cargo_dependencies.is_empty() {
@@ -104,6 +115,79 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     }
 
     Ok(())
+}
+
+/* ========================================================== */
+/*                     ✨ SUMMARY ✨                          */
+/* ========================================================== */
+
+fn print_add_summary(written: &[String], skipped: &[String]) {
+    let summary = format_add_summary(written, skipped);
+    if !summary.is_empty() {
+        println!("{summary}");
+    }
+}
+
+pub fn format_add_summary(written: &[String], skipped: &[String]) -> String {
+    let mut lines: Vec<String> = Vec::new();
+
+    if !written.is_empty() {
+        lines.push(format!("✅ Added:   {}", written.join(", ")));
+    }
+    if !skipped.is_empty() {
+        lines.push(format!("⏭  Skipped: {} (already exist)", skipped.join(", ")));
+    }
+
+    lines.join("\n")
+}
+
+/* ========================================================== */
+/*                        🧪 TESTS 🧪                         */
+/* ========================================================== */
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn s(v: &[&str]) -> Vec<String> {
+        v.iter().map(|s| s.to_string()).collect()
+    }
+
+    #[test]
+    fn summary_all_written() {
+        let result = format_add_summary(&s(&["button", "badge"]), &[]);
+        assert_eq!(result, "✅ Added:   button, badge");
+    }
+
+    #[test]
+    fn summary_all_skipped() {
+        let result = format_add_summary(&[], &s(&["card"]));
+        assert_eq!(result, "⏭  Skipped: card (already exist)");
+    }
+
+    #[test]
+    fn summary_mixed() {
+        let result = format_add_summary(&s(&["button"]), &s(&["card"]));
+        assert_eq!(result, "✅ Added:   button\n⏭  Skipped: card (already exist)");
+    }
+
+    #[test]
+    fn summary_empty() {
+        let result = format_add_summary(&[], &[]);
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn summary_single_written() {
+        let result = format_add_summary(&s(&["badge"]), &[]);
+        assert_eq!(result, "✅ Added:   badge");
+    }
+
+    #[test]
+    fn summary_multiple_skipped() {
+        let result = format_add_summary(&[], &s(&["button", "card", "badge"]));
+        assert_eq!(result, "⏭  Skipped: button, card, badge (already exist)");
+    }
 }
 
 /// Download and install JS files to the user's public directory
