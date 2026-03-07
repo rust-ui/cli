@@ -38,6 +38,18 @@ pub fn command_add() -> Command {
                 .help("Override the output directory for components (default: base_path_components from ui_config.toml)")
                 .value_name("PATH"),
         )
+        .arg(
+            Arg::new("view")
+                .long("view")
+                .help("View registry source for each component without installing")
+                .action(clap::ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new("diff")
+                .long("diff")
+                .help("Show a diff of what would change for each component without installing")
+                .action(clap::ArgAction::SetTrue),
+        )
 }
 
 /* ========================================================== */
@@ -50,6 +62,8 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
         matches.get_many::<String>("components").unwrap_or_default().cloned().collect();
     let force = matches.get_flag("yes");
     let dry_run = matches.get_flag("dry-run");
+    let view_flag = matches.get_flag("view");
+    let diff_flag = matches.get_flag("diff");
     let path_override: Option<String> = matches.get_one::<String>("path").cloned();
     let has_path_override = path_override.is_some();
 
@@ -92,6 +106,48 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
 
     // Track which components the user explicitly requested for prompt decisions
     let user_requested: HashSet<String> = user_components.iter().cloned().collect();
+
+    // --view: print registry source for each resolved component, then exit
+    if view_flag {
+        let mut names = all_resolved_components.clone();
+        names.sort();
+        for component_name in &names {
+            let content = RustUIClient::fetch_styles_default(component_name).await?;
+            println!("{}", crate::command_view::_view::format_view_human(component_name, &content));
+        }
+        return Ok(());
+    }
+
+    // --diff: show diff vs local files for each resolved component, then exit
+    if diff_flag {
+        use crate::command_diff::_diff::{ComponentDiff, DiffStatus, compute_diff, format_diff_human};
+        let mut names = all_resolved_components.clone();
+        names.sort();
+        let mut diffs: Vec<ComponentDiff> = Vec::new();
+        for component_name in &names {
+            let component_type = super::component_type::ComponentType::from_component_name(component_name);
+            let local_path =
+                Path::new(&base_path).join(component_type.to_path()).join(format!("{component_name}.rs"));
+            match RustUIClient::fetch_styles_default(component_name).await {
+                Ok(remote_content) => {
+                    let local_content = std::fs::read_to_string(&local_path).unwrap_or_default();
+                    let diff_lines = compute_diff(&local_content, &remote_content);
+                    let has_changes = diff_lines.iter().any(|l| !matches!(l, crate::command_diff::_diff::DiffLine::Same(_)));
+                    let status = if has_changes { DiffStatus::Changed } else { DiffStatus::UpToDate };
+                    diffs.push(ComponentDiff { name: component_name.clone(), status, lines: diff_lines });
+                }
+                Err(_) => {
+                    diffs.push(ComponentDiff {
+                        name: component_name.clone(),
+                        status: DiffStatus::NotInRegistry,
+                        lines: vec![],
+                    });
+                }
+            }
+        }
+        println!("{}", format_diff_human(&diffs));
+        return Ok(());
+    }
 
     // Dry-run: show what would happen without touching the filesystem
     if dry_run {
