@@ -1,10 +1,6 @@
 # UI CLI
 
-A **CLI tool** to add any number of components to your project, or to start a new project from scratch. 
-It works for **Leptos** at the moment, but it will be extended to other frameworks in the future. 
-All the components are built using **Tailwind CSS**.
-
-
+A CLI tool to add **rust-ui** components to your Leptos project.
 
 ## Installation
 
@@ -12,61 +8,31 @@ All the components are built using **Tailwind CSS**.
 cargo install ui-cli --force
 ```
 
-
 ## Commands
 
-### 1. Starters (optional, quick start)
-
-If you want to start very easily with all setup for you, run this:
-
 ```bash
-ui starters # Optional, quick start
+ui starters                  # clone a starter project
+ui init                      # set up an existing project
+ui add button card           # add components
+ui list                      # browse all components
+ui search <query>            # search components by name
+ui view <name>               # view a component's source
+ui diff                      # compare installed vs registry
+ui update                    # check for outdated components
+ui mcp                       # start the MCP server (for AI editors)
+ui mcp init --client claude  # write editor config for MCP
 ```
 
+## MCP (AI Editor Integration)
 
-### 2. Init (existing projects)
+Run `ui mcp init --client <claude|cursor|vscode|opencode>` once in your project.
+Your editor will auto-connect and can then browse, search, and add components for you.
 
-If you want add components to an existing project, run this:
+## Links
 
-```bash
-ui init
-```
-
-This command will setup everything for you to then add components easily.
-
-
-### 3. Add
-
-For adding new components, you just need to run this:
-
-```bash
-ui add button
-# ui add demo_card demo_button
-# └──> Works with any number of components
-```
-
-
-## Example in Production
-
-This crate is used in [rust-ui.com](https://www.rust-ui.com) — check it out to see UI CLI in action :)
-
-
-
-
-
-## Contributions 💪
-
-Still room for improvements.
-
-Any contribution is welcome!
-
-
-
-## Changelog
-
-See [CHANGELOG.md](./CHANGELOG.md) for the full release history.
-
+- Docs & components: [rust-ui.com](https://www.rust-ui.com)
+- Changelog: [CHANGELOG.md](./CHANGELOG.md)
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
+MIT — see [LICENSE](./LICENSE).
