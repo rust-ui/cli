@@ -267,6 +267,13 @@ mod tests {
     }
 
     #[test]
+    fn resolve_dependencies_collects_cargo_deps() {
+        let parser = TreeParser::parse_tree_md(SAMPLE_TREE).unwrap();
+        let resolved = parser.resolve_dependencies(&["button".to_string()]).unwrap();
+        assert!(resolved.cargo_deps.contains("some-crate"));
+    }
+
+    #[test]
     fn resolve_dependencies_includes_transitive() {
         let parser = TreeParser::parse_tree_md(SAMPLE_TREE).unwrap();
         let resolved = parser.resolve_dependencies(&["card".to_string()]).unwrap();
