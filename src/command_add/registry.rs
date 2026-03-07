@@ -239,8 +239,7 @@ fn write_component_name_in_mod_rs_if_not_exists(
 
     // Check if the component already exists
     if mod_rs_content.contains(&component_name) {
-        println!("Component {component_name} already exists in mod.rs");
-        return Ok(()); // Exit the function if the component already exists
+        return Ok(());
     }
 
     // Append the component name to mod.rs

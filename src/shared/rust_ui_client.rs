@@ -16,10 +16,6 @@ impl RustUIClient {
         format!("{}/styles/default/{component_name}.md", Self::BASE_URL)
     }
 
-    pub fn styles_index_url() -> String {
-        format!("{}/styles/index.json", Self::BASE_URL)
-    }
-
     fn js_file_url(path: &str) -> String {
         format!("{}{path}", Self::SITE_URL)
     }
@@ -52,15 +48,6 @@ impl RustUIClient {
         let markdown_content = response.text().await.map_err(|_| CliError::registry_request_failed())?;
 
         extract_rust_code_from_markdown(&markdown_content).ok_or_else(CliError::registry_component_missing)
-    }
-
-    pub async fn fetch_styles_index() -> CliResult<String> {
-        let response = Self::fetch_response(&Self::styles_index_url()).await?;
-        let json =
-            response.json::<serde_json::Value>().await.map_err(|_| CliError::registry_invalid_format())?;
-
-        serde_json::to_string_pretty(&json)
-            .map_err(|err| CliError::malformed_registry(&format!("Failed to convert to pretty JSON: {err}")))
     }
 
     /// Fetch a JS file from the site (e.g., /hooks/lock_scroll.js)
