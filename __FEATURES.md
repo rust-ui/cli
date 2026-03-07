@@ -155,7 +155,7 @@ Print a diagnostic summary of the current project:
 - Links to docs, component source, schema
 - `--json` flag for machine-readable output
 
-### `build`
+### `build` _(not planned)_
 Build registry items from local source files so a custom registry can be published.
 - Read local component source
 - Validate against registry schema
@@ -184,7 +184,7 @@ Open the rust-ui documentation in the default browser.
 | `--dry-run` | Preview which files would be written/overwritten without actually writing anything |
 | `--overwrite` / `-o` | Overwrite existing files without prompting |
 | `--yes` / `-y` | Skip all confirmation prompts (useful for CI/scripting) |
-| `--all` / `-a` | Add all available components at once |
+| `--all` / `-a` | Add all available components at once _(not planned)_ |
 | `--path <path>` | Override the output directory for the component |
 | `--silent` / `-s` | Suppress output |
 | Overwrite prompt | When a component already exists, prompt the user before overwriting (noted in TODOS.md) |
