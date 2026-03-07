@@ -39,6 +39,7 @@ impl BaseColor {
         Self::ALL.iter().map(|c| c.label()).collect()
     }
 
+    #[allow(dead_code)]
     pub fn from_str(s: &str) -> Option<Self> {
         Self::ALL.iter().copied().find(|c| c.label().eq_ignore_ascii_case(s))
     }
@@ -146,6 +147,7 @@ impl AccentColor {
         Self::ALL.iter().map(|c| c.label()).collect()
     }
 
+    #[allow(dead_code)]
     pub fn from_str(s: &str) -> Option<Self> {
         Self::ALL.iter().copied().find(|c| c.label().eq_ignore_ascii_case(s))
     }

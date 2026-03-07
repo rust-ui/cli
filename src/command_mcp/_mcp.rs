@@ -57,11 +57,11 @@ pub fn process_mcp_init(matches: &ArgMatches) -> CliResult<()> {
             let labels = ["Claude Code", "Cursor", "VS Code", "OpenCode"];
             let idx = Select::new()
                 .with_prompt("Which editor are you using?")
-                .items(&labels)
+                .items(labels)
                 .default(0)
                 .interact()
                 .map_err(|e| CliError::file_operation(&e.to_string()))?;
-            names[idx].to_string()
+            names.get(idx).copied().unwrap_or("claude").to_string()
         }
     };
 

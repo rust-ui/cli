@@ -66,7 +66,7 @@ pub fn command_init() -> Command {
 ///
 /// - `force`     – overwrite existing files without prompting (`--yes` / `--force`)
 /// - `reinstall` – `Some(true)` = always reinstall components, `Some(false)` = never,
-///                 `None` = prompt when existing components are detected
+///   `None` = prompt when existing components are detected
 pub async fn process_init(force: bool, reinstall: Option<bool>) -> CliResult<InitOutcome> {
     // Check if Leptos is installed before proceeding
     if !check_leptos_dependency()? {
@@ -100,9 +100,11 @@ pub async fn process_init(force: bool, reinstall: Option<bool>) -> CliResult<Ini
     let mut config_backup = FileBackup::new(Path::new(UI_CONFIG_TOML))
         .map_err(|e| CliError::file_operation(&e.to_string()))?;
 
-    let mut ui_config = UiConfig::default();
-    ui_config.base_color = base_color.label().to_lowercase();
-    ui_config.color_theme = accent_color.label().to_lowercase();
+    let ui_config = UiConfig {
+        base_color: base_color.label().to_lowercase(),
+        color_theme: accent_color.label().to_lowercase(),
+        ..UiConfig::default()
+    };
     let ui_config_toml = toml::to_string_pretty(&ui_config)?;
 
     // ui_config.toml - always write (config file)
