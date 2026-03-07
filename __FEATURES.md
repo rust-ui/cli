@@ -21,10 +21,10 @@ Features that shadcn CLI has that our `ui-cli` currently lacks.
   │  info               │  ✅                   │  ✅                            │
   │  docs               │  ✅                   │  ✅                            │
   │  view               │  ✅                   │  ✅                            │
+  │  mcp                │  ✅                   │  🚧 planned (see __FEATURES_MCP.md) │
   │  migrate            │  ✅                   │  ❌ (not needed)               │
   │  build              │  ✅                   │  ❌ (not needed)               │
-  │  mcp                │  ✅                   │  ❌                            │
-  │  registry           │  ✅ (registry:add)    │  ❌ (not needed)               │
+  │  registry add       │  ✅                   │  ❌ (not needed)               │
   └─────────────────────┴───────────────────────┴───────────────────────────────┘
 
   ---
@@ -35,17 +35,19 @@ Features that shadcn CLI has that our `ui-cli` currently lacks.
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
   │ Framework auto-detection                    │ ✅ (Next, Vite, Astro, Laravel, React Router…) │ ❌                    │
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
-  │ Monorepo support                            │ ✅                                             │ ❌                    │
+  │ Monorepo / workspace support                │ ✅                                             │ ✅ (workspace_utils)  │
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
   │ Multiple templates                          │ ✅ 7 templates                                 │ ❌                    │
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
-  │ Theme presets / color base selection        │ ✅                                             │ ❌                    │
+  │ Theme presets / color base selection        │ ✅ interactive                                 │ ⚠️ auto-selects Default│
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
   │ CSS variables toggle                        │ ✅                                             │ ❌                    │
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
   │ RTL support                                 │ ✅                                             │ ❌                    │
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
-  │ Overwrite config prompt                     │ ✅                                             │ ❌ (TODO in TODOS.md) │
+  │ Overwrite config prompt                     │ ✅                                             │ ✅                    │
+  ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
+  │ --yes / --force / --defaults flags          │ ✅                                             │ ❌                    │
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
   │ Re-install existing components              │ ✅                                             │ ❌                    │
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
@@ -70,15 +72,19 @@ Features that shadcn CLI has that our `ui-cli` currently lacks.
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
   │ Interactive TUI picker            │ ❌ (simple multiselect prompt) │ ✅ Ratatui with tabs (components, hooks, blocks, icons, demos, settings) │
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
-  │ Overwrite prompt                  │ ✅                             │ ❌ (TODO)                                                                │
+  │ Overwrite prompt (interactive)    │ ✅                             │ ✅                                                                       │
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
-  │ --all flag                        │ ✅                             │ ❌                                                                       │
+  │ --yes / --overwrite flag          │ ✅                             │ ❌                                                                       │
+  ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+  │ --all flag                        │ ✅                             │ ❌ (not planned)                                                         │
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
   │ --dry-run                         │ ✅                             │ ✅                                                                       │
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
   │ --diff / --view                   │ ✅                             │ ✅                                                                       │
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
   │ --path override                   │ ✅                             │ ✅                                                                       │
+  ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+  │ --json output                     │ ✅                             │ ✅ (list, search, diff, update, view, info)                              │
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
   │ JS file dependency download       │ ❌                             │ ✅                                                                       │
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
@@ -99,105 +105,42 @@ Features that shadcn CLI has that our `ui-cli` currently lacks.
   ├──────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────┤
   │ build        │ Build registry items from local source (for publishing custom registries) (not needed)            │
   ├──────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────┤
-  │ mcp          │ Start an MCP server so AI tools (Claude, Cursor, VS Code, Codex) can call shadcn programmatically │
-  ├──────────────┼───────────────────────────────────────────────────────────────────────────────────────────────────┤
   │ registry add │ Add a registry source to the project config (not needed)                                          │
   └──────────────┴───────────────────────────────────────────────────────────────────────────────────────────────────┘
 
 
-  
 
 ---
 
-## Commands to Add
+## Features Still Missing
 
-### `diff` (or `add --diff`)
-Show a line-by-line diff between the locally installed component and the latest version in the registry.
-- Without arguments: scan all installed components and report which ones have updates available
-- With a component name: show the exact diff for that component
-- `add --diff [path]` — inline diff during add
-- `add --view [path]` — view registry file contents without installing
+### `mcp` command
+Start the CLI as an MCP server so AI coding tools (Claude Code, Cursor, VS Code) can call it programmatically.
+See `__FEATURES_MCP.md` for the full design.
 
-### `search` (alias: `list`)
-Query items from the registry.
-```
-ui search <registry> --query <string> --limit <n> --offset <n>
-```
-- Accept registry names or URLs
-- Filter by query string
-- Paginate results (limit/offset)
-- Output as JSON
+### `add --yes` / `--overwrite` flag
+Skip the interactive overwrite prompt non-interactively. Needed for CI / scripting.
+Currently the CLI always prompts when a file already exists.
 
-### `migrate`
-Run automated code migrations when the library evolves.
-Available migrations in shadcn:
-- `icons` — migrate UI components to a different icon library
-- `rtl` — add RTL (right-to-left) support to components
-- Accept a path/glob pattern to limit scope
-- `--list` to enumerate available migrations
-- `--yes` to skip confirmation
+### `add` — deprecated component warnings
+Warn when a requested component is deprecated in the registry.
 
-### `info`
-Print a diagnostic summary of the current project:
-- Detected framework and version
-- Tailwind version and config path
-- CSS variables / RTL / icon library settings
-- All configured import aliases and resolved paths
-- List of currently installed components
-- Links to docs, component source, schema
-- `--json` flag for machine-readable output
+### `init --yes` / `--force` / `--defaults` flags
+Skip all prompts and use defaults. Needed for scripted/CI environments.
 
-### `build` _(not planned)_
-Build registry items from local source files so a custom registry can be published.
-- Read local component source
-- Validate against registry schema
-- Output registry-compatible JSON files
+### `init` — backup/restore on failure
+Back up existing config before writing; restore if the process exits unexpectedly.
 
-### `mcp`
-Expose the CLI as an MCP (Model Context Protocol) server so AI coding tools can call it programmatically.
-- `ui mcp` — start the MCP stdio server
-- `ui mcp init --client <client>` — write MCP config for a specific client
-  - Supported clients: Claude Code, Cursor, VS Code, Codex, OpenCode
-  - Merges config into the client's existing config file (`.mcp.json`, `.cursor/mcp.json`, etc.)
+### `init` — re-install existing components
+After re-running `ui init`, offer to re-download and overwrite already installed components.
 
-### `registry add`
-Register a custom or third-party registry URL in the project config (`ui_config.toml`).
-
-### `docs`
-Open the rust-ui documentation in the default browser.
-
----
-
-## Flags / Options to Add to Existing Commands
-
-### `add` command
-| Flag | Description |
-|---|---|
-| `--dry-run` | Preview which files would be written/overwritten without actually writing anything |
-| `--overwrite` / `-o` | Overwrite existing files without prompting |
-| `--yes` / `-y` | Skip all confirmation prompts (useful for CI/scripting) |
-| `--all` / `-a` | Add all available components at once _(not planned)_ |
-| `--path <path>` | Override the output directory for the component ✅ |
-| `--silent` / `-s` | Suppress output |
-| Overwrite prompt | When a component already exists, prompt the user before overwriting (noted in TODOS.md) |
-| Deprecated component warnings | Warn when a requested component is deprecated |
-
-### `init` command
-| Flag / Behavior | Description |
-|---|---|
-| Overwrite prompt | Ask before overwriting existing `ui_config.toml` (noted in TODOS.md) |
-| `--force` / `-f` | Force overwrite of existing config without prompting |
-| `--yes` / `-y` | Skip all confirmation prompts |
-| `--silent` / `-s` | Suppress output |
-| Re-install existing components | Offer to re-download and overwrite already installed components |
-| Backup/restore on failure | Back up config before writing; restore on unexpected exit |
-| `--defaults` / `-d` | Use a default config without any prompts |
+### `init` — interactive theme/color picker
+Currently auto-selects the Default style. Should let the user pick a base color
+(neutral, zinc, slate, stone…) interactively during init.
 
 ---
 
 ## Quality-of-Life Improvements
 
-- **Installed component tracking** — know which components are installed at what version, to power `diff` and update detection
-- **Monorepo awareness** — detect if running from a workspace root and guide the user to the right sub-package
-- **`--json` output** on relevant commands for scripting/AI consumption
 - **Custom registry support** — allow users to point `add`/`search` at a non-default registry URL
+- **`--silent` flag** — suppress all output (for scripting)
