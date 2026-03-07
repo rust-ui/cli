@@ -1,4 +1,5 @@
-use clap::Command;
+use clap::{Arg, ArgMatches, Command};
+use serde::Serialize;
 
 use crate::command_add::installed::get_installed_components;
 use crate::command_init::config::UiConfig;
@@ -8,19 +9,44 @@ use crate::shared::cli_error::CliResult;
 const UI_CONFIG_TOML: &str = "ui_config.toml";
 
 /* ========================================================== */
+/*                        📦 TYPES 📦                         */
+/* ========================================================== */
+
+#[derive(Serialize)]
+pub struct InfoData {
+    pub config_file: String,
+    pub base_color: String,
+    pub base_path: String,
+    pub workspace: Option<bool>,
+    pub target_crate: Option<String>,
+    pub installed: Vec<String>,
+}
+
+/* ========================================================== */
 /*                         🦀 MAIN 🦀                         */
 /* ========================================================== */
 
 pub fn command_info() -> Command {
-    Command::new("info").about("Show project configuration and installed components")
+    Command::new("info")
+        .about("Show project configuration and installed components")
+        .arg(
+            Arg::new("json")
+                .long("json")
+                .help("Output as JSON")
+                .action(clap::ArgAction::SetTrue),
+        )
 }
 
-pub fn process_info() -> CliResult<()> {
+pub fn process_info(matches: &ArgMatches) -> CliResult<()> {
+    let json = matches.get_flag("json");
+
     let config = UiConfig::try_reading_ui_config(UI_CONFIG_TOML)?;
     let installed = get_installed_components(&config.base_path_components);
     let workspace = analyze_workspace().ok();
 
-    let output = format_info(&config.base_color, &config.base_path_components, &installed, workspace.as_ref());
+    let data = build_info_data(&config.base_color, &config.base_path_components, &installed, workspace.as_ref());
+
+    let output = if json { format_info_json(&data)? } else { format_info(&data) };
     println!("{output}");
     Ok(())
 }
@@ -29,38 +55,63 @@ pub fn process_info() -> CliResult<()> {
 /*                     ✨ HELPERS ✨                          */
 /* ========================================================== */
 
-/// Pure formatter — takes plain data, returns the info string. Fully testable.
-pub fn format_info(
+pub fn build_info_data(
     base_color: &str,
     base_path: &str,
     installed: &std::collections::HashSet<String>,
     workspace: Option<&crate::command_init::workspace_utils::WorkspaceInfo>,
-) -> String {
+) -> InfoData {
+    let mut sorted_installed: Vec<String> = installed.iter().cloned().collect();
+    sorted_installed.sort();
+
+    let (ws_flag, target_crate) = match workspace {
+        Some(ws) => (Some(ws.is_workspace), ws.target_crate.clone()),
+        None => (None, None),
+    };
+
+    InfoData {
+        config_file: UI_CONFIG_TOML.to_string(),
+        base_color: base_color.to_string(),
+        base_path: base_path.to_string(),
+        workspace: ws_flag,
+        target_crate,
+        installed: sorted_installed,
+    }
+}
+
+/// Human-readable formatter.
+pub fn format_info(data: &InfoData) -> String {
     let mut lines: Vec<String> = Vec::new();
 
-    lines.push(format!("  Config file   ui_config.toml"));
-    lines.push(format!("  Base color    {base_color}"));
-    lines.push(format!("  Base path     {base_path}"));
+    lines.push(format!("  Config file   {}", data.config_file));
+    lines.push(format!("  Base color    {}", data.base_color));
+    lines.push(format!("  Base path     {}", data.base_path));
 
-    if let Some(ws) = workspace {
-        let workspace_label = if ws.is_workspace { "yes" } else { "no" };
-        lines.push(format!("  Workspace     {workspace_label}"));
-        if let Some(ref crate_name) = ws.target_crate {
-            lines.push(format!("  Target crate  {crate_name}"));
-        }
+    if let Some(is_workspace) = data.workspace {
+        lines.push(format!("  Workspace     {}", if is_workspace { "yes" } else { "no" }));
+    }
+    if let Some(ref crate_name) = data.target_crate {
+        lines.push(format!("  Target crate  {crate_name}"));
     }
 
-    let count = installed.len();
+    let count = data.installed.len();
     if count == 0 {
         lines.push("  Installed     none".to_string());
     } else {
-        let mut sorted: Vec<&String> = installed.iter().collect();
-        sorted.sort();
-        lines.push(format!("  Installed ({count})  {}", sorted.iter().map(|s| s.as_str()).collect::<Vec<_>>().join(", ")));
+        lines.push(format!("  Installed ({count})  {}", data.installed.join(", ")));
     }
 
     lines.join("\n")
 }
+
+/// Machine-readable JSON formatter.
+pub fn format_info_json(data: &InfoData) -> CliResult<String> {
+    serde_json::to_string_pretty(data).map_err(Into::into)
+}
+
+/* ========================================================== */
+/*                     ✨ HELPERS ✨                          */
+/* ========================================================== */
 
 /* ========================================================== */
 /*                        🧪 TESTS 🧪                         */
@@ -101,9 +152,15 @@ mod tests {
         })
     }
 
+    fn data(color: &str, path: &str, names: &[&str], ws: Option<WorkspaceInfo>) -> InfoData {
+        build_info_data(color, path, &installed(names), ws.as_ref())
+    }
+
+    // --- format_info (human-readable) ---
+
     #[test]
     fn shows_config_fields() {
-        let result = format_info("neutral", "src/components", &installed(&[]), no_workspace().as_ref());
+        let result = format_info(&data("neutral", "src/components", &[], no_workspace()));
         assert!(result.contains("ui_config.toml"));
         assert!(result.contains("neutral"));
         assert!(result.contains("src/components"));
@@ -111,52 +168,106 @@ mod tests {
 
     #[test]
     fn shows_none_when_no_components_installed() {
-        let result = format_info("neutral", "src/components", &installed(&[]), no_workspace().as_ref());
+        let result = format_info(&data("neutral", "src/components", &[], no_workspace()));
         assert!(result.contains("none"));
     }
 
     #[test]
     fn shows_installed_components_sorted() {
-        let result = format_info("neutral", "src/components", &installed(&["card", "button", "badge"]), no_workspace().as_ref());
+        let result = format_info(&data("neutral", "src/components", &["card", "button", "badge"], no_workspace()));
         assert!(result.contains("badge, button, card"));
     }
 
     #[test]
     fn shows_installed_count() {
-        let result = format_info("neutral", "src/components", &installed(&["button", "badge"]), no_workspace().as_ref());
+        let result = format_info(&data("neutral", "src/components", &["button", "badge"], no_workspace()));
         assert!(result.contains("(2)"));
     }
 
     #[test]
     fn shows_workspace_no_when_single_crate() {
-        let result = format_info("neutral", "src/components", &installed(&[]), single_crate_workspace().as_ref());
-        assert!(result.contains("Workspace     no") || result.contains("no"));
+        let result = format_info(&data("neutral", "src/components", &[], single_crate_workspace()));
+        assert!(result.contains("no"));
     }
 
     #[test]
     fn shows_workspace_yes_when_in_workspace() {
-        let result = format_info("neutral", "src/components", &installed(&[]), full_workspace().as_ref());
+        let result = format_info(&data("neutral", "src/components", &[], full_workspace()));
         assert!(result.contains("yes"));
         assert!(result.contains("frontend"));
     }
 
     #[test]
     fn shows_target_crate_when_available() {
-        let result = format_info("neutral", "src/components", &installed(&[]), single_crate_workspace().as_ref());
+        let result = format_info(&data("neutral", "src/components", &[], single_crate_workspace()));
         assert!(result.contains("my-app"));
     }
 
     #[test]
     fn no_workspace_info_omits_workspace_line() {
-        let result = format_info("neutral", "src/components", &installed(&[]), no_workspace().as_ref());
+        let result = format_info(&data("neutral", "src/components", &[], no_workspace()));
         assert!(!result.contains("Workspace"));
         assert!(!result.contains("Target crate"));
     }
 
     #[test]
     fn single_installed_component() {
-        let result = format_info("neutral", "src/components", &installed(&["button"]), no_workspace().as_ref());
+        let result = format_info(&data("neutral", "src/components", &["button"], no_workspace()));
         assert!(result.contains("(1)"));
         assert!(result.contains("button"));
+    }
+
+    // --- format_info_json ---
+
+    #[test]
+    fn json_output_is_valid_json() {
+        let d = data("neutral", "src/components", &["button"], no_workspace());
+        let json = format_info_json(&d).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert!(parsed.is_object());
+    }
+
+    #[test]
+    fn json_contains_all_fields() {
+        let d = data("neutral", "src/components", &["button"], no_workspace());
+        let json = format_info_json(&d).unwrap();
+        assert!(json.contains("base_color"));
+        assert!(json.contains("base_path"));
+        assert!(json.contains("config_file"));
+        assert!(json.contains("installed"));
+    }
+
+    #[test]
+    fn json_installed_is_array() {
+        let d = data("neutral", "src/components", &["badge", "button"], no_workspace());
+        let json = format_info_json(&d).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert!(parsed["installed"].is_array());
+        assert_eq!(parsed["installed"].as_array().unwrap().len(), 2);
+    }
+
+    #[test]
+    fn json_workspace_null_when_no_workspace() {
+        let d = data("neutral", "src/components", &[], no_workspace());
+        let json = format_info_json(&d).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert!(parsed["workspace"].is_null());
+    }
+
+    #[test]
+    fn json_workspace_true_when_in_workspace() {
+        let d = data("neutral", "src/components", &[], full_workspace());
+        let json = format_info_json(&d).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+        assert_eq!(parsed["workspace"], true);
+    }
+
+    #[test]
+    fn json_installed_sorted() {
+        let d = data("neutral", "src/components", &["card", "alert", "badge"], no_workspace());
+        let json = format_info_json(&d).unwrap();
+        let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
+        let names: Vec<&str> = parsed["installed"].as_array().unwrap().iter().map(|v| v.as_str().unwrap()).collect();
+        assert_eq!(names, vec!["alert", "badge", "card"]);
     }
 }

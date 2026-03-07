@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::{BTreeMap, HashMap, HashSet};
 
 use crate::shared::cli_error::CliResult;
 
@@ -123,6 +123,18 @@ impl TreeParser {
         let mut names: Vec<String> = self.components.keys().cloned().collect();
         names.sort();
         names
+    }
+
+    /// Returns components grouped by category, with both categories and names sorted.
+    pub fn get_components_by_category(&self) -> BTreeMap<String, Vec<String>> {
+        let mut map: BTreeMap<String, Vec<String>> = BTreeMap::new();
+        for entry in self.components.values() {
+            map.entry(entry.category.clone()).or_default().push(entry.name.clone());
+        }
+        for names in map.values_mut() {
+            names.sort();
+        }
+        map
     }
 
     pub fn get_dependencies_map(&self) -> HashMap<String, Vec<String>> {
@@ -309,5 +321,38 @@ mod tests {
         let parser = TreeParser::parse_tree_md(SAMPLE_TREE).unwrap();
         let button = parser.components.get("button").unwrap();
         assert!(button.js_files.is_empty());
+    }
+
+    #[test]
+    fn get_components_by_category_groups_correctly() {
+        let parser = TreeParser::parse_tree_md(SAMPLE_TREE).unwrap();
+        let by_cat = parser.get_components_by_category();
+
+        assert!(by_cat.contains_key("ui"));
+        assert!(by_cat.contains_key("demos"));
+        assert!(by_cat["ui"].contains(&"button".to_string()));
+        assert!(by_cat["demos"].contains(&"demo_button".to_string()));
+    }
+
+    #[test]
+    fn get_components_by_category_names_are_sorted() {
+        let parser = TreeParser::parse_tree_md(SAMPLE_TREE).unwrap();
+        let by_cat = parser.get_components_by_category();
+
+        let ui = &by_cat["ui"];
+        let mut sorted = ui.clone();
+        sorted.sort();
+        assert_eq!(ui, &sorted);
+    }
+
+    #[test]
+    fn get_components_by_category_categories_are_sorted() {
+        let parser = TreeParser::parse_tree_md(SAMPLE_TREE).unwrap();
+        let by_cat = parser.get_components_by_category();
+
+        let keys: Vec<&String> = by_cat.keys().collect();
+        let mut sorted = keys.clone();
+        sorted.sort();
+        assert_eq!(keys, sorted);
     }
 }
