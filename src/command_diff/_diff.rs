@@ -3,6 +3,7 @@ use std::path::Path;
 use clap::{Arg, ArgMatches, Command};
 use colored::Colorize;
 use serde::Serialize;
+use similar::{ChangeTag, TextDiff};
 
 use crate::command_add::component_type::ComponentType;
 use crate::command_add::installed::get_installed_components;
@@ -17,13 +18,6 @@ const CONTEXT_LINES: usize = 3;
 /*                        📦 TYPES 📦                         */
 /* ========================================================== */
 
-#[derive(Debug, PartialEq, Clone)]
-pub enum DiffLine {
-    Same(String),
-    Removed(String),
-    Added(String),
-}
-
 #[derive(Debug, PartialEq, Clone, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum DiffStatus {
@@ -32,24 +26,12 @@ pub enum DiffStatus {
     NotInRegistry,
 }
 
-#[derive(Debug, Clone, Serialize)]
-pub struct DiffHunk {
-    pub removed: Vec<String>,
-    pub added: Vec<String>,
-}
-
 #[derive(Debug, Clone)]
 pub struct ComponentDiff {
     pub name: String,
     pub status: DiffStatus,
-    pub lines: Vec<DiffLine>,
-}
-
-#[derive(Debug, Serialize)]
-struct ComponentDiffJson {
-    name: String,
-    status: DiffStatus,
-    hunks: Vec<DiffHunk>,
+    pub local: String,
+    pub remote: String,
 }
 
 /* ========================================================== */
@@ -75,15 +57,18 @@ pub async fn diff_components(names: &[String], base_path: &str) -> CliResult<Vec
         let component_type = ComponentType::from_component_name(name);
         let local_path = Path::new(base_path).join(component_type.to_path()).join(format!("{name}.rs"));
         match RustUIClient::fetch_styles_default(name).await {
-            Ok(remote_content) => {
-                let local_content = std::fs::read_to_string(&local_path).unwrap_or_default();
-                let diff_lines = compute_diff(&local_content, &remote_content);
-                let has_changes = diff_lines.iter().any(|l| !matches!(l, DiffLine::Same(_)));
-                let status = if has_changes { DiffStatus::Changed } else { DiffStatus::UpToDate };
-                diffs.push(ComponentDiff { name: name.clone(), status, lines: diff_lines });
+            Ok(remote) => {
+                let local = std::fs::read_to_string(&local_path).unwrap_or_default();
+                let status = if local == remote { DiffStatus::UpToDate } else { DiffStatus::Changed };
+                diffs.push(ComponentDiff { name: name.clone(), status, local, remote });
             }
             Err(_) => {
-                diffs.push(ComponentDiff { name: name.clone(), status: DiffStatus::NotInRegistry, lines: vec![] });
+                diffs.push(ComponentDiff {
+                    name: name.clone(),
+                    status: DiffStatus::NotInRegistry,
+                    local: String::new(),
+                    remote: String::new(),
+                });
             }
         }
     }
@@ -123,72 +108,6 @@ pub async fn process_diff(matches: &ArgMatches) -> CliResult<()> {
 }
 
 /* ========================================================== */
-/*                      🧮 ALGORITHM 🧮                       */
-/* ========================================================== */
-
-/// Compute a line-level diff using LCS (Longest Common Subsequence).
-pub fn compute_diff(local: &str, remote: &str) -> Vec<DiffLine> {
-    let local_lines: Vec<&str> = local.lines().collect();
-    let remote_lines: Vec<&str> = remote.lines().collect();
-
-    let m = local_lines.len();
-    let n = remote_lines.len();
-
-    // Build LCS table (flat 1D, row-major: index = i * (n+1) + j)
-    let cols = n + 1;
-    let mut table = vec![0usize; (m + 1) * cols];
-
-    for i in 1..=m {
-        for j in 1..=n {
-            let local_line = local_lines.get(i - 1).copied().unwrap_or_default();
-            let remote_line = remote_lines.get(j - 1).copied().unwrap_or_default();
-            let val = if local_line == remote_line {
-                table.get((i - 1) * cols + (j - 1)).copied().unwrap_or(0) + 1
-            } else {
-                let up = table.get((i - 1) * cols + j).copied().unwrap_or(0);
-                let left = table.get(i * cols + (j - 1)).copied().unwrap_or(0);
-                up.max(left)
-            };
-            if let Some(cell) = table.get_mut(i * cols + j) {
-                *cell = val;
-            }
-        }
-    }
-
-    // Backtrack to build diff
-    let mut result: Vec<DiffLine> = Vec::new();
-    let mut i = m;
-    let mut j = n;
-
-    while i > 0 || j > 0 {
-        let local_line = if i > 0 { local_lines.get(i - 1).copied().unwrap_or_default() } else { "" };
-        let remote_line = if j > 0 { remote_lines.get(j - 1).copied().unwrap_or_default() } else { "" };
-
-        if i > 0 && j > 0 && local_line == remote_line {
-            result.push(DiffLine::Same(local_line.to_string()));
-            i -= 1;
-            j -= 1;
-        } else if j > 0 {
-            let left = table.get(i * cols + (j - 1)).copied().unwrap_or(0);
-            let up = if i > 0 { table.get((i - 1) * cols + j).copied().unwrap_or(0) } else { 0 };
-            if i == 0 || left >= up {
-                result.push(DiffLine::Added(remote_line.to_string()));
-                j -= 1;
-            } else {
-                result.push(DiffLine::Removed(local_line.to_string()));
-                i -= 1;
-            }
-        } else {
-            result.push(DiffLine::Removed(local_line.to_string()));
-            i -= 1;
-        }
-    }
-
-    result.reverse();
-    result
-}
-
-/* ========================================================== */
 /*                      🖨  FORMATTERS 🖨                      */
 /* ========================================================== */
 
@@ -216,7 +135,8 @@ pub fn format_diff_human(diffs: &[ComponentDiff]) -> String {
             }
             DiffStatus::Changed => {
                 changed_count += 1;
-                let change_count = diff.lines.iter().filter(|l| !matches!(l, DiffLine::Same(_))).count();
+                let td = TextDiff::from_lines(&diff.local, &diff.remote);
+                let change_count = td.iter_all_changes().filter(|c| c.tag() != ChangeTag::Equal).count();
 
                 if multi {
                     let padded = format!("{:<width$}", diff.name, width = name_width);
@@ -229,8 +149,23 @@ pub fn format_diff_human(diffs: &[ComponentDiff]) -> String {
                     ));
                 }
 
-                // Show the actual diff block
-                output.push_str(&format_single_diff(diff));
+                output.push_str(&format!("\n--- {} (local)\n+++ {} (registry)\n\n", diff.name, diff.name));
+                let mut first = true;
+                for group in td.grouped_ops(CONTEXT_LINES) {
+                    if !first { output.push_str(&"  ...\n".dimmed().to_string()); }
+                    first = false;
+                    for op in &group {
+                        for change in td.iter_changes(op) {
+                            let line = change.value().trim_end_matches('\n');
+                            match change.tag() {
+                                ChangeTag::Equal  => output.push_str(&format!("{}\n", format!("  {line}").dimmed())),
+                                ChangeTag::Delete => output.push_str(&format!("{}\n", format!("- {line}").red())),
+                                ChangeTag::Insert => output.push_str(&format!("{}\n", format!("+ {line}").green())),
+                            }
+                        }
+                    }
+                }
+                output.push('\n');
             }
         }
     }
@@ -251,91 +186,36 @@ pub fn format_diff_human(diffs: &[ComponentDiff]) -> String {
     output
 }
 
-fn format_single_diff(diff: &ComponentDiff) -> String {
-    let mut out = String::new();
-
-    out.push_str(&format!("\n--- {} (local)\n", diff.name));
-    out.push_str(&format!("+++ {} (registry)\n\n", diff.name));
-
-    // Find indices of changed lines
-    let changed_indices: Vec<usize> = diff
-        .lines
-        .iter()
-        .enumerate()
-        .filter(|(_, l)| !matches!(l, DiffLine::Same(_)))
-        .map(|(i, _)| i)
-        .collect();
-
-    if changed_indices.is_empty() {
-        return out;
-    }
-
-    // Build visible ranges: CONTEXT_LINES around each changed line, merged
-    let mut ranges: Vec<(usize, usize)> = Vec::new();
-    for &idx in &changed_indices {
-        let start = idx.saturating_sub(CONTEXT_LINES);
-        let end = (idx + CONTEXT_LINES + 1).min(diff.lines.len());
-        if let Some(last) = ranges.last_mut()
-            && start <= last.1 {
-                last.1 = last.1.max(end);
-                continue;
-            }
-        ranges.push((start, end));
-    }
-
-    for (range_idx, (start, end)) in ranges.iter().enumerate() {
-        if range_idx > 0 {
-            out.push_str(&"  ...\n".dimmed().to_string());
-        }
-        for line in diff.lines.get(*start..*end).unwrap_or_default() {
-            match line {
-                DiffLine::Same(s) => out.push_str(&format!("{}\n", format!("  {s}").dimmed())),
-                DiffLine::Removed(s) => out.push_str(&format!("{}\n", format!("- {s}").red())),
-                DiffLine::Added(s) => out.push_str(&format!("{}\n", format!("+ {s}").green())),
-            }
-        }
-    }
-
-    out.push('\n');
-    out
-}
-
 /// Machine-readable JSON output.
 pub fn format_diff_json(diffs: &[ComponentDiff]) -> CliResult<String> {
-    let json_diffs: Vec<ComponentDiffJson> = diffs
+    let json_diffs: Vec<serde_json::Value> = diffs
         .iter()
         .map(|d| {
-            let hunks = extract_hunks(&d.lines);
-            ComponentDiffJson { name: d.name.clone(), status: d.status.clone(), hunks }
+            let td = TextDiff::from_lines(&d.local, &d.remote);
+            let hunks: Vec<serde_json::Value> = td
+                .grouped_ops(0)
+                .into_iter()
+                .map(|group| {
+                    let (mut removed, mut added) = (Vec::new(), Vec::new());
+                    for op in &group {
+                        for change in td.iter_changes(op) {
+                            let line = change.value().trim_end_matches('\n').to_string();
+                            match change.tag() {
+                                ChangeTag::Delete => removed.push(line),
+                                ChangeTag::Insert => added.push(line),
+                                ChangeTag::Equal => {}
+                            }
+                        }
+                    }
+                    serde_json::json!({ "removed": removed, "added": added })
+                })
+                .collect();
+            let status = serde_json::to_value(&d.status).unwrap_or_default();
+            serde_json::json!({ "name": d.name, "status": status, "hunks": hunks })
         })
         .collect();
 
     serde_json::to_string_pretty(&json_diffs).map_err(Into::into)
-}
-
-/// Extract hunks (contiguous blocks of changes) from a diff.
-fn extract_hunks(lines: &[DiffLine]) -> Vec<DiffHunk> {
-    let mut hunks: Vec<DiffHunk> = Vec::new();
-    let mut iter = lines.iter().peekable();
-
-    while iter.peek().is_some() {
-        if matches!(iter.peek(), Some(DiffLine::Same(_))) {
-            iter.next();
-            continue;
-        }
-        let mut removed = Vec::new();
-        let mut added = Vec::new();
-        while !matches!(iter.peek(), None | Some(DiffLine::Same(_))) {
-            match iter.next() {
-                Some(DiffLine::Removed(s)) => removed.push(s.clone()),
-                Some(DiffLine::Added(s)) => added.push(s.clone()),
-                _ => {}
-            }
-        }
-        hunks.push(DiffHunk { removed, added });
-    }
-
-    hunks
 }
 
 /* ========================================================== */
@@ -346,70 +226,15 @@ fn extract_hunks(lines: &[DiffLine]) -> Vec<DiffHunk> {
 mod tests {
     use super::*;
 
-    // --- compute_diff ---
-
-    #[test]
-    fn identical_input_produces_only_same_lines() {
-        let content = "fn foo() {}\nfn bar() {}";
-        let diff = compute_diff(content, content);
-        assert!(diff.iter().all(|l| matches!(l, DiffLine::Same(_))));
-        assert_eq!(diff.len(), 2);
-    }
-
-    #[test]
-    fn single_changed_line_produces_remove_and_add() {
-        let local = "let x = 1;";
-        let remote = "let x = 2;";
-        let diff = compute_diff(local, remote);
-        assert!(diff.iter().any(|l| matches!(l, DiffLine::Removed(_))));
-        assert!(diff.iter().any(|l| matches!(l, DiffLine::Added(_))));
-    }
-
-    #[test]
-    fn added_lines_in_remote_appear_as_added() {
-        let local = "line1\nline3";
-        let remote = "line1\nline2\nline3";
-        let diff = compute_diff(local, remote);
-        let added: Vec<_> = diff.iter().filter(|l| matches!(l, DiffLine::Added(_))).collect();
-        assert_eq!(added.len(), 1);
-        assert!(matches!(&added[0], DiffLine::Added(s) if s == "line2"));
-    }
-
-    #[test]
-    fn removed_lines_appear_as_removed() {
-        let local = "line1\nline2\nline3";
-        let remote = "line1\nline3";
-        let diff = compute_diff(local, remote);
-        let removed: Vec<_> = diff.iter().filter(|l| matches!(l, DiffLine::Removed(_))).collect();
-        assert_eq!(removed.len(), 1);
-        assert!(matches!(&removed[0], DiffLine::Removed(s) if s == "line2"));
-    }
-
-    #[test]
-    fn empty_inputs_produce_empty_diff() {
-        let diff = compute_diff("", "");
-        assert!(diff.is_empty());
-    }
-
-    #[test]
-    fn multi_change_diff_preserves_same_lines() {
-        let local = "a\nb\nc\nd";
-        let remote = "a\nB\nc\nD";
-        let diff = compute_diff(local, remote);
-        let same: Vec<_> = diff.iter().filter(|l| matches!(l, DiffLine::Same(_))).collect();
-        assert_eq!(same.len(), 2); // "a" and "c" are unchanged
+    fn make_diff(name: &str, status: DiffStatus, local: &str, remote: &str) -> ComponentDiff {
+        ComponentDiff { name: name.to_string(), status, local: local.to_string(), remote: remote.to_string() }
     }
 
     // --- format_diff_human ---
 
     #[test]
     fn up_to_date_single_component_shows_no_diff_block() {
-        let diff = ComponentDiff {
-            name: "button".to_string(),
-            status: DiffStatus::UpToDate,
-            lines: vec![DiffLine::Same("fn foo() {}".to_string())],
-        };
-        // single component: no summary line is printed for UpToDate
+        let diff = make_diff("button", DiffStatus::UpToDate, "fn foo() {}", "fn foo() {}");
         let out = format_diff_human(&[diff]);
         assert!(!out.contains("---"));
         assert!(!out.contains("+++"));
@@ -417,14 +242,7 @@ mod tests {
 
     #[test]
     fn changed_component_shows_diff_headers() {
-        let diff = ComponentDiff {
-            name: "button".to_string(),
-            status: DiffStatus::Changed,
-            lines: vec![
-                DiffLine::Removed("let x = 1;".to_string()),
-                DiffLine::Added("let x = 2;".to_string()),
-            ],
-        };
+        let diff = make_diff("button", DiffStatus::Changed, "let x = 1;", "let x = 2;");
         let out = format_diff_human(&[diff]);
         assert!(out.contains("--- button (local)"));
         assert!(out.contains("+++ button (registry)"));
@@ -433,8 +251,8 @@ mod tests {
     #[test]
     fn multi_up_to_date_shows_all_up_to_date_message() {
         let diffs = vec![
-            ComponentDiff { name: "badge".to_string(), status: DiffStatus::UpToDate, lines: vec![] },
-            ComponentDiff { name: "card".to_string(), status: DiffStatus::UpToDate, lines: vec![] },
+            make_diff("badge", DiffStatus::UpToDate, "x", "x"),
+            make_diff("card", DiffStatus::UpToDate, "x", "x"),
         ];
         let out = format_diff_human(&diffs);
         assert!(out.contains("All components are up to date."));
@@ -443,12 +261,8 @@ mod tests {
     #[test]
     fn multi_changed_shows_changed_count() {
         let diffs = vec![
-            ComponentDiff {
-                name: "button".to_string(),
-                status: DiffStatus::Changed,
-                lines: vec![DiffLine::Added("x".to_string())],
-            },
-            ComponentDiff { name: "badge".to_string(), status: DiffStatus::UpToDate, lines: vec![] },
+            make_diff("button", DiffStatus::Changed, "old", "new"),
+            make_diff("badge", DiffStatus::UpToDate, "x", "x"),
         ];
         let out = format_diff_human(&diffs);
         assert!(out.contains("1 component has changed"));
@@ -456,11 +270,7 @@ mod tests {
 
     #[test]
     fn not_in_registry_shows_question_mark_label() {
-        let diffs = vec![ComponentDiff {
-            name: "my_custom".to_string(),
-            status: DiffStatus::NotInRegistry,
-            lines: vec![],
-        }];
+        let diffs = vec![make_diff("my_custom", DiffStatus::NotInRegistry, "", "")];
         let out = format_diff_human(&diffs);
         assert!(out.contains("not in registry"));
     }
@@ -469,11 +279,7 @@ mod tests {
 
     #[test]
     fn json_output_is_valid_array() {
-        let diffs = vec![ComponentDiff {
-            name: "button".to_string(),
-            status: DiffStatus::UpToDate,
-            lines: vec![],
-        }];
+        let diffs = vec![make_diff("button", DiffStatus::UpToDate, "x", "x")];
         let json = format_diff_json(&diffs).unwrap();
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
         assert!(parsed.is_array());
@@ -482,9 +288,9 @@ mod tests {
     #[test]
     fn json_status_serialized_correctly() {
         let diffs = vec![
-            ComponentDiff { name: "a".to_string(), status: DiffStatus::UpToDate, lines: vec![] },
-            ComponentDiff { name: "b".to_string(), status: DiffStatus::Changed, lines: vec![] },
-            ComponentDiff { name: "c".to_string(), status: DiffStatus::NotInRegistry, lines: vec![] },
+            make_diff("a", DiffStatus::UpToDate, "x", "x"),
+            make_diff("b", DiffStatus::Changed, "old", "new"),
+            make_diff("c", DiffStatus::NotInRegistry, "", ""),
         ];
         let json = format_diff_json(&diffs).unwrap();
         assert!(json.contains("up_to_date"));
@@ -494,15 +300,7 @@ mod tests {
 
     #[test]
     fn json_contains_hunks_for_changed_component() {
-        let diffs = vec![ComponentDiff {
-            name: "button".to_string(),
-            status: DiffStatus::Changed,
-            lines: vec![
-                DiffLine::Same("fn foo() {}".to_string()),
-                DiffLine::Removed("old".to_string()),
-                DiffLine::Added("new".to_string()),
-            ],
-        }];
+        let diffs = vec![make_diff("button", DiffStatus::Changed, "fn foo() {}\nold\n", "fn foo() {}\nnew\n")];
         let json = format_diff_json(&diffs).unwrap();
         assert!(json.contains("hunks"));
         assert!(json.contains("old"));
