@@ -2,8 +2,15 @@
 
 ## Unreleased
 
+---
+
+## 0.3.9
+
 ### Added
 
+- `ui mcp` — starts a stdio MCP server exposing rust-ui registry tools to AI editors (Claude Code, Cursor, VS Code, OpenCode)
+- `ui mcp init --client <claude|cursor|vscode|opencode>` — writes the editor config file so your AI editor auto-connects to the MCP server on startup
+- MCP tools available: `list_components`, `search_components`, `view_component`, `get_add_command`, `get_audit_checklist`
 - `ui view <name>` — prints a component's source from the registry without installing it; supports `--json`
 - `ui add --path <dir>` — override the output directory for components, bypassing `base_path_components` from `ui_config.toml`
 - `ui diff` — shows a line-by-line diff of installed components vs the registry; supports a single component (`ui diff button`) or all installed components at once; supports `--json` for machine-readable output
