@@ -17,6 +17,7 @@ mod command_list;
 mod command_search;
 mod command_starters;
 mod command_update;
+mod command_view;
 mod shared;
 
 // * cargo run --bin ui init
@@ -41,7 +42,8 @@ async fn main() {
         .subcommand(command_update::_update::command_update())
         .subcommand(command_diff::_diff::command_diff())
         .subcommand(command_docs::_docs::command_docs())
-        .subcommand(command_starters::_starters::command_starters());
+        .subcommand(command_starters::_starters::command_starters())
+        .subcommand(command_view::_view::command_view());
 
     let matches = mut_program.clone().get_matches();
 
@@ -97,6 +99,12 @@ async fn main() {
         }
         Some(("starters", _)) => {
             if let Err(e) = command_starters::_starters::process_starters().await {
+                eprintln!("{e}");
+                process::exit(1);
+            }
+        }
+        Some(("view", sub_matches)) => {
+            if let Err(e) = command_view::_view::process_view(sub_matches).await {
                 eprintln!("{e}");
                 process::exit(1);
             }
