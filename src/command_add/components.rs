@@ -64,3 +64,108 @@ impl Components {
         Ok(())
     }
 }
+
+/* ========================================================== */
+/*                        🧪 TESTS 🧪                         */
+/* ========================================================== */
+
+#[cfg(test)]
+mod tests {
+    use tempfile::TempDir;
+
+    use super::*;
+
+    // --- register_components_in_application_entry ---
+
+    #[test]
+    fn prepends_mod_components_when_missing() {
+        let tmp = TempDir::new().unwrap();
+        let path = tmp.path().join("main.rs");
+        std::fs::write(&path, "fn main() {}").unwrap();
+
+        Components::register_components_in_application_entry(path.to_str().unwrap()).unwrap();
+
+        let content = std::fs::read_to_string(&path).unwrap();
+        assert!(content.starts_with("mod components;"));
+        assert!(content.contains("fn main() {}"));
+    }
+
+    #[test]
+    fn skips_when_mod_components_already_present() {
+        let tmp = TempDir::new().unwrap();
+        let path = tmp.path().join("main.rs");
+        std::fs::write(&path, "mod components;\nfn main() {}").unwrap();
+
+        Components::register_components_in_application_entry(path.to_str().unwrap()).unwrap();
+
+        let content = std::fs::read_to_string(&path).unwrap();
+        assert_eq!(content.matches("mod components;").count(), 1);
+    }
+
+    #[test]
+    fn is_idempotent() {
+        let tmp = TempDir::new().unwrap();
+        let path = tmp.path().join("lib.rs");
+        std::fs::write(&path, "pub fn foo() {}").unwrap();
+
+        Components::register_components_in_application_entry(path.to_str().unwrap()).unwrap();
+        Components::register_components_in_application_entry(path.to_str().unwrap()).unwrap();
+
+        let content = std::fs::read_to_string(&path).unwrap();
+        assert_eq!(content.matches("mod components;").count(), 1);
+    }
+
+    // --- create_components_mod_if_not_exists_with_pub_mods ---
+
+    #[test]
+    fn creates_mod_rs_with_pub_mods() {
+        let tmp = TempDir::new().unwrap();
+        let components_dir = tmp.path().join("components");
+        let dirs = vec!["ui".to_string(), "hooks".to_string()];
+
+        Components::create_components_mod_if_not_exists_with_pub_mods(
+            components_dir.to_str().unwrap().to_string(),
+            dirs,
+        )
+        .unwrap();
+
+        let mod_rs = std::fs::read_to_string(components_dir.join("mod.rs")).unwrap();
+        assert!(mod_rs.contains("pub mod ui;"));
+        assert!(mod_rs.contains("pub mod hooks;"));
+    }
+
+    #[test]
+    fn does_not_duplicate_existing_pub_mod() {
+        let tmp = TempDir::new().unwrap();
+        let components_dir = tmp.path().join("components");
+        std::fs::create_dir_all(&components_dir).unwrap();
+        std::fs::write(components_dir.join("mod.rs"), "pub mod ui;\n").unwrap();
+
+        Components::create_components_mod_if_not_exists_with_pub_mods(
+            components_dir.to_str().unwrap().to_string(),
+            vec!["ui".to_string()],
+        )
+        .unwrap();
+
+        let mod_rs = std::fs::read_to_string(components_dir.join("mod.rs")).unwrap();
+        assert_eq!(mod_rs.matches("pub mod ui;").count(), 1);
+    }
+
+    #[test]
+    fn appends_new_mods_to_existing_mod_rs() {
+        let tmp = TempDir::new().unwrap();
+        let components_dir = tmp.path().join("components");
+        std::fs::create_dir_all(&components_dir).unwrap();
+        std::fs::write(components_dir.join("mod.rs"), "pub mod ui;\n").unwrap();
+
+        Components::create_components_mod_if_not_exists_with_pub_mods(
+            components_dir.to_str().unwrap().to_string(),
+            vec!["ui".to_string(), "hooks".to_string()],
+        )
+        .unwrap();
+
+        let mod_rs = std::fs::read_to_string(components_dir.join("mod.rs")).unwrap();
+        assert_eq!(mod_rs.matches("pub mod ui;").count(), 1);
+        assert!(mod_rs.contains("pub mod hooks;"));
+    }
+}
