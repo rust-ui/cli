@@ -25,6 +25,20 @@ pub fn command_init() -> Command {
     Command::new("init")
         .about("Initialize the project")
         .arg(Arg::new("project_name").help("The name of the project to initialize").required(false))
+        .arg(
+            Arg::new("yes")
+                .short('y')
+                .long("yes")
+                .help("Skip confirmation prompts and accept defaults")
+                .action(clap::ArgAction::SetTrue),
+        )
+        .arg(
+            Arg::new("force")
+                .short('f')
+                .long("force")
+                .help("Force overwrite existing files without prompting")
+                .action(clap::ArgAction::SetTrue),
+        )
         .subcommand(Command::new("run").about("Run the initialization logic"))
 }
 
@@ -32,7 +46,7 @@ pub fn command_init() -> Command {
 /*                     ✨ FUNCTIONS ✨                        */
 /* ========================================================== */
 
-pub async fn process_init() -> CliResult<()> {
+pub async fn process_init(force: bool) -> CliResult<()> {
     // Check if Leptos is installed before proceeding
     if !check_leptos_dependency()? {
         return Err(CliError::config(
@@ -52,8 +66,9 @@ pub async fn process_init() -> CliResult<()> {
     // package.json - merge with existing to preserve user dependencies
     merge_package_json(PACKAGE_JSON, MyTemplate::PACKAGE_JSON).await?;
 
-    // tailwind.css - ask before overwriting if exists
-    write_template_with_confirmation(&tailwind_input_file, MyTemplate::STYLE_TAILWIND_CSS).await?;
+    // tailwind.css - ask before overwriting if exists (skipped when --yes or --force)
+    write_template_with_confirmation(&tailwind_input_file, MyTemplate::STYLE_TAILWIND_CSS, force)
+        .await?;
 
     add_init_crates().await?;
 
@@ -96,11 +111,16 @@ async fn merge_package_json(file_name: &str, template: &str) -> CliResult<()> {
     Ok(())
 }
 
-/// Write template file with confirmation if file already exists
-async fn write_template_with_confirmation(file_name: &str, template: &str) -> CliResult<()> {
+/// Write template file with confirmation if file already exists.
+/// When `force` is true, overwrites without prompting.
+async fn write_template_with_confirmation(
+    file_name: &str,
+    template: &str,
+    force: bool,
+) -> CliResult<()> {
     let file_path = Path::new(".").join(file_name);
 
-    if file_path.exists() {
+    if file_path.exists() && !force {
         let should_overwrite = Confirm::with_theme(&ColorfulTheme::default())
             .with_prompt(format!("{file_name} already exists. Overwrite?"))
             .default(false)
@@ -164,6 +184,41 @@ mod tests {
     use tempfile::TempDir;
 
     use super::*;
+
+    // --- command_init flags ---
+
+    #[test]
+    fn command_init_yes_flag_is_registered() {
+        let m = command_init().try_get_matches_from(["init", "--yes"]).unwrap();
+        assert!(m.get_flag("yes"));
+        assert!(!m.get_flag("force"));
+    }
+
+    #[test]
+    fn command_init_yes_short_flag_is_registered() {
+        let m = command_init().try_get_matches_from(["init", "-y"]).unwrap();
+        assert!(m.get_flag("yes"));
+    }
+
+    #[test]
+    fn command_init_force_flag_is_registered() {
+        let m = command_init().try_get_matches_from(["init", "--force"]).unwrap();
+        assert!(m.get_flag("force"));
+        assert!(!m.get_flag("yes"));
+    }
+
+    #[test]
+    fn command_init_force_short_flag_is_registered() {
+        let m = command_init().try_get_matches_from(["init", "-f"]).unwrap();
+        assert!(m.get_flag("force"));
+    }
+
+    #[test]
+    fn command_init_both_flags_can_be_combined() {
+        let m = command_init().try_get_matches_from(["init", "--yes", "--force"]).unwrap();
+        assert!(m.get_flag("yes"));
+        assert!(m.get_flag("force"));
+    }
 
     #[test]
     fn test_merge_json_preserves_existing_dependencies() {

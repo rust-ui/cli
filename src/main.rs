@@ -51,8 +51,9 @@ async fn main() {
 
     // Handle commands
     match matches.subcommand() {
-        Some(("init", _)) => {
-            if let Err(e) = command_init::_init::process_init().await {
+        Some(("init", sub_matches)) => {
+            let force = sub_matches.get_flag("yes") || sub_matches.get_flag("force");
+            if let Err(e) = command_init::_init::process_init(force).await {
                 eprintln!("{e}");
                 process::exit(1);
             }

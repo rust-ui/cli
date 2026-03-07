@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+### Added
+
+- `ui add` — deprecated component warnings: warns and exits when a deprecated component is requested, pointing to the replacement (e.g. `toast` → use `sonner`)
+- `ui init --yes` / `-y` and `--force` / `-f` — skip confirmation prompts and force overwrite existing files without prompting
+
 ---
 
 ## 0.3.10
