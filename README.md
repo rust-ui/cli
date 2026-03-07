@@ -13,7 +13,10 @@ cargo install ui-cli --force
 ```bash
 ui starters                  # clone a starter project
 ui init                      # set up an existing project
-ui add button card           # add components
+ui add                       # interactive component picker
+ui add button card           # add components directly
+ui add button --dry-run      # preview without installing
+ui add button -y             # skip overwrite prompt
 ui list                      # browse all components
 ui search <query>            # search components by name
 ui view <name>               # view a component's source
