@@ -5,11 +5,8 @@ use dialoguer::Confirm;
 use dialoguer::theme::ColorfulTheme;
 
 use super::component_type::ComponentType;
-use crate::command_init::config::UiConfig;
 use crate::shared::cli_error::{CliError, CliResult};
 use crate::shared::rust_ui_client::RustUIClient;
-
-const UI_CONFIG_TOML: &str = "ui_config.toml";
 
 /* ========================================================== */
 /*                        📦 TYPES 📦                         */
@@ -40,8 +37,8 @@ impl RegistryComponent {
         Ok(RegistryComponent { registry_md_path, registry_md_content, component_name })
     }
 
-    pub async fn then_write_to_file(self, force: bool) -> CliResult<WriteOutcome> {
-        let components_base_path = UiConfig::try_reading_ui_config(UI_CONFIG_TOML)?.base_path_components;
+    pub async fn then_write_to_file_to(self, force: bool, base_path: &str) -> CliResult<WriteOutcome> {
+        let components_base_path = base_path.to_string();
         let full_path_component = std::path::Path::new(&components_base_path).join(&self.registry_md_path);
 
         let full_path_component_without_name_rs = full_path_component

@@ -32,6 +32,12 @@ pub fn command_add() -> Command {
                 .help("Preview which files would be written without making any changes")
                 .action(clap::ArgAction::SetTrue),
         )
+        .arg(
+            Arg::new("path")
+                .long("path")
+                .help("Override the output directory for components (default: base_path_components from ui_config.toml)")
+                .value_name("PATH"),
+        )
 }
 
 /* ========================================================== */
@@ -44,15 +50,19 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
         matches.get_many::<String>("components").unwrap_or_default().cloned().collect();
     let force = matches.get_flag("yes");
     let dry_run = matches.get_flag("dry-run");
+    let path_override: Option<String> = matches.get_one::<String>("path").cloned();
+    let has_path_override = path_override.is_some();
 
     // Fetch and parse tree.md
     let tree_content = RustUIClient::fetch_tree_md().await?;
     let tree_parser = TreeParser::parse_tree_md(&tree_content)?;
 
-    // Get base path for components (try reading config, fallback to default)
-    let base_path = UiConfig::try_reading_ui_config(UI_CONFIG_TOML)
-        .map(|c| c.base_path_components)
-        .unwrap_or_else(|_| "src/components".to_string());
+    // Get base path for components: --path flag takes priority over ui_config.toml
+    let base_path = path_override.unwrap_or_else(|| {
+        UiConfig::try_reading_ui_config(UI_CONFIG_TOML)
+            .map(|c| c.base_path_components)
+            .unwrap_or_else(|_| "src/components".to_string())
+    });
 
     // Detect already installed components
     let installed = get_installed_components(&base_path);
@@ -97,28 +107,28 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     }
 
     // Create components/mod.rs if it does not exist
-    let components_base_path = UiConfig::try_reading_ui_config(UI_CONFIG_TOML)?.base_path_components;
-
     Components::create_components_mod_if_not_exists_with_pub_mods(
-        components_base_path.clone(),
+        base_path.clone(),
         all_resolved_parent_dirs,
     )?;
 
-    // Register `components` module
-    let components_path = Path::new(&components_base_path);
-    let parent_path = components_path
-        .parent()
-        .ok_or_else(|| CliError::invalid_path(&components_base_path, "no parent directory"))?;
+    // Register `components` module in lib.rs/main.rs — skip when --path overrides the directory
+    // because the custom path may not correspond to any Rust entry file.
+    if !has_path_override {
+        let components_path = Path::new(&base_path);
+        let parent_path = components_path
+            .parent()
+            .ok_or_else(|| CliError::invalid_path(&base_path, "no parent directory"))?;
 
-    let entry_file_path = if parent_path.join("lib.rs").exists() {
-        parent_path.join("lib.rs")
-    } else {
-        parent_path.join("main.rs")
-    };
+        let entry_file_path = if parent_path.join("lib.rs").exists() {
+            parent_path.join("lib.rs")
+        } else {
+            parent_path.join("main.rs")
+        };
 
-    let entry_file_path = entry_file_path.to_string_lossy().to_string();
-
-    Components::register_components_in_application_entry(entry_file_path.as_str())?;
+        let entry_file_path = entry_file_path.to_string_lossy().to_string();
+        Components::register_components_in_application_entry(entry_file_path.as_str())?;
+    }
 
     // Components to add
     let mut written: Vec<String> = Vec::new();
@@ -132,8 +142,10 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
             continue;
         }
 
-        let outcome =
-            RegistryComponent::fetch_from_registry(component_name.clone()).await?.then_write_to_file(force).await?;
+        let outcome = RegistryComponent::fetch_from_registry(component_name.clone())
+            .await?
+            .then_write_to_file_to(force, &base_path)
+            .await?;
 
         match outcome {
             super::registry::WriteOutcome::Written => written.push(component_name),
