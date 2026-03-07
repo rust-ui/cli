@@ -36,35 +36,9 @@ async fn test_fetch_styles_default_button() {
 }
 
 #[tokio::test]
-async fn test_fetch_styles_index() {
-    let result = RustUIClient::fetch_styles_index().await;
-
-    assert!(result.is_ok(), "Failed to fetch styles/index.json: {:?}", result.err());
-
-    let json_content = result.unwrap();
-    assert!(!json_content.is_empty(), "styles/index.json content should not be empty");
-
-    // Verify it's valid JSON by parsing it
-    let parsed: serde_json::Value =
-        serde_json::from_str(&json_content).expect("Response should be valid JSON");
-
-    // Basic structure check - should be an object or array
-    assert!(parsed.is_object() || parsed.is_array(), "JSON should be an object or array");
-}
-
-#[tokio::test]
 async fn test_fetch_nonexistent_component() {
     let result = RustUIClient::fetch_styles_default("nonexistent_component_xyz").await;
 
     // Should fail for nonexistent components
     assert!(result.is_err(), "Should fail when fetching nonexistent component");
-}
-
-#[tokio::test]
-async fn test_styles_index_url_format() {
-    let url = RustUIClient::styles_index_url();
-
-    assert_eq!(url, "https://www.rust-ui.com/registry/styles/index.json");
-    assert!(url.starts_with("https://"));
-    assert!(url.ends_with(".json"));
 }

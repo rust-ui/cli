@@ -11,7 +11,6 @@ const PACKAGE_JSON: &str = "package.json";
 
 use super::config::{UiConfig, add_init_crates};
 use super::install::InstallType;
-use super::user_input::UserInput;
 use super::workspace_utils::{check_leptos_dependency, get_tailwind_input_file};
 use crate::command_init::install::install_dependencies;
 use crate::command_init::template::MyTemplate;
@@ -57,8 +56,6 @@ pub async fn process_init() -> CliResult<()> {
     write_template_with_confirmation(&tailwind_input_file, MyTemplate::STYLE_TAILWIND_CSS).await?;
 
     add_init_crates().await?;
-
-    UserInput::handle_index_styles().await?;
 
     install_dependencies(&[InstallType::Tailwind]).await?;
     Ok(())

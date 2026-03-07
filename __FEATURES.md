@@ -74,7 +74,7 @@ Features that shadcn CLI has that our `ui-cli` currently lacks.
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
   │ Overwrite prompt (interactive)    │ ✅                             │ ✅                                                                       │
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
-  │ --yes / --overwrite flag          │ ✅                             │ ❌                                                                       │
+  │ --yes / --overwrite flag          │ ✅                             │ ✅                                                                       │
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
   │ --all flag                        │ ✅                             │ ❌ (not planned)                                                         │
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
@@ -117,10 +117,6 @@ Features that shadcn CLI has that our `ui-cli` currently lacks.
 ### `mcp` command
 Start the CLI as an MCP server so AI coding tools (Claude Code, Cursor, VS Code) can call it programmatically.
 See `__FEATURES_MCP.md` for the full design.
-
-### `add --yes` / `--overwrite` flag
-Skip the interactive overwrite prompt non-interactively. Needed for CI / scripting.
-Currently the CLI always prompts when a file already exists.
 
 ### `add` — deprecated component warnings
 Warn when a requested component is deprecated in the registry.

@@ -69,14 +69,8 @@ pub enum CliError {
     #[error("🔸 Validation error: {message}")]
     Validation { message: String },
 
-    #[error("🔸 Registry index is malformed: {reason}")]
-    MalformedRegistry { reason: String },
-
     #[error("🔸 Registry component missing required fields")]
     RegistryComponentMissing,
-
-    #[error("🔸 Registry has invalid format")]
-    RegistryInvalidFormat,
 
     #[error("🔸 Project not initialized. Run 'ui init' to initialize the project first.")]
     ProjectNotInitialized,
@@ -101,10 +95,6 @@ impl CliError {
 
     pub fn validation(message: &str) -> Self {
         Self::Validation { message: message.to_string() }
-    }
-
-    pub fn malformed_registry(reason: &str) -> Self {
-        Self::MalformedRegistry { reason: reason.to_string() }
     }
 
     pub fn registry_request_failed() -> Self {
@@ -133,10 +123,6 @@ impl CliError {
 
     pub fn registry_component_missing() -> Self {
         Self::RegistryComponentMissing
-    }
-
-    pub fn registry_invalid_format() -> Self {
-        Self::RegistryInvalidFormat
     }
 
     pub fn project_not_initialized() -> Self {
