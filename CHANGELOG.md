@@ -4,6 +4,14 @@
 
 ---
 
+## 0.3.10
+
+### Fixed
+
+- MCP server now correctly advertises the `tools` capability in the initialize response, so Claude Code and other clients properly discover and register tools on session start
+
+---
+
 ## 0.3.9
 
 ### Added
