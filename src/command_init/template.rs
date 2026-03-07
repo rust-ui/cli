@@ -1,54 +1,11 @@
+use super::colors::{AccentColor, BaseColor, generate_theme_vars};
+
 pub struct MyTemplate;
 
 impl MyTemplate {
-    pub const STYLE_TAILWIND_CSS: &str = r#"@import "tailwindcss";
-@import "tw-animate-css";
+    const CSS_HEADER: &str = "@import \"tailwindcss\";\n@import \"tw-animate-css\";\n\n";
 
-
-:root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-}
-
-.dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-}
-
-
+    const CSS_FOOTER: &str = r#"
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -94,8 +51,59 @@ impl MyTemplate {
 }
 "#;
 
+    /// Build a complete tailwind.css from the chosen base + accent colors.
+    pub fn build_css(base: BaseColor, accent: AccentColor) -> String {
+        format!("{}{}{}", Self::CSS_HEADER, generate_theme_vars(base, accent), Self::CSS_FOOTER)
+    }
+
     pub const PACKAGE_JSON: &str = r#"{
 	"type": "module"
 }
 "#;
+}
+
+/* ========================================================== */
+/*                        🧪 TESTS 🧪                         */
+/* ========================================================== */
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn build_css_contains_tailwind_import() {
+        let css = MyTemplate::build_css(BaseColor::default(), AccentColor::default());
+        assert!(css.contains("@import \"tailwindcss\""));
+        assert!(css.contains("@import \"tw-animate-css\""));
+    }
+
+    #[test]
+    fn build_css_contains_theme_inline_block() {
+        let css = MyTemplate::build_css(BaseColor::default(), AccentColor::default());
+        assert!(css.contains("@theme inline {"));
+        assert!(css.contains("--color-background: var(--background)"));
+    }
+
+    #[test]
+    fn build_css_contains_layer_base() {
+        let css = MyTemplate::build_css(BaseColor::default(), AccentColor::default());
+        assert!(css.contains("@layer base {"));
+    }
+
+    #[test]
+    fn build_css_contains_color_vars() {
+        let css = MyTemplate::build_css(BaseColor::default(), AccentColor::default());
+        assert!(css.contains(":root {"));
+        assert!(css.contains(".dark {"));
+        assert!(css.contains("--radius: 0.625rem"));
+    }
+
+    #[test]
+    fn build_css_zinc_blue_has_zinc_background() {
+        let css = MyTemplate::build_css(BaseColor::Zinc, AccentColor::Blue);
+        // Zinc dark background
+        assert!(css.contains("--background: oklch(0.141 0.005 285.823)"));
+        // Blue accent primary
+        assert!(css.contains("--primary: oklch(0.488 0.243 264.376)"));
+    }
 }

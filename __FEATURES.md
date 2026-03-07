@@ -39,7 +39,7 @@ Features that shadcn CLI has that our `ui-cli` currently lacks.
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
   │ Multiple templates                          │ ✅ 7 templates                                 │ ❌                    │
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
-  │ Theme presets / color base selection        │ ✅ interactive                                 │ ⚠️ auto-selects Default│
+  │ Theme presets / color base selection        │ ✅ interactive                                 │ ✅ interactive (7 base + 18 accent)│
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
   │ CSS variables toggle                        │ ✅                                             │ ❌                    │
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
@@ -116,9 +116,10 @@ Features that shadcn CLI has that our `ui-cli` currently lacks.
 
 ## Features Still Missing
 
-### `init` — interactive theme/color picker
-Currently auto-selects the Default style. Should let the user pick a base color
-(neutral, zinc, slate, stone…) interactively during init.
+### `init` — interactive theme/color picker ✅
+Implemented: interactive base color (7 options) + accent color (18 options) prompts.
+Selections stored in `ui_config.toml` as `base_color` + `color_theme`.
+`--yes` / `--force` skips prompts and uses defaults (Neutral + Default).
 
 ---
 

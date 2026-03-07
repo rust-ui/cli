@@ -21,7 +21,13 @@ use crate::shared::task_spinner::TaskSpinner;
 #[derive(Debug, Deserialize, Serialize, PartialEq, PartialOrd)]
 pub struct UiConfig {
     pub base_color: String,
+    #[serde(default = "default_color_theme")]
+    pub color_theme: String,
     pub base_path_components: String,
+}
+
+fn default_color_theme() -> String {
+    "default".to_string()
 }
 
 impl UiConfig {
@@ -45,6 +51,7 @@ impl Default for UiConfig {
 
         UiConfig {
             base_color: "neutral".to_string(),
+            color_theme: default_color_theme(),
             base_path_components,
         }
     }
@@ -670,6 +677,26 @@ base_path_components = "src/ui"
         .unwrap();
         let result = UiConfig::try_reading_ui_config(path.to_str().unwrap()).unwrap();
         assert_eq!(result.base_color, "zinc");
+        assert_eq!(result.base_path_components, "src/ui");
+        // color_theme defaults when missing from existing configs
+        assert_eq!(result.color_theme, "default");
+    }
+
+    #[test]
+    fn try_reading_ui_config_parses_color_theme() {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("ui_config.toml");
+        fs::write(
+            &path,
+            r#"base_color = "stone"
+color_theme = "blue"
+base_path_components = "src/ui"
+"#,
+        )
+        .unwrap();
+        let result = UiConfig::try_reading_ui_config(path.to_str().unwrap()).unwrap();
+        assert_eq!(result.base_color, "stone");
+        assert_eq!(result.color_theme, "blue");
         assert_eq!(result.base_path_components, "src/ui");
     }
 }
