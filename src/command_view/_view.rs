@@ -134,4 +134,12 @@ mod tests {
         let parsed: serde_json::Value = serde_json::from_str(&json).unwrap();
         assert_eq!(parsed["name"], "badge");
     }
+
+    // --- view_components ---
+
+    #[tokio::test]
+    async fn view_components_empty_names_returns_ok() {
+        let result = view_components(&[]).await;
+        assert!(result.is_ok());
+    }
 }

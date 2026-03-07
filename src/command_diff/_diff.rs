@@ -491,4 +491,12 @@ mod tests {
         assert!(json.contains("old"));
         assert!(json.contains("new"));
     }
+
+    // --- diff_components ---
+
+    #[tokio::test]
+    async fn diff_components_empty_names_returns_empty_vec() {
+        let result = diff_components(&[], "any/path").await.unwrap();
+        assert!(result.is_empty());
+    }
 }
