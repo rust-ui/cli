@@ -62,6 +62,11 @@ Any contribution is welcome!
 
 
 
+## Changelog
+
+See [CHANGELOG.md](./CHANGELOG.md) for the full release history.
+
+
 ## License
 
 This project is licensed under the MIT License. See the [LICENSE](./LICENSE) file for details.
