@@ -10,7 +10,9 @@ use super::components::Components;
 use super::installed::get_installed_components;
 use super::registry::RegistryComponent;
 use super::tree_parser::TreeParser;
+use crate::command_diff::_diff::{diff_components, format_diff_human};
 use crate::command_init::config::UiConfig;
+use crate::command_view::_view::view_components;
 use crate::shared::cli_error::{CliError, CliResult};
 use crate::shared::rust_ui_client::RustUIClient;
 
@@ -111,40 +113,14 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     if view_flag {
         let mut names = all_resolved_components.clone();
         names.sort();
-        for component_name in &names {
-            let content = RustUIClient::fetch_styles_default(component_name).await?;
-            println!("{}", crate::command_view::_view::format_view_human(component_name, &content));
-        }
-        return Ok(());
+        return view_components(&names).await;
     }
 
     // --diff: show diff vs local files for each resolved component, then exit
     if diff_flag {
-        use crate::command_diff::_diff::{ComponentDiff, DiffStatus, compute_diff, format_diff_human};
         let mut names = all_resolved_components.clone();
         names.sort();
-        let mut diffs: Vec<ComponentDiff> = Vec::new();
-        for component_name in &names {
-            let component_type = super::component_type::ComponentType::from_component_name(component_name);
-            let local_path =
-                Path::new(&base_path).join(component_type.to_path()).join(format!("{component_name}.rs"));
-            match RustUIClient::fetch_styles_default(component_name).await {
-                Ok(remote_content) => {
-                    let local_content = std::fs::read_to_string(&local_path).unwrap_or_default();
-                    let diff_lines = compute_diff(&local_content, &remote_content);
-                    let has_changes = diff_lines.iter().any(|l| !matches!(l, crate::command_diff::_diff::DiffLine::Same(_)));
-                    let status = if has_changes { DiffStatus::Changed } else { DiffStatus::UpToDate };
-                    diffs.push(ComponentDiff { name: component_name.clone(), status, lines: diff_lines });
-                }
-                Err(_) => {
-                    diffs.push(ComponentDiff {
-                        name: component_name.clone(),
-                        status: DiffStatus::NotInRegistry,
-                        lines: vec![],
-                    });
-                }
-            }
-        }
+        let diffs = diff_components(&names, &base_path).await?;
         println!("{}", format_diff_human(&diffs));
         return Ok(());
     }
