@@ -289,21 +289,17 @@ fn extract_tailwind_from_manifest(manifest: &Manifest) -> Option<String> {
         && let Some(leptos_value) = metadata.get("leptos")
     {
         // [[workspace.metadata.leptos]] is an array
-        if let Some(array) = leptos_value.as_array() {
-            if let Some(first) = array.first() {
-                if let Some(tailwind) = first.get("tailwind-input-file") {
-                    if let Some(value) = tailwind.as_str() {
+        if let Some(array) = leptos_value.as_array()
+            && let Some(first) = array.first()
+                && let Some(tailwind) = first.get("tailwind-input-file")
+                    && let Some(value) = tailwind.as_str() {
                         return Some(value.to_string());
                     }
-                }
-            }
-        }
         // [workspace.metadata.leptos] could also be a table
-        if let Some(tailwind) = leptos_value.get("tailwind-input-file") {
-            if let Some(value) = tailwind.as_str() {
+        if let Some(tailwind) = leptos_value.get("tailwind-input-file")
+            && let Some(value) = tailwind.as_str() {
                 return Some(value.to_string());
             }
-        }
     }
 
     // Try package.metadata.leptos (single table)
