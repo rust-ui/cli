@@ -9,6 +9,7 @@ use std::process;
 use clap::Command;
 
 mod command_add;
+mod command_info;
 mod command_init;
 mod command_starters;
 mod shared;
@@ -29,6 +30,7 @@ async fn main() {
         .version(env!("CARGO_PKG_VERSION"))
         .subcommand(command_init::_init::command_init())
         .subcommand(command_add::_add::command_add())
+        .subcommand(command_info::_info::command_info())
         .subcommand(command_starters::_starters::command_starters());
 
     let matches = mut_program.clone().get_matches();
@@ -43,6 +45,12 @@ async fn main() {
         }
         Some(("add", sub_matches)) => {
             if let Err(e) = command_add::_add::process_add(sub_matches).await {
+                eprintln!("{e}");
+                process::exit(1);
+            }
+        }
+        Some(("info", _)) => {
+            if let Err(e) = command_info::_info::process_info() {
                 eprintln!("{e}");
                 process::exit(1);
             }
