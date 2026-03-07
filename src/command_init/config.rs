@@ -639,4 +639,37 @@ members = ["app"]
         let deps = get_workspace_dependencies(&Some(info));
         assert!(deps.is_empty());
     }
+
+    #[test]
+    fn try_reading_ui_config_returns_error_when_file_missing() {
+        let temp = TempDir::new().unwrap();
+        let missing = temp.path().join("ui_config.toml");
+        let result = UiConfig::try_reading_ui_config(missing.to_str().unwrap());
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn try_reading_ui_config_returns_error_on_invalid_toml() {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("ui_config.toml");
+        fs::write(&path, "this is not valid toml = [[[").unwrap();
+        let result = UiConfig::try_reading_ui_config(path.to_str().unwrap());
+        assert!(result.is_err());
+    }
+
+    #[test]
+    fn try_reading_ui_config_parses_valid_config() {
+        let temp = TempDir::new().unwrap();
+        let path = temp.path().join("ui_config.toml");
+        fs::write(
+            &path,
+            r#"base_color = "zinc"
+base_path_components = "src/ui"
+"#,
+        )
+        .unwrap();
+        let result = UiConfig::try_reading_ui_config(path.to_str().unwrap()).unwrap();
+        assert_eq!(result.base_color, "zinc");
+        assert_eq!(result.base_path_components, "src/ui");
+    }
 }

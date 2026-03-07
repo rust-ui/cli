@@ -516,6 +516,77 @@ version = "0.1.0"
     }
 
     #[test]
+    fn get_existing_deps_returns_empty_when_no_cargo_toml() {
+        let temp = TempDir::new().unwrap();
+        let info = WorkspaceInfo {
+            is_workspace: false,
+            workspace_root: None,
+            target_crate: None,
+            target_crate_path: Some(temp.path().to_path_buf()),
+            components_base_path: "src/components".to_string(),
+        };
+        let result = get_existing_dependencies(&Some(info)).unwrap();
+        assert!(result.is_empty());
+    }
+
+    #[test]
+    fn get_existing_deps_reads_dependencies_section() {
+        let temp = TempDir::new().unwrap();
+        fs::write(
+            temp.path().join("Cargo.toml"),
+            r#"[package]
+name = "app"
+version = "0.1.0"
+
+[dependencies]
+serde = "1.0"
+tokio = "1.0"
+"#,
+        )
+        .unwrap();
+        let info = WorkspaceInfo {
+            is_workspace: false,
+            workspace_root: None,
+            target_crate: None,
+            target_crate_path: Some(temp.path().to_path_buf()),
+            components_base_path: "src/components".to_string(),
+        };
+        let result = get_existing_dependencies(&Some(info)).unwrap();
+        assert!(result.contains("serde"));
+        assert!(result.contains("tokio"));
+        assert_eq!(result.len(), 2);
+    }
+
+    #[test]
+    fn get_existing_deps_includes_dev_dependencies() {
+        let temp = TempDir::new().unwrap();
+        fs::write(
+            temp.path().join("Cargo.toml"),
+            r#"[package]
+name = "app"
+version = "0.1.0"
+
+[dependencies]
+serde = "1.0"
+
+[dev-dependencies]
+tempfile = "3.0"
+"#,
+        )
+        .unwrap();
+        let info = WorkspaceInfo {
+            is_workspace: false,
+            workspace_root: None,
+            target_crate: None,
+            target_crate_path: Some(temp.path().to_path_buf()),
+            components_base_path: "src/components".to_string(),
+        };
+        let result = get_existing_dependencies(&Some(info)).unwrap();
+        assert!(result.contains("serde"));
+        assert!(result.contains("tempfile"));
+    }
+
+    #[test]
     fn test_add_workspace_dependency_full_flow() {
         let temp = TempDir::new().unwrap();
         let root = temp.path();
