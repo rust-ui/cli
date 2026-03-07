@@ -56,3 +56,40 @@ fn ask_user_choose_style(vec_styles: Vec<serde_json::Value>) -> CliResult<()> {
     // If no styles available, return an error
     Err(CliError::validation("No styles available in registry"))
 }
+
+/* ========================================================== */
+/*                        🧪 TESTS 🧪                         */
+/* ========================================================== */
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn style(label: &str) -> serde_json::Value {
+        serde_json::json!({ "label": label })
+    }
+
+    #[test]
+    fn empty_styles_returns_error() {
+        assert!(ask_user_choose_style(vec![]).is_err());
+    }
+
+    #[test]
+    fn selects_default_style_when_present() {
+        let styles = vec![style("Other"), style("Default")];
+        assert!(ask_user_choose_style(styles).is_ok());
+    }
+
+    #[test]
+    fn falls_back_to_first_when_no_default() {
+        let styles = vec![style("Dark"), style("Light")];
+        assert!(ask_user_choose_style(styles).is_ok());
+    }
+
+    #[test]
+    fn style_without_label_field_is_skipped_and_falls_through_to_error() {
+        // A style entry with no "label" key — neither branch matches
+        let styles = vec![serde_json::json!({ "name": "Default" })];
+        assert!(ask_user_choose_style(styles).is_err());
+    }
+}
