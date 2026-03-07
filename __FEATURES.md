@@ -185,7 +185,7 @@ Open the rust-ui documentation in the default browser.
 | `--overwrite` / `-o` | Overwrite existing files without prompting |
 | `--yes` / `-y` | Skip all confirmation prompts (useful for CI/scripting) |
 | `--all` / `-a` | Add all available components at once _(not planned)_ |
-| `--path <path>` | Override the output directory for the component |
+| `--path <path>` | Override the output directory for the component ✅ |
 | `--silent` / `-s` | Suppress output |
 | Overwrite prompt | When a component already exists, prompt the user before overwriting (noted in TODOS.md) |
 | Deprecated component warnings | Warn when a requested component is deprecated |

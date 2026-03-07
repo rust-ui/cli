@@ -5,6 +5,7 @@
 ### Added
 
 - `ui view <name>` — prints a component's source from the registry without installing it; supports `--json`
+- `ui add --path <dir>` — override the output directory for components, bypassing `base_path_components` from `ui_config.toml`
 - `ui diff` — shows a line-by-line diff of installed components vs the registry; supports a single component (`ui diff button`) or all installed components at once; supports `--json` for machine-readable output
 
 ---
