@@ -68,6 +68,75 @@ pub fn command_add() -> Command {
 /*                         🦀 MAIN 🦀                         */
 /* ========================================================== */
 
+/// Install a specific list of components into `base_path`, always overwriting.
+/// Used by `ui init --reinstall` to re-download existing components.
+pub async fn process_add_components(components: Vec<String>, base_path: &str) -> CliResult<()> {
+    if components.is_empty() {
+        return Ok(());
+    }
+
+    let tree_content = RustUIClient::fetch_tree_md().await?;
+    let tree_parser = TreeParser::parse_tree_md(&tree_content)?;
+
+    let resolved_set = tree_parser.resolve_dependencies(&components)?;
+    let all_resolved_components: Vec<String> = resolved_set.components.into_iter().collect();
+    let all_resolved_parent_dirs: Vec<String> = resolved_set.parent_dirs.into_iter().collect();
+    let all_resolved_cargo_dependencies: Vec<String> = resolved_set.cargo_deps.into_iter().collect();
+    let all_resolved_js_files: HashSet<String> = resolved_set.js_files;
+    let user_requested: HashSet<String> = components.into_iter().collect();
+
+    Components::create_components_mod_if_not_exists_with_pub_mods(
+        base_path.to_string(),
+        all_resolved_parent_dirs,
+    )?;
+
+    let components_path = Path::new(base_path);
+    let parent_path = components_path
+        .parent()
+        .ok_or_else(|| CliError::invalid_path(base_path, "no parent directory"))?;
+    let entry_file_path = if parent_path.join("lib.rs").exists() {
+        parent_path.join("lib.rs")
+    } else {
+        parent_path.join("main.rs")
+    };
+    Components::register_components_in_application_entry(
+        entry_file_path.to_string_lossy().as_ref(),
+    )?;
+
+    let installed = get_installed_components(base_path);
+    let mut written: Vec<String> = Vec::new();
+    let mut skipped: Vec<String> = Vec::new();
+    let mut already_installed: Vec<String> = Vec::new();
+
+    for component_name in all_resolved_components {
+        if installed.contains(&component_name) && !user_requested.contains(&component_name) {
+            already_installed.push(component_name);
+            continue;
+        }
+
+        let outcome = RegistryComponent::fetch_from_registry(component_name.clone())
+            .await?
+            .then_write_to_file_to(true, base_path) // force = always overwrite on reinstall
+            .await?;
+
+        match outcome {
+            super::registry::WriteOutcome::Written => written.push(component_name),
+            super::registry::WriteOutcome::Skipped => skipped.push(component_name),
+        }
+    }
+
+    print_add_summary(&written, &skipped, &already_installed);
+
+    if !all_resolved_cargo_dependencies.is_empty() {
+        super::dependencies::process_cargo_deps(&all_resolved_cargo_dependencies)?;
+    }
+    if !all_resolved_js_files.is_empty() {
+        process_js_files(&all_resolved_js_files).await?;
+    }
+
+    Ok(())
+}
+
 //
 pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     let user_components: Vec<String> =
@@ -516,6 +585,16 @@ mod tests {
         assert!(out.contains("Would overwrite"));
         assert!(out.contains("Would add cargo deps"));
         assert!(out.contains("Would install JS files"));
+    }
+
+    // --- process_add_components ---
+
+    #[test]
+    fn process_add_components_returns_ok_for_empty_list() {
+        // Empty input must short-circuit without hitting the network
+        let rt = tokio::runtime::Runtime::new().unwrap();
+        let result = rt.block_on(process_add_components(vec![], "src/components"));
+        assert!(result.is_ok());
     }
 
     // --- deprecated component warnings ---

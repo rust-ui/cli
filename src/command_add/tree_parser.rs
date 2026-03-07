@@ -181,6 +181,7 @@ impl TreeParser {
             }
         }
 
+        // Debug output — intentionally kept for visibility during development
         println!("📦 Final set of resolved components: {resolved_components:?}");
         println!("📦 Final set of cargo dependencies: {resolved_cargo_deps:?}");
         if !resolved_js_files.is_empty() {

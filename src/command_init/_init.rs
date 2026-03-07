@@ -9,13 +9,22 @@ use dialoguer::theme::ColorfulTheme;
 const UI_CONFIG_TOML: &str = "ui_config.toml";
 const PACKAGE_JSON: &str = "package.json";
 
+use super::backup::FileBackup;
 use super::config::{UiConfig, add_init_crates};
 use super::install::InstallType;
 use super::workspace_utils::{check_leptos_dependency, get_tailwind_input_file};
+use crate::command_add::installed::get_installed_components;
 use crate::command_init::install::install_dependencies;
 use crate::command_init::template::MyTemplate;
 use crate::shared::cli_error::{CliError, CliResult};
 use crate::shared::task_spinner::TaskSpinner;
+
+/// Returned by `process_init`. Non-empty `to_reinstall` means the caller
+/// should re-download those components (e.g. via `process_add_components`).
+pub struct InitOutcome {
+    pub to_reinstall: Vec<String>,
+    pub base_path: String,
+}
 
 /* ========================================================== */
 /*                         🦀 MAIN 🦀                         */
@@ -39,6 +48,12 @@ pub fn command_init() -> Command {
                 .help("Force overwrite existing files without prompting")
                 .action(clap::ArgAction::SetTrue),
         )
+        .arg(
+            Arg::new("reinstall")
+                .long("reinstall")
+                .help("Re-download and overwrite all already-installed components")
+                .action(clap::ArgAction::SetTrue),
+        )
         .subcommand(Command::new("run").about("Run the initialization logic"))
 }
 
@@ -46,7 +61,12 @@ pub fn command_init() -> Command {
 /*                     ✨ FUNCTIONS ✨                        */
 /* ========================================================== */
 
-pub async fn process_init(force: bool) -> CliResult<()> {
+/// Run project initialisation.
+///
+/// - `force`     – overwrite existing files without prompting (`--yes` / `--force`)
+/// - `reinstall` – `Some(true)` = always reinstall components, `Some(false)` = never,
+///                 `None` = prompt when existing components are detected
+pub async fn process_init(force: bool, reinstall: Option<bool>) -> CliResult<InitOutcome> {
     // Check if Leptos is installed before proceeding
     if !check_leptos_dependency()? {
         return Err(CliError::config(
@@ -56,6 +76,21 @@ pub async fn process_init(force: bool) -> CliResult<()> {
 
     // Get tailwind input file from Cargo.toml metadata
     let tailwind_input_file = get_tailwind_input_file()?;
+
+    // Read the existing config (if any) so we can detect installed components
+    // and derive the base_path *before* we overwrite ui_config.toml.
+    let existing_config = UiConfig::try_reading_ui_config(UI_CONFIG_TOML).ok();
+    let base_path = existing_config
+        .as_ref()
+        .map(|c| c.base_path_components.clone())
+        .unwrap_or_else(|| "src/components".to_string());
+
+    // Detect components installed in the current project (empty on first run)
+    let installed: Vec<String> = get_installed_components(&base_path).into_iter().collect();
+
+    // Back up ui_config.toml — restored automatically on Drop if we error out
+    let mut config_backup = FileBackup::new(Path::new(UI_CONFIG_TOML))
+        .map_err(|e| CliError::file_operation(&e.to_string()))?;
 
     let ui_config = UiConfig::default();
     let ui_config_toml = toml::to_string_pretty(&ui_config)?;
@@ -73,7 +108,34 @@ pub async fn process_init(force: bool) -> CliResult<()> {
     add_init_crates().await?;
 
     install_dependencies(&[InstallType::Tailwind]).await?;
-    Ok(())
+
+    // All writes succeeded — disarm the backup
+    if let Some(ref mut backup) = config_backup {
+        backup.disarm();
+    }
+
+    // Determine which components to reinstall
+    let to_reinstall = if installed.is_empty() {
+        vec![]
+    } else {
+        let should_reinstall = match reinstall {
+            Some(v) => v,
+            None if force => true,
+            None => {
+                Confirm::with_theme(&ColorfulTheme::default())
+                    .with_prompt(format!(
+                        "{} existing component(s) found. Re-install them?",
+                        installed.len()
+                    ))
+                    .default(false)
+                    .interact()
+                    .map_err(|e| CliError::validation(&e.to_string()))?
+            }
+        };
+        if should_reinstall { installed } else { vec![] }
+    };
+
+    Ok(InitOutcome { to_reinstall, base_path })
 }
 
 /* ========================================================== */
@@ -218,6 +280,18 @@ mod tests {
         let m = command_init().try_get_matches_from(["init", "--yes", "--force"]).unwrap();
         assert!(m.get_flag("yes"));
         assert!(m.get_flag("force"));
+    }
+
+    #[test]
+    fn command_init_reinstall_flag_is_registered() {
+        let m = command_init().try_get_matches_from(["init", "--reinstall"]).unwrap();
+        assert!(m.get_flag("reinstall"));
+    }
+
+    #[test]
+    fn command_init_reinstall_is_false_by_default() {
+        let m = command_init().try_get_matches_from(["init"]).unwrap();
+        assert!(!m.get_flag("reinstall"));
     }
 
     #[test]

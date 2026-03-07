@@ -49,9 +49,9 @@ Features that shadcn CLI has that our `ui-cli` currently lacks.
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
   │ --yes / --force / --defaults flags          │ ✅                                             │ ✅ (--yes, --force)   │
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
-  │ Re-install existing components              │ ✅                                             │ ❌                    │
+  │ Re-install existing components              │ ✅                                             │ ✅ (--reinstall)      │
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
-  │ Backup/restore on failure                   │ ✅                                             │ ❌                    │
+  │ Backup/restore on failure                   │ ✅                                             │ ✅ (RAII FileBackup)  │
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
   │ Leptos dep check                            │ ❌                                             │ ✅                    │
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
@@ -115,12 +115,6 @@ Features that shadcn CLI has that our `ui-cli` currently lacks.
 ---
 
 ## Features Still Missing
-
-### `init` — backup/restore on failure
-Back up existing config before writing; restore if the process exits unexpectedly.
-
-### `init` — re-install existing components
-After re-running `ui init`, offer to re-download and overwrite already installed components.
 
 ### `init` — interactive theme/color picker
 Currently auto-selects the Default style. Should let the user pick a base color
