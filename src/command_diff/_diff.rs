@@ -134,14 +134,23 @@ pub fn compute_diff(local: &str, remote: &str) -> Vec<DiffLine> {
     let m = local_lines.len();
     let n = remote_lines.len();
 
-    // Build LCS table
-    let mut table = vec![vec![0usize; n + 1]; m + 1];
+    // Build LCS table (flat 1D, row-major: index = i * (n+1) + j)
+    let cols = n + 1;
+    let mut table = vec![0usize; (m + 1) * cols];
+
     for i in 1..=m {
         for j in 1..=n {
-            if local_lines[i - 1] == remote_lines[j - 1] {
-                table[i][j] = table[i - 1][j - 1] + 1;
+            let local_line = local_lines.get(i - 1).copied().unwrap_or_default();
+            let remote_line = remote_lines.get(j - 1).copied().unwrap_or_default();
+            let val = if local_line == remote_line {
+                table.get((i - 1) * cols + (j - 1)).copied().unwrap_or(0) + 1
             } else {
-                table[i][j] = table[i - 1][j].max(table[i][j - 1]);
+                let up = table.get((i - 1) * cols + j).copied().unwrap_or(0);
+                let left = table.get(i * cols + (j - 1)).copied().unwrap_or(0);
+                up.max(left)
+            };
+            if let Some(cell) = table.get_mut(i * cols + j) {
+                *cell = val;
             }
         }
     }
@@ -152,15 +161,25 @@ pub fn compute_diff(local: &str, remote: &str) -> Vec<DiffLine> {
     let mut j = n;
 
     while i > 0 || j > 0 {
-        if i > 0 && j > 0 && local_lines[i - 1] == remote_lines[j - 1] {
-            result.push(DiffLine::Same(local_lines[i - 1].to_string()));
+        let local_line = if i > 0 { local_lines.get(i - 1).copied().unwrap_or_default() } else { "" };
+        let remote_line = if j > 0 { remote_lines.get(j - 1).copied().unwrap_or_default() } else { "" };
+
+        if i > 0 && j > 0 && local_line == remote_line {
+            result.push(DiffLine::Same(local_line.to_string()));
             i -= 1;
             j -= 1;
-        } else if j > 0 && (i == 0 || table[i][j - 1] >= table[i - 1][j]) {
-            result.push(DiffLine::Added(remote_lines[j - 1].to_string()));
-            j -= 1;
+        } else if j > 0 {
+            let left = table.get(i * cols + (j - 1)).copied().unwrap_or(0);
+            let up = if i > 0 { table.get((i - 1) * cols + j).copied().unwrap_or(0) } else { 0 };
+            if i == 0 || left >= up {
+                result.push(DiffLine::Added(remote_line.to_string()));
+                j -= 1;
+            } else {
+                result.push(DiffLine::Removed(local_line.to_string()));
+                i -= 1;
+            }
         } else {
-            result.push(DiffLine::Removed(local_lines[i - 1].to_string()));
+            result.push(DiffLine::Removed(local_line.to_string()));
             i -= 1;
         }
     }
@@ -268,7 +287,7 @@ fn format_single_diff(diff: &ComponentDiff) -> String {
         if range_idx > 0 {
             out.push_str(&"  ...\n".dimmed().to_string());
         }
-        for line in &diff.lines[*start..*end] {
+        for line in diff.lines.get(*start..*end).unwrap_or_default() {
             match line {
                 DiffLine::Same(s) => out.push_str(&format!("{}\n", format!("  {s}").dimmed())),
                 DiffLine::Removed(s) => out.push_str(&format!("{}\n", format!("- {s}").red())),
@@ -297,22 +316,21 @@ pub fn format_diff_json(diffs: &[ComponentDiff]) -> CliResult<String> {
 /// Extract hunks (contiguous blocks of changes) from a diff.
 fn extract_hunks(lines: &[DiffLine]) -> Vec<DiffHunk> {
     let mut hunks: Vec<DiffHunk> = Vec::new();
-    let mut i = 0;
+    let mut iter = lines.iter().peekable();
 
-    while i < lines.len() {
-        if matches!(&lines[i], DiffLine::Same(_)) {
-            i += 1;
+    while iter.peek().is_some() {
+        if matches!(iter.peek(), Some(DiffLine::Same(_))) {
+            iter.next();
             continue;
         }
         let mut removed = Vec::new();
         let mut added = Vec::new();
-        while i < lines.len() && !matches!(&lines[i], DiffLine::Same(_)) {
-            match &lines[i] {
-                DiffLine::Removed(s) => removed.push(s.clone()),
-                DiffLine::Added(s) => added.push(s.clone()),
-                DiffLine::Same(_) => unreachable!(),
+        while !matches!(iter.peek(), None | Some(DiffLine::Same(_))) {
+            match iter.next() {
+                Some(DiffLine::Removed(s)) => removed.push(s.clone()),
+                Some(DiffLine::Added(s)) => added.push(s.clone()),
+                _ => {}
             }
-            i += 1;
         }
         hunks.push(DiffHunk { removed, added });
     }
