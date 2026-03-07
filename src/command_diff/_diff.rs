@@ -256,12 +256,11 @@ fn format_single_diff(diff: &ComponentDiff) -> String {
     for &idx in &changed_indices {
         let start = idx.saturating_sub(CONTEXT_LINES);
         let end = (idx + CONTEXT_LINES + 1).min(diff.lines.len());
-        if let Some(last) = ranges.last_mut() {
-            if start <= last.1 {
+        if let Some(last) = ranges.last_mut()
+            && start <= last.1 {
                 last.1 = last.1.max(end);
                 continue;
             }
-        }
         ranges.push((start, end));
     }
 
