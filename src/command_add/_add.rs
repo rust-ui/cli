@@ -25,6 +25,13 @@ pub fn command_add() -> Command {
                 .help("Overwrite existing files without prompting")
                 .action(clap::ArgAction::SetTrue),
         )
+        .arg(
+            Arg::new("dry-run")
+                .short('n')
+                .long("dry-run")
+                .help("Preview which files would be written without making any changes")
+                .action(clap::ArgAction::SetTrue),
+        )
 }
 
 /* ========================================================== */
@@ -36,6 +43,7 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     let user_components: Vec<String> =
         matches.get_many::<String>("components").unwrap_or_default().cloned().collect();
     let force = matches.get_flag("yes");
+    let dry_run = matches.get_flag("dry-run");
 
     // Fetch and parse tree.md
     let tree_content = RustUIClient::fetch_tree_md().await?;
@@ -72,6 +80,22 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     let all_resolved_cargo_dependencies: Vec<String> = resolved_set.cargo_deps.into_iter().collect();
     let all_resolved_js_files: HashSet<String> = resolved_set.js_files;
 
+    // Track which components the user explicitly requested for prompt decisions
+    let user_requested: HashSet<String> = user_components.iter().cloned().collect();
+
+    // Dry-run: show what would happen without touching the filesystem
+    if dry_run {
+        let summary = compute_dry_run_summary(
+            &all_resolved_components,
+            &installed,
+            &user_requested,
+            &all_resolved_cargo_dependencies,
+            &all_resolved_js_files,
+        );
+        println!("{}", format_dry_run_summary(&summary));
+        return Ok(());
+    }
+
     // Create components/mod.rs if it does not exist
     let components_base_path = UiConfig::try_reading_ui_config(UI_CONFIG_TOML)?.base_path_components;
 
@@ -99,10 +123,6 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     // Components to add
     let mut written: Vec<String> = Vec::new();
     let mut skipped: Vec<String> = Vec::new();
-
-    // Track which components the user explicitly requested for prompt decisions
-    let user_requested: HashSet<String> = user_components.iter().cloned().collect();
-
     let mut already_installed: Vec<String> = Vec::new();
 
     for component_name in all_resolved_components {
@@ -134,6 +154,75 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     }
 
     Ok(())
+}
+
+/* ========================================================== */
+/*                    🔍 DRY-RUN SUMMARY 🔍                  */
+/* ========================================================== */
+
+struct DryRunSummary {
+    would_add: Vec<String>,
+    would_overwrite: Vec<String>,
+    already_installed: Vec<String>,
+    cargo_deps: Vec<String>,
+    js_files: Vec<String>,
+}
+
+fn compute_dry_run_summary(
+    resolved: &[String],
+    installed: &HashSet<String>,
+    user_requested: &HashSet<String>,
+    cargo_deps: &[String],
+    js_files: &HashSet<String>,
+) -> DryRunSummary {
+    let mut would_add = Vec::new();
+    let mut would_overwrite = Vec::new();
+    let mut already_installed = Vec::new();
+
+    for name in resolved {
+        if installed.contains(name) && !user_requested.contains(name) {
+            already_installed.push(name.clone());
+        } else if installed.contains(name) {
+            would_overwrite.push(name.clone());
+        } else {
+            would_add.push(name.clone());
+        }
+    }
+
+    // Sort for deterministic output
+    would_add.sort();
+    would_overwrite.sort();
+    already_installed.sort();
+
+    let mut cargo_deps = cargo_deps.to_vec();
+    cargo_deps.sort();
+
+    let mut js_files: Vec<String> = js_files.iter().cloned().collect();
+    js_files.sort();
+
+    DryRunSummary { would_add, would_overwrite, already_installed, cargo_deps, js_files }
+}
+
+fn format_dry_run_summary(s: &DryRunSummary) -> String {
+    let mut lines: Vec<String> = Vec::new();
+
+    if !s.would_add.is_empty() {
+        lines.push(format!("[dry-run] Would add:              {}", s.would_add.join(", ")));
+    }
+    if !s.would_overwrite.is_empty() {
+        lines.push(format!("[dry-run] Would overwrite:        {}", s.would_overwrite.join(", ")));
+    }
+    if !s.already_installed.is_empty() {
+        lines.push(format!("[dry-run] Dep already installed:  {}", s.already_installed.join(", ")));
+    }
+    if !s.cargo_deps.is_empty() {
+        lines.push(format!("[dry-run] Would add cargo deps:   {}", s.cargo_deps.join(", ")));
+    }
+    if !s.js_files.is_empty() {
+        lines.push(format!("[dry-run] Would install JS files: {}", s.js_files.join(", ")));
+    }
+
+    if lines.is_empty() { "[dry-run] Nothing to add.".to_string() } else { lines.join("\n") }
 }
 
 /* ========================================================== */
@@ -256,6 +345,109 @@ mod tests {
         let user_requested: HashSet<String> = ["badge"].iter().map(|s| s.to_string()).collect();
         // button is not installed → never skipped regardless of requested
         assert!(!(installed.contains("button") && !user_requested.contains("button")));
+    }
+
+    // --- compute_dry_run_summary / format_dry_run_summary ---
+
+    fn make_set(items: &[&str]) -> HashSet<String> {
+        items.iter().map(|s| s.to_string()).collect()
+    }
+
+    fn dry_run(
+        resolved: &[&str],
+        installed: &[&str],
+        requested: &[&str],
+        cargo: &[&str],
+        js: &[&str],
+    ) -> DryRunSummary {
+        compute_dry_run_summary(
+            &resolved.iter().map(|s| s.to_string()).collect::<Vec<_>>(),
+            &make_set(installed),
+            &make_set(requested),
+            &cargo.iter().map(|s| s.to_string()).collect::<Vec<_>>(),
+            &make_set(js),
+        )
+    }
+
+    #[test]
+    fn dry_run_nothing_to_add_when_all_empty() {
+        let s = dry_run(&[], &[], &[], &[], &[]);
+        assert_eq!(format_dry_run_summary(&s), "[dry-run] Nothing to add.");
+    }
+
+    #[test]
+    fn dry_run_new_component_goes_to_would_add() {
+        let s = dry_run(&["badge"], &[], &["badge"], &[], &[]);
+        assert!(s.would_add.contains(&"badge".to_string()));
+        assert!(s.would_overwrite.is_empty());
+        assert!(s.already_installed.is_empty());
+    }
+
+    #[test]
+    fn dry_run_installed_dep_not_requested_goes_to_already_installed() {
+        let s = dry_run(&["button"], &["button"], &["badge"], &[], &[]);
+        assert!(s.already_installed.contains(&"button".to_string()));
+        assert!(s.would_add.is_empty());
+        assert!(s.would_overwrite.is_empty());
+    }
+
+    #[test]
+    fn dry_run_installed_and_requested_goes_to_would_overwrite() {
+        let s = dry_run(&["button"], &["button"], &["button"], &[], &[]);
+        assert!(s.would_overwrite.contains(&"button".to_string()));
+        assert!(s.would_add.is_empty());
+        assert!(s.already_installed.is_empty());
+    }
+
+    #[test]
+    fn dry_run_cargo_deps_shown_in_summary() {
+        let s = dry_run(&[], &[], &[], &["lucide-leptos"], &[]);
+        assert_eq!(s.cargo_deps, vec!["lucide-leptos"]);
+        assert!(format_dry_run_summary(&s).contains("Would add cargo deps"));
+    }
+
+    #[test]
+    fn dry_run_js_files_shown_in_summary() {
+        let s = dry_run(&[], &[], &[], &[], &["floating-ui.js"]);
+        assert!(format_dry_run_summary(&s).contains("Would install JS files"));
+    }
+
+    #[test]
+    fn dry_run_mixed_all_categories() {
+        let s = dry_run(
+            &["badge", "button", "card"],
+            &["button", "card"],
+            &["badge", "button"],
+            &["lucide"],
+            &["fp.js"],
+        );
+        assert_eq!(s.would_add, vec!["badge"]);
+        assert_eq!(s.would_overwrite, vec!["button"]);
+        assert_eq!(s.already_installed, vec!["card"]);
+        assert_eq!(s.cargo_deps, vec!["lucide"]);
+        assert_eq!(s.js_files, vec!["fp.js"]);
+    }
+
+    #[test]
+    fn dry_run_output_is_sorted() {
+        let s = dry_run(&["card", "alert", "badge"], &[], &["card", "alert", "badge"], &[], &[]);
+        assert_eq!(s.would_add, vec!["alert", "badge", "card"]);
+    }
+
+    #[test]
+    fn dry_run_format_shows_all_sections() {
+        let s = dry_run(
+            &["badge", "button"],
+            &["button"],
+            &["badge", "button"],
+            &["dep-a"],
+            &["file.js"],
+        );
+        let out = format_dry_run_summary(&s);
+        assert!(out.contains("Would add"));
+        assert!(out.contains("Would overwrite"));
+        assert!(out.contains("Would add cargo deps"));
+        assert!(out.contains("Would install JS files"));
     }
 }
 

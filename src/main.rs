@@ -9,6 +9,7 @@ use std::process;
 use clap::Command;
 
 mod command_add;
+mod command_docs;
 mod command_info;
 mod command_init;
 mod command_starters;
@@ -31,6 +32,7 @@ async fn main() {
         .subcommand(command_init::_init::command_init())
         .subcommand(command_add::_add::command_add())
         .subcommand(command_info::_info::command_info())
+        .subcommand(command_docs::_docs::command_docs())
         .subcommand(command_starters::_starters::command_starters());
 
     let matches = mut_program.clone().get_matches();
@@ -51,6 +53,12 @@ async fn main() {
         }
         Some(("info", _)) => {
             if let Err(e) = command_info::_info::process_info() {
+                eprintln!("{e}");
+                process::exit(1);
+            }
+        }
+        Some(("docs", _)) => {
+            if let Err(e) = command_docs::_docs::process_docs() {
                 eprintln!("{e}");
                 process::exit(1);
             }
