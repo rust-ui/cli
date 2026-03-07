@@ -21,7 +21,7 @@ Features that shadcn CLI has that our `ui-cli` currently lacks.
   │  info               │  ✅                   │  ✅                            │
   │  docs               │  ✅                   │  ✅                            │
   │  view               │  ✅                   │  ✅                            │
-  │  mcp                │  ✅                   │  🚧 planned (see __FEATURES_MCP.md) │
+  │  mcp                │  ✅                   │  ✅                                 │
   │  migrate            │  ✅                   │  ❌ (not needed)               │
   │  build              │  ✅                   │  ❌ (not needed)               │
   │  registry add       │  ✅                   │  ❌ (not needed)               │
@@ -47,7 +47,7 @@ Features that shadcn CLI has that our `ui-cli` currently lacks.
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
   │ Overwrite config prompt                     │ ✅                                             │ ✅                    │
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
-  │ --yes / --force / --defaults flags          │ ✅                                             │ ❌                    │
+  │ --yes / --force / --defaults flags          │ ✅                                             │ ✅ (--yes, --force)   │
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
   │ Re-install existing components              │ ✅                                             │ ❌                    │
   ├─────────────────────────────────────────────┼────────────────────────────────────────────────┼───────────────────────┤
@@ -75,6 +75,8 @@ Features that shadcn CLI has that our `ui-cli` currently lacks.
   │ Overwrite prompt (interactive)    │ ✅                             │ ✅                                                                       │
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
   │ --yes / --overwrite flag          │ ✅                             │ ✅                                                                       │
+  ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
+  │ Deprecated component warnings     │ ✅                             │ ✅                                                                       │
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
   │ --all flag                        │ ✅                             │ ❌ (not planned)                                                         │
   ├───────────────────────────────────┼────────────────────────────────┼──────────────────────────────────────────────────────────────────────────┤
@@ -113,16 +115,6 @@ Features that shadcn CLI has that our `ui-cli` currently lacks.
 ---
 
 ## Features Still Missing
-
-### `mcp` command
-Start the CLI as an MCP server so AI coding tools (Claude Code, Cursor, VS Code) can call it programmatically.
-See `__FEATURES_MCP.md` for the full design.
-
-### `add` — deprecated component warnings
-Warn when a requested component is deprecated in the registry.
-
-### `init --yes` / `--force` / `--defaults` flags
-Skip all prompts and use defaults. Needed for scripted/CI environments.
 
 ### `init` — backup/restore on failure
 Back up existing config before writing; restore if the process exits unexpectedly.

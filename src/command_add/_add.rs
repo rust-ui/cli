@@ -4,6 +4,16 @@ use std::vec::Vec;
 
 const UI_CONFIG_TOML: &str = "ui_config.toml";
 
+struct DeprecatedComponent {
+    name: &'static str,
+    replacement: &'static str,
+}
+
+const DEPRECATED_COMPONENTS: &[DeprecatedComponent] = &[DeprecatedComponent {
+    name: "toast",
+    replacement: "sonner",
+}];
+
 use clap::{Arg, ArgMatches, Command};
 
 use super::components::Components;
@@ -96,6 +106,20 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     } else {
         user_components
     };
+
+    // Warn and exit if any requested component is deprecated
+    for component in &user_components {
+        if let Some(dep) = DEPRECATED_COMPONENTS.iter().find(|d| d.name == component.as_str()) {
+            eprintln!(
+                "Warning: '{}' is deprecated. Use '{}' instead.",
+                dep.name, dep.replacement
+            );
+            return Err(CliError::validation(&format!(
+                "'{}' is deprecated. Use '{}' instead.",
+                dep.name, dep.replacement
+            )));
+        }
+    }
 
     // Resolve dependencies using the new tree-based system
     let resolved_set = tree_parser.resolve_dependencies(&user_components)?;
@@ -492,6 +516,25 @@ mod tests {
         assert!(out.contains("Would overwrite"));
         assert!(out.contains("Would add cargo deps"));
         assert!(out.contains("Would install JS files"));
+    }
+
+    // --- deprecated component warnings ---
+
+    #[test]
+    fn toast_is_in_deprecated_list() {
+        assert!(DEPRECATED_COMPONENTS.iter().any(|d| d.name == "toast"));
+    }
+
+    #[test]
+    fn deprecated_toast_points_to_sonner() {
+        let dep = DEPRECATED_COMPONENTS.iter().find(|d| d.name == "toast").unwrap();
+        assert_eq!(dep.replacement, "sonner");
+    }
+
+    #[test]
+    fn non_deprecated_component_not_in_list() {
+        assert!(!DEPRECATED_COMPONENTS.iter().any(|d| d.name == "button"));
+        assert!(!DEPRECATED_COMPONENTS.iter().any(|d| d.name == "badge"));
     }
 
     // --- command_add flag wiring ---
