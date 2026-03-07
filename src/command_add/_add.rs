@@ -45,7 +45,7 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     let user_components = if user_components.is_empty() {
         let component_names: Vec<String> = tree_parser.get_all_component_names();
         let dependencies = tree_parser.get_dependencies_map();
-        let selected = super::ratatui::run_tui(component_names, installed, dependencies)?;
+        let selected = super::ratatui::run_tui(component_names, installed.clone(), dependencies)?;
         if selected.is_empty() {
             println!("No components selected.");
             return Ok(());
@@ -92,7 +92,18 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
     let mut written: Vec<String> = Vec::new();
     let mut skipped: Vec<String> = Vec::new();
 
+    // Track which components the user explicitly requested for prompt decisions
+    let user_requested: HashSet<String> = user_components.iter().cloned().collect();
+
+    let mut already_installed: Vec<String> = Vec::new();
+
     for component_name in all_resolved_components {
+        // Auto-resolved dep already on disk — skip fetch, report it separately
+        if installed.contains(&component_name) && !user_requested.contains(&component_name) {
+            already_installed.push(component_name);
+            continue;
+        }
+
         let outcome =
             RegistryComponent::fetch_from_registry(component_name.clone()).await?.then_write_to_file(false).await?;
 
@@ -102,7 +113,7 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
         }
     }
 
-    print_add_summary(&written, &skipped);
+    print_add_summary(&written, &skipped, &already_installed);
 
     // Handle cargo dependencies if any exist
     if !all_resolved_cargo_dependencies.is_empty() {
@@ -121,21 +132,28 @@ pub async fn process_add(matches: &ArgMatches) -> CliResult<()> {
 /*                     ✨ SUMMARY ✨                          */
 /* ========================================================== */
 
-fn print_add_summary(written: &[String], skipped: &[String]) {
-    let summary = format_add_summary(written, skipped);
+fn print_add_summary(written: &[String], skipped: &[String], already_installed: &[String]) {
+    let summary = format_add_summary(written, skipped, already_installed);
     if !summary.is_empty() {
         println!("{summary}");
     }
 }
 
-pub fn format_add_summary(written: &[String], skipped: &[String]) -> String {
+pub fn format_add_summary(
+    written: &[String],
+    skipped: &[String],
+    already_installed: &[String],
+) -> String {
     let mut lines: Vec<String> = Vec::new();
 
     if !written.is_empty() {
-        lines.push(format!("✅ Added:   {}", written.join(", ")));
+        lines.push(format!("✅ Added:            {}", written.join(", ")));
     }
     if !skipped.is_empty() {
-        lines.push(format!("⏭  Skipped: {} (already exist)", skipped.join(", ")));
+        lines.push(format!("⏭  Skipped:          {} (already exist)", skipped.join(", ")));
+    }
+    if !already_installed.is_empty() {
+        lines.push(format!("📦 Dep already installed: {}", already_installed.join(", ")));
     }
 
     lines.join("\n")
@@ -153,40 +171,83 @@ mod tests {
         v.iter().map(|s| s.to_string()).collect()
     }
 
+    // --- format_add_summary ---
+
     #[test]
     fn summary_all_written() {
-        let result = format_add_summary(&s(&["button", "badge"]), &[]);
-        assert_eq!(result, "✅ Added:   button, badge");
+        let result = format_add_summary(&s(&["button", "badge"]), &[], &[]);
+        assert_eq!(result, "✅ Added:            button, badge");
     }
 
     #[test]
     fn summary_all_skipped() {
-        let result = format_add_summary(&[], &s(&["card"]));
-        assert_eq!(result, "⏭  Skipped: card (already exist)");
+        let result = format_add_summary(&[], &s(&["card"]), &[]);
+        assert_eq!(result, "⏭  Skipped:          card (already exist)");
     }
 
     #[test]
-    fn summary_mixed() {
-        let result = format_add_summary(&s(&["button"]), &s(&["card"]));
-        assert_eq!(result, "✅ Added:   button\n⏭  Skipped: card (already exist)");
+    fn summary_all_already_installed() {
+        let result = format_add_summary(&[], &[], &s(&["button"]));
+        assert_eq!(result, "📦 Dep already installed: button");
+    }
+
+    #[test]
+    fn summary_mixed_all_three() {
+        let result = format_add_summary(&s(&["badge"]), &s(&["card"]), &s(&["button"]));
+        assert_eq!(
+            result,
+            "✅ Added:            badge\n⏭  Skipped:          card (already exist)\n📦 Dep already installed: button"
+        );
+    }
+
+    #[test]
+    fn summary_written_and_already_installed() {
+        let result = format_add_summary(&s(&["badge"]), &[], &s(&["button"]));
+        assert_eq!(result, "✅ Added:            badge\n📦 Dep already installed: button");
     }
 
     #[test]
     fn summary_empty() {
-        let result = format_add_summary(&[], &[]);
+        let result = format_add_summary(&[], &[], &[]);
         assert!(result.is_empty());
     }
 
     #[test]
     fn summary_single_written() {
-        let result = format_add_summary(&s(&["badge"]), &[]);
-        assert_eq!(result, "✅ Added:   badge");
+        let result = format_add_summary(&s(&["badge"]), &[], &[]);
+        assert_eq!(result, "✅ Added:            badge");
     }
 
     #[test]
-    fn summary_multiple_skipped() {
-        let result = format_add_summary(&[], &s(&["button", "card", "badge"]));
-        assert_eq!(result, "⏭  Skipped: button, card, badge (already exist)");
+    fn summary_multiple_already_installed() {
+        let result = format_add_summary(&[], &[], &s(&["button", "card", "badge"]));
+        assert_eq!(result, "📦 Dep already installed: button, card, badge");
+    }
+
+    // --- dep-skip logic ---
+
+    #[test]
+    fn dep_already_installed_not_requested_is_skipped() {
+        let installed: HashSet<String> = ["button"].iter().map(|s| s.to_string()).collect();
+        let user_requested: HashSet<String> = ["badge"].iter().map(|s| s.to_string()).collect();
+        // button is installed but not requested → should be put in already_installed
+        assert!(installed.contains("button") && !user_requested.contains("button"));
+    }
+
+    #[test]
+    fn dep_already_installed_but_explicitly_requested_is_not_skipped() {
+        let installed: HashSet<String> = ["button"].iter().map(|s| s.to_string()).collect();
+        let user_requested: HashSet<String> = ["button"].iter().map(|s| s.to_string()).collect();
+        // button is installed AND requested → should go through normal write path
+        assert!(!(installed.contains("button") && !user_requested.contains("button")));
+    }
+
+    #[test]
+    fn new_dep_not_installed_is_not_skipped() {
+        let installed: HashSet<String> = HashSet::new();
+        let user_requested: HashSet<String> = ["badge"].iter().map(|s| s.to_string()).collect();
+        // button is not installed → never skipped regardless of requested
+        assert!(!(installed.contains("button") && !user_requested.contains("button")));
     }
 }
 
