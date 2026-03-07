@@ -1,4 +1,8 @@
 use std::io::Write;
+use std::path::Path;
+
+use dialoguer::Confirm;
+use dialoguer::theme::ColorfulTheme;
 
 use super::component_type::ComponentType;
 use crate::command_init::config::UiConfig;
@@ -6,6 +10,16 @@ use crate::shared::cli_error::{CliError, CliResult};
 use crate::shared::rust_ui_client::RustUIClient;
 
 const UI_CONFIG_TOML: &str = "ui_config.toml";
+
+/* ========================================================== */
+/*                        📦 TYPES 📦                         */
+/* ========================================================== */
+
+#[derive(Debug, PartialEq)]
+pub enum WriteOutcome {
+    Written,
+    Skipped,
+}
 
 /* ========================================================== */
 /*                     ✨ FUNCTIONS ✨                        */
@@ -26,7 +40,7 @@ impl RegistryComponent {
         Ok(RegistryComponent { registry_md_path, registry_md_content, component_name })
     }
 
-    pub async fn then_write_to_file(self) -> CliResult<()> {
+    pub async fn then_write_to_file(self, force: bool) -> CliResult<WriteOutcome> {
         let components_base_path = UiConfig::try_reading_ui_config(UI_CONFIG_TOML)?.base_path_components;
         let full_path_component = std::path::Path::new(&components_base_path).join(&self.registry_md_path);
 
@@ -37,26 +51,124 @@ impl RegistryComponent {
             .ok_or_else(|| CliError::file_operation("Failed to convert path to string"))?
             .to_string();
 
+        let outcome = write_component_file(&full_path_component, &self.registry_md_content, force)?;
+
+        if outcome == WriteOutcome::Skipped {
+            return Ok(WriteOutcome::Skipped);
+        }
+
         write_component_name_in_mod_rs_if_not_exists(
             self.component_name,
             full_path_component_without_name_rs,
         )?;
 
-        let dir = full_path_component
-            .parent()
-            .ok_or_else(|| CliError::file_operation("Failed to get parent directory"))?;
-        std::fs::create_dir_all(dir).map_err(|_| CliError::directory_create_failed())?;
-
-        std::fs::write(&full_path_component, self.registry_md_content)
-            .map_err(|_| CliError::file_write_failed())?;
-
-        Ok(())
+        Ok(WriteOutcome::Written)
     }
+}
+
+/* ========================================================== */
+/*                     ✨ HELPERS ✨                          */
+/* ========================================================== */
+
+/// Write a component file to disk. If the file already exists and `force` is
+/// false, prompt the user. Returns whether the file was written or skipped.
+pub fn write_component_file(path: &Path, content: &str, force: bool) -> CliResult<WriteOutcome> {
+    if path.exists() && !force {
+        let file_name = path.file_name().and_then(|n| n.to_str()).unwrap_or("file");
+        let overwrite = Confirm::with_theme(&ColorfulTheme::default())
+            .with_prompt(format!("{file_name} already exists. Overwrite?"))
+            .default(false)
+            .interact()
+            .map_err(|err| CliError::validation(&format!("Failed to get user input: {err}")))?;
+
+        if !overwrite {
+            return Ok(WriteOutcome::Skipped);
+        }
+    }
+
+    let dir = path.parent().ok_or_else(|| CliError::file_operation("Failed to get parent directory"))?;
+    std::fs::create_dir_all(dir).map_err(|_| CliError::directory_create_failed())?;
+    std::fs::write(path, content).map_err(|_| CliError::file_write_failed())?;
+
+    Ok(WriteOutcome::Written)
 }
 
 /* ========================================================== */
 /*                     ✨ FUNCTIONS ✨                        */
 /* ========================================================== */
+
+/* ========================================================== */
+/*                        🧪 TESTS 🧪                         */
+/* ========================================================== */
+
+#[cfg(test)]
+mod tests {
+    use std::fs;
+
+    use tempfile::TempDir;
+
+    use super::*;
+
+    fn temp_file(dir: &TempDir, name: &str) -> std::path::PathBuf {
+        dir.path().join(name)
+    }
+
+    #[test]
+    fn write_new_file_returns_written() {
+        let dir = TempDir::new().unwrap();
+        let path = temp_file(&dir, "button.rs");
+
+        let outcome = write_component_file(&path, "// button", true).unwrap();
+
+        assert_eq!(outcome, WriteOutcome::Written);
+        assert!(path.exists());
+    }
+
+    #[test]
+    fn written_content_is_correct() {
+        let dir = TempDir::new().unwrap();
+        let path = temp_file(&dir, "button.rs");
+
+        write_component_file(&path, "// button content", true).unwrap();
+
+        assert_eq!(fs::read_to_string(&path).unwrap(), "// button content");
+    }
+
+    #[test]
+    fn force_true_overwrites_existing_file() {
+        let dir = TempDir::new().unwrap();
+        let path = temp_file(&dir, "button.rs");
+        fs::write(&path, "// old").unwrap();
+
+        let outcome = write_component_file(&path, "// new", true).unwrap();
+
+        assert_eq!(outcome, WriteOutcome::Written);
+        assert_eq!(fs::read_to_string(&path).unwrap(), "// new");
+    }
+
+    #[test]
+    fn write_creates_nested_parent_dirs() {
+        let dir = TempDir::new().unwrap();
+        let path = dir.path().join("ui").join("nested").join("button.rs");
+
+        let outcome = write_component_file(&path, "// button", true).unwrap();
+
+        assert_eq!(outcome, WriteOutcome::Written);
+        assert!(path.exists());
+    }
+
+    #[test]
+    fn new_file_with_force_false_returns_written() {
+        // force=false on a non-existing file: no prompt needed, just writes
+        let dir = TempDir::new().unwrap();
+        let path = temp_file(&dir, "badge.rs");
+
+        let outcome = write_component_file(&path, "// badge", false).unwrap();
+
+        assert_eq!(outcome, WriteOutcome::Written);
+        assert!(path.exists());
+    }
+}
 
 fn write_component_name_in_mod_rs_if_not_exists(
     component_name: String,
