@@ -1,6 +1,6 @@
 # rust-ui CLI — Changelog
 
-## Unreleased
+## 0.3.8
 
 ### Added
 
