@@ -165,6 +165,59 @@ mod tests {
         assert_eq!(outcome, WriteOutcome::Written);
         assert!(path.exists());
     }
+
+    // --- write_component_name_in_mod_rs_if_not_exists ---
+
+    #[test]
+    fn creates_mod_rs_with_pub_mod_entry() {
+        let dir = TempDir::new().unwrap();
+        let subdir = dir.path().join("ui");
+        fs::create_dir_all(&subdir).unwrap();
+
+        write_component_name_in_mod_rs_if_not_exists(
+            "button".to_string(),
+            subdir.to_str().unwrap().to_string(),
+        )
+        .unwrap();
+
+        let mod_rs = fs::read_to_string(subdir.join("mod.rs")).unwrap();
+        assert!(mod_rs.contains("pub mod button;"));
+    }
+
+    #[test]
+    fn skips_if_component_already_in_mod_rs() {
+        let dir = TempDir::new().unwrap();
+        let subdir = dir.path().join("ui");
+        fs::create_dir_all(&subdir).unwrap();
+        fs::write(subdir.join("mod.rs"), "pub mod button;\n").unwrap();
+
+        write_component_name_in_mod_rs_if_not_exists(
+            "button".to_string(),
+            subdir.to_str().unwrap().to_string(),
+        )
+        .unwrap();
+
+        let mod_rs = fs::read_to_string(subdir.join("mod.rs")).unwrap();
+        assert_eq!(mod_rs.matches("pub mod button;").count(), 1);
+    }
+
+    #[test]
+    fn appends_new_component_to_existing_mod_rs() {
+        let dir = TempDir::new().unwrap();
+        let subdir = dir.path().join("ui");
+        fs::create_dir_all(&subdir).unwrap();
+        fs::write(subdir.join("mod.rs"), "pub mod button;\n").unwrap();
+
+        write_component_name_in_mod_rs_if_not_exists(
+            "badge".to_string(),
+            subdir.to_str().unwrap().to_string(),
+        )
+        .unwrap();
+
+        let mod_rs = fs::read_to_string(subdir.join("mod.rs")).unwrap();
+        assert!(mod_rs.contains("pub mod button;"));
+        assert!(mod_rs.contains("pub mod badge;"));
+    }
 }
 
 fn write_component_name_in_mod_rs_if_not_exists(
