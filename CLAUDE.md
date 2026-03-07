@@ -36,4 +36,5 @@ crates/ui-cli/
 
 - **CHANGELOG.md**: Update `CHANGELOG.md` every time a new feature, fix, or change is added. New work goes under `## Unreleased`. Keep entries concise and user-facing.
 - **Version**: When bumping the crate version in `Cargo.toml`, move `## Unreleased` entries to the new version section in `CHANGELOG.md` at the same time.
+  - **DEFAULT**: Always bump the **minor** version only (e.g. `0.3.7` → `0.3.8`). Never bump major or minor segment (e.g. `0.4.0`) without explicitly asking the user first.
 
