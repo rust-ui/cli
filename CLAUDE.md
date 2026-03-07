@@ -6,6 +6,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ### Building and Testing
 ```bash
+# Run tests (preferred)
+cargo nextest run
+
+# Run tests (fallback if nextest not installed)
+cargo test
+
 # For manual end-to-end testing, use the _TMP/ directory (gitignored) as a throwaway project.
 
 # Run with specific commands (examples from main.rs)
@@ -21,13 +27,16 @@ cargo run --bin ui starters
 crates/ui-cli/
 ├── src/
 │   ├── command_add/          # Component installation logic
+│   ├── command_diff/         # ui diff command
 │   ├── command_docs/         # ui docs command
 │   ├── command_info/         # ui info command
 │   ├── command_init/         # Project initialization
 │   ├── command_list/         # ui list command
+│   ├── command_mcp/          # ui mcp server + mcp init
 │   ├── command_search/       # ui search command
-│   ├── command_update/       # ui update command
 │   ├── command_starters/     # Starter template cloning
+│   ├── command_update/       # ui update command
+│   ├── command_view/         # ui view command
 │   └── shared/               # Shared utilities
 └── Cargo.toml               # Binary configuration
 ```
