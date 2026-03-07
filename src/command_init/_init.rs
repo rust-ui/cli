@@ -3,13 +3,14 @@ use std::io::{self, Write};
 use std::path::Path;
 
 use clap::{Arg, Command};
-use dialoguer::Confirm;
 use dialoguer::theme::ColorfulTheme;
+use dialoguer::{Confirm, Select};
 
 const UI_CONFIG_TOML: &str = "ui_config.toml";
 const PACKAGE_JSON: &str = "package.json";
 
 use super::backup::FileBackup;
+use super::colors::{AccentColor, BaseColor};
 use super::config::{UiConfig, add_init_crates};
 use super::install::InstallType;
 use super::workspace_utils::{check_leptos_dependency, get_tailwind_input_file};
@@ -88,11 +89,20 @@ pub async fn process_init(force: bool, reinstall: Option<bool>) -> CliResult<Ini
     // Detect components installed in the current project (empty on first run)
     let installed: Vec<String> = get_installed_components(&base_path).into_iter().collect();
 
+    // Prompt for base + accent colors (or use defaults when --yes/--force)
+    let (base_color, accent_color) = if force {
+        (BaseColor::default(), AccentColor::default())
+    } else {
+        (prompt_base_color()?, prompt_accent_color()?)
+    };
+
     // Back up ui_config.toml — restored automatically on Drop if we error out
     let mut config_backup = FileBackup::new(Path::new(UI_CONFIG_TOML))
         .map_err(|e| CliError::file_operation(&e.to_string()))?;
 
-    let ui_config = UiConfig::default();
+    let mut ui_config = UiConfig::default();
+    ui_config.base_color = base_color.label().to_lowercase();
+    ui_config.color_theme = accent_color.label().to_lowercase();
     let ui_config_toml = toml::to_string_pretty(&ui_config)?;
 
     // ui_config.toml - always write (config file)
@@ -102,8 +112,8 @@ pub async fn process_init(force: bool, reinstall: Option<bool>) -> CliResult<Ini
     merge_package_json(PACKAGE_JSON, MyTemplate::PACKAGE_JSON).await?;
 
     // tailwind.css - ask before overwriting if exists (skipped when --yes or --force)
-    write_template_with_confirmation(&tailwind_input_file, MyTemplate::STYLE_TAILWIND_CSS, force)
-        .await?;
+    let css = MyTemplate::build_css(base_color, accent_color);
+    write_template_with_confirmation(&tailwind_input_file, &css, force).await?;
 
     add_init_crates().await?;
 
@@ -141,6 +151,28 @@ pub async fn process_init(force: bool, reinstall: Option<bool>) -> CliResult<Ini
 /* ========================================================== */
 /*                     ✨ FUNCTIONS ✨                        */
 /* ========================================================== */
+
+fn prompt_base_color() -> CliResult<BaseColor> {
+    let labels = BaseColor::all_labels();
+    let selection = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Base color")
+        .default(0)
+        .items(&labels)
+        .interact()
+        .map_err(|e| CliError::validation(&e.to_string()))?;
+    Ok(BaseColor::from_index(selection))
+}
+
+fn prompt_accent_color() -> CliResult<AccentColor> {
+    let labels = AccentColor::all_labels();
+    let selection = Select::with_theme(&ColorfulTheme::default())
+        .with_prompt("Accent color")
+        .default(0)
+        .items(&labels)
+        .interact()
+        .map_err(|e| CliError::validation(&e.to_string()))?;
+    Ok(AccentColor::from_index(selection))
+}
 
 /// Write template file (always writes, no confirmation)
 async fn write_template_file(file_name: &str, template: &str) -> CliResult<()> {
