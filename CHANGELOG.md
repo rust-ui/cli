@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+---
+
+## 0.3.11
+
 ### Added
 
 - `ui init` — interactive base color picker (Neutral / Stone / Zinc / Mauve / Olive / Mist / Taupe) and accent color picker (Default / Amber / Blue / … / Yellow); selections are saved to `ui_config.toml` and the generated `tailwind.css` uses the exact OKLCH values; `--yes` / `--force` skips prompts and uses defaults
