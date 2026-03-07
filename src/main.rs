@@ -15,6 +15,7 @@ mod command_init;
 mod command_list;
 mod command_search;
 mod command_starters;
+mod command_update;
 mod shared;
 
 // * cargo run --bin ui init
@@ -36,6 +37,7 @@ async fn main() {
         .subcommand(command_info::_info::command_info())
         .subcommand(command_list::_list::command_list())
         .subcommand(command_search::_search::command_search())
+        .subcommand(command_update::_update::command_update())
         .subcommand(command_docs::_docs::command_docs())
         .subcommand(command_starters::_starters::command_starters());
 
@@ -69,6 +71,12 @@ async fn main() {
         }
         Some(("search", sub_matches)) => {
             if let Err(e) = command_search::_search::process_search(sub_matches).await {
+                eprintln!("{e}");
+                process::exit(1);
+            }
+        }
+        Some(("update", sub_matches)) => {
+            if let Err(e) = command_update::_update::process_update(sub_matches).await {
                 eprintln!("{e}");
                 process::exit(1);
             }

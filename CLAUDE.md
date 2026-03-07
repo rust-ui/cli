@@ -26,6 +26,7 @@ crates/ui-cli/
 │   ├── command_init/         # Project initialization
 │   ├── command_list/         # ui list command
 │   ├── command_search/       # ui search command
+│   ├── command_update/       # ui update command
 │   ├── command_starters/     # Starter template cloning
 │   └── shared/               # Shared utilities
 └── Cargo.toml               # Binary configuration

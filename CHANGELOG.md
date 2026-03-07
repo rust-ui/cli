@@ -4,6 +4,7 @@
 
 ### Added
 
+- `ui update` — checks all installed components against the registry; reports `up to date`, `outdated`, or `not in registry` per component; suggests the exact `ui add <name> -y` command to fix each; supports `--json`
 - `ui search <query>` — filters the registry by name (case-insensitive); supports `--json` for scripted output
 - `ui list --json` — machine-readable JSON output for `ui list` (`{ total, categories: { ... } }`)
 - `ui list` — lists all available components from the registry grouped by category (grep-friendly, one component per line)
