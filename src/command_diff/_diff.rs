@@ -67,6 +67,29 @@ pub fn command_diff() -> Command {
 /*                         🦀 MAIN 🦀                         */
 /* ========================================================== */
 
+/// Fetch registry content and compute diffs for a list of component names.
+/// Names are processed in the order given; sort before calling if needed.
+pub async fn diff_components(names: &[String], base_path: &str) -> CliResult<Vec<ComponentDiff>> {
+    let mut diffs: Vec<ComponentDiff> = Vec::new();
+    for name in names {
+        let component_type = ComponentType::from_component_name(name);
+        let local_path = Path::new(base_path).join(component_type.to_path()).join(format!("{name}.rs"));
+        match RustUIClient::fetch_styles_default(name).await {
+            Ok(remote_content) => {
+                let local_content = std::fs::read_to_string(&local_path).unwrap_or_default();
+                let diff_lines = compute_diff(&local_content, &remote_content);
+                let has_changes = diff_lines.iter().any(|l| !matches!(l, DiffLine::Same(_)));
+                let status = if has_changes { DiffStatus::Changed } else { DiffStatus::UpToDate };
+                diffs.push(ComponentDiff { name: name.clone(), status, lines: diff_lines });
+            }
+            Err(_) => {
+                diffs.push(ComponentDiff { name: name.clone(), status: DiffStatus::NotInRegistry, lines: vec![] });
+            }
+        }
+    }
+    Ok(diffs)
+}
+
 pub async fn process_diff(matches: &ArgMatches) -> CliResult<()> {
     let json = matches.get_flag("json");
     let component_arg: Option<&String> = matches.get_one("component");
@@ -91,32 +114,7 @@ pub async fn process_diff(matches: &ArgMatches) -> CliResult<()> {
         println!("Checking {} installed component{}...\n", names.len(), if names.len() == 1 { "" } else { "s" });
     }
 
-    let mut diffs: Vec<ComponentDiff> = Vec::new();
-
-    for name in &names {
-        let component_type = ComponentType::from_component_name(name);
-        let local_path = Path::new(&base_path).join(component_type.to_path()).join(format!("{name}.rs"));
-
-        let local_content = match std::fs::read_to_string(&local_path) {
-            Ok(c) => c,
-            Err(_) => {
-                diffs.push(ComponentDiff { name: name.clone(), status: DiffStatus::NotInRegistry, lines: vec![] });
-                continue;
-            }
-        };
-
-        match RustUIClient::fetch_styles_default(name).await {
-            Ok(remote_content) => {
-                let diff_lines = compute_diff(&local_content, &remote_content);
-                let has_changes = diff_lines.iter().any(|l| !matches!(l, DiffLine::Same(_)));
-                let status = if has_changes { DiffStatus::Changed } else { DiffStatus::UpToDate };
-                diffs.push(ComponentDiff { name: name.clone(), status, lines: diff_lines });
-            }
-            Err(_) => {
-                diffs.push(ComponentDiff { name: name.clone(), status: DiffStatus::NotInRegistry, lines: vec![] });
-            }
-        }
-    }
+    let diffs = diff_components(&names, &base_path).await?;
 
     let output = if json { format_diff_json(&diffs)? } else { format_diff_human(&diffs) };
     println!("{output}");

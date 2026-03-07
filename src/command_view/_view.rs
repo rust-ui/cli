@@ -29,6 +29,16 @@ pub fn command_view() -> Command {
 /*                         🦀 MAIN 🦀                         */
 /* ========================================================== */
 
+/// Fetch and print registry source for a list of component names.
+/// Names are processed in the order given; sort before calling if needed.
+pub async fn view_components(names: &[String]) -> CliResult<()> {
+    for name in names {
+        let content = RustUIClient::fetch_styles_default(name).await?;
+        println!("{}", format_view_human(name, &content));
+    }
+    Ok(())
+}
+
 pub async fn process_view(matches: &ArgMatches) -> CliResult<()> {
     let name = matches.get_one::<String>("component").map(|s| s.as_str()).unwrap_or("");
     let json = matches.get_flag("json");
