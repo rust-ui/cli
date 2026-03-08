@@ -1,3 +1,4 @@
+use std::path::Path;
 use std::process::Command;
 
 use strum::AsRefStr;
@@ -43,13 +44,33 @@ impl PackageManager {
     }
 }
 
+fn missing_dependencies<'a>(deps: &[&'a str]) -> Vec<&'a str> {
+    deps.iter()
+        .copied()
+        .filter(|dep| {
+            !Path::new("node_modules").join(dep).join("package.json").exists()
+        })
+        .collect()
+}
+
 pub async fn install_dependencies(install_types: &[InstallType]) -> CliResult<()> {
     let package_manager = PackageManager::detect();
-
     for install_type in install_types {
-        install_with_package_manager(install_type.clone(), package_manager.clone())?;
-    }
+        let all_deps = install_type.dependencies();
+        let to_install = missing_dependencies(all_deps);
 
+        if to_install.is_empty() {
+            let spinner = TaskSpinner::new(&format!(
+                "Checking {} dependencies...", install_type.name()
+            ));
+            spinner.finish_success(&format!(
+                "{} dependencies already installed. Skipping.", install_type.name()
+            ));
+            continue;
+        }
+
+        install_with_package_manager(install_type.clone(), package_manager.clone(), &to_install)?;
+    }
     Ok(())
 }
 
@@ -57,8 +78,11 @@ pub async fn install_dependencies(install_types: &[InstallType]) -> CliResult<()
 /*                     ✨ FUNCTIONS ✨                        */
 /* ========================================================== */
 
-fn install_with_package_manager(install_type: InstallType, package_manager: PackageManager) -> CliResult<()> {
-    let dependencies = install_type.dependencies();
+fn install_with_package_manager(
+    install_type: InstallType,
+    package_manager: PackageManager,
+    dependencies: &[&str],
+) -> CliResult<()> {
     let deps_list = dependencies.join(" ");
     let pm_name = package_manager.command();
     let type_name = install_type.name();
